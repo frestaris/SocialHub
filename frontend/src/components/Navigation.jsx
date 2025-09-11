@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Layout, Menu, Button, Drawer, Grid } from "antd";
 import { MenuOutlined } from "@ant-design/icons";
+import { Link, useNavigate } from "react-router-dom";
 
 const { Header } = Layout;
 const { useBreakpoint } = Grid;
@@ -8,10 +9,11 @@ const { useBreakpoint } = Grid;
 export default function Navigation() {
   const [open, setOpen] = useState(false);
   const screens = useBreakpoint();
+  const navigate = useNavigate();
 
   const menuItems = [
-    { key: "explore", label: "Explore" },
-    { key: "login", label: "Login" },
+    { key: "explore", label: <Link to="/explore">Explore</Link> },
+    { key: "login", label: <Link to="/login">Login</Link> },
   ];
 
   return (
@@ -25,8 +27,11 @@ export default function Navigation() {
         boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
       }}
     >
-      {/* Logo */}
-      <div style={{ fontWeight: "bold", fontSize: "20px", cursor: "pointer" }}>
+      {/* Logo (click to go home) */}
+      <div
+        style={{ fontWeight: "bold", fontSize: "20px", cursor: "pointer" }}
+        onClick={() => navigate("/")}
+      >
         CreatorHub
       </div>
 
@@ -39,7 +44,9 @@ export default function Navigation() {
             selectable={false}
             style={{ borderBottom: "none", marginRight: "16px" }}
           />
-          <Button type="primary">Become a Creator</Button>
+          <Button type="primary" onClick={() => navigate("/login")}>
+            Become a Creator
+          </Button>
         </div>
       ) : (
         // Hamburger for md and below
@@ -60,7 +67,7 @@ export default function Navigation() {
       >
         <Menu mode="vertical" items={menuItems} selectable={false} />
         <div style={{ marginTop: "16px" }}>
-          <Button type="primary" block>
+          <Button type="primary" block onClick={() => navigate("/login")}>
             Become a Creator
           </Button>
         </div>

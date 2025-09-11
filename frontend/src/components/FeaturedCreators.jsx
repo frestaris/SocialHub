@@ -52,7 +52,7 @@ export default function FeaturedCreators() {
         <Swiper
           modules={[Navigation]}
           spaceBetween={20}
-          slidesPerView={3}
+          slidesPerView={3.2}
           centeredSlides={false}
           breakpoints={{
             1024: { slidesPerView: 3 },
