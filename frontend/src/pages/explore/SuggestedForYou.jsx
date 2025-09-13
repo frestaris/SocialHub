@@ -1,6 +1,7 @@
 import { Typography, Card } from "antd";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
+import { Link } from "react-router-dom";
 
 const { Title } = Typography;
 
@@ -67,22 +68,24 @@ export default function SuggestedForYou() {
       >
         {mockPosts.map((post) => (
           <SwiperSlide key={post.id}>
-            <Card
-              hoverable
-              cover={
-                <img
-                  src={post.img}
-                  alt={post.title}
-                  style={{ height: "150px", objectFit: "cover" }}
+            <Link to={`/video/${post.id}`} style={{ textDecoration: "none" }}>
+              <Card
+                hoverable
+                cover={
+                  <img
+                    src={post.img}
+                    alt={post.title}
+                    style={{ height: "150px", objectFit: "cover" }}
+                  />
+                }
+                style={{ borderRadius: "12px", overflow: "hidden" }}
+              >
+                <Card.Meta
+                  title={post.title}
+                  description={`${post.category} • by ${post.creator}`}
                 />
-              }
-              style={{ borderRadius: "12px", overflow: "hidden" }}
-            >
-              <Card.Meta
-                title={post.title}
-                description={`${post.category} • by ${post.creator}`}
-              />
-            </Card>
+              </Card>
+            </Link>
           </SwiperSlide>
         ))}
       </Swiper>
