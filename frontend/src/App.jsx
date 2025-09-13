@@ -9,7 +9,7 @@ import HomePage from "./pages/homepage/HomePage";
 import Explore from "./pages/explore/Explore";
 import Video from "./pages/video/Video";
 import Live from "./pages/live/Live";
-import Profile from "./pages/user/Profile";
+import Profile from "./pages/user/profile/Profile";
 import Upload from "./pages/upload/Upload";
 
 const { Content } = Layout;

@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import { Row, Col, Tabs } from "antd";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useGetUserByIdQuery } from "../../redux/user/userApi";
+import { useGetUserByIdQuery } from "../../../redux/user/userApi";
 
 import ProfileInfo from "./ProfileInfo";
 import SuggestedCreators from "./SuggestedCreators";
