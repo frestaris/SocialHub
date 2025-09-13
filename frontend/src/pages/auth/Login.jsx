@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { signInWithPopup } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
-import { auth, googleProvider } from "../firebase";
 import {
-  useFirebaseLoginMutation,
-  useLoginMutation,
-  useRegisterMutation,
-} from "../redux/auth/authApi";
-import { setCredentials, logout } from "../redux/auth/authSlice";
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+} from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { auth, googleProvider, githubProvider } from "../../firebase";
+import { useFirebaseLoginMutation } from "../../redux/auth/authApi";
+import { setCredentials, logout } from "../../redux/auth/authSlice";
 import {
   Button,
   Form,
@@ -19,7 +19,7 @@ import {
   Alert,
   Spin,
 } from "antd";
-import { GoogleOutlined } from "@ant-design/icons";
+import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
 
 const { Title } = Typography;
 
@@ -28,31 +28,22 @@ export default function Login() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
 
-  // RTK Query mutations
+  // RTK Query
   const [firebaseLogin, { isLoading: socialLoading, error: socialError }] =
     useFirebaseLoginMutation();
-  const [loginUser, { isLoading: loginLoading, error: loginError }] =
-    useLoginMutation();
-  const [registerUser, { isLoading: registerLoading, error: registerError }] =
-    useRegisterMutation();
 
   const [isRegister, setIsRegister] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [formLoading, setFormLoading] = useState(false);
 
-  // Sync RTK Query errors → local state
+  // Handle Firebase → backend error sync
   useEffect(() => {
-    if (loginError) {
-      setErrorMessage(loginError.data?.error || "Login failed");
-    } else if (registerError) {
-      setErrorMessage(registerError.data?.error || "Registration failed");
-    } else if (socialError) {
+    if (socialError) {
       setErrorMessage(socialError.data?.error || "Social login failed");
-    } else {
-      setErrorMessage(null); // clear when no errors
     }
-  }, [loginError, registerError, socialError]);
+  }, [socialError]);
 
-  // Social login handler
+  // Social login
   const handleSocialLogin = async (provider) => {
     try {
       const result = await signInWithPopup(auth, provider);
@@ -61,32 +52,54 @@ export default function Login() {
       const data = await firebaseLogin(token).unwrap();
       if (data.success) {
         dispatch(setCredentials({ user: data.user, token }));
-        // navigate("/explore");
+        navigate("/settings");
         setErrorMessage(null);
       }
     } catch (err) {
-      console.log(err);
-      setErrorMessage("Social login failed");
+      if (err.code === "auth/account-exists-with-different-credential") {
+        const email = err.customData?.email;
+        setErrorMessage(
+          `This email (${email}) is already used with another provider. Please log in with that provider first, then link this one in your profile.`
+        );
+      } else {
+        console.error(err);
+        setErrorMessage("Social login failed");
+      }
     }
   };
 
-  // Email/password form submit
+  // Email/password login or register
   const handleFormFinish = async (values) => {
     try {
-      let data;
+      setFormLoading(true);
+      let fbUser;
       if (isRegister) {
-        data = await registerUser(values).unwrap();
+        fbUser = await createUserWithEmailAndPassword(
+          auth,
+          values.email,
+          values.password
+        );
       } else {
-        data = await loginUser(values).unwrap();
+        fbUser = await signInWithEmailAndPassword(
+          auth,
+          values.email,
+          values.password
+        );
       }
+
+      const token = await fbUser.user.getIdToken();
+
+      const data = await firebaseLogin(token).unwrap();
       if (data.success) {
-        dispatch(setCredentials({ user: data.user, token: "local" }));
-        // navigate("/explore");
+        dispatch(setCredentials({ user: data.user, token }));
+        navigate("/settings");
         setErrorMessage(null);
       }
     } catch (err) {
-      console.log(err);
-      // RTK Query error already handled in useEffect
+      console.error("❌ Firebase error:", err);
+      setErrorMessage(err.message || "Authentication failed");
+    } finally {
+      setFormLoading(false);
     }
   };
 
@@ -133,7 +146,7 @@ export default function Login() {
             message={errorMessage}
             showIcon
             closable
-            onClose={() => setErrorMessage(null)} // allow manual close
+            onClose={() => setErrorMessage(null)}
             style={{ marginBottom: 16 }}
           />
         )}
@@ -171,14 +184,16 @@ export default function Login() {
             <Input.Password />
           </Form.Item>
 
-          <Button
-            type="primary"
-            htmlType="submit"
-            block
-            disabled={loginLoading || registerLoading}
-          >
-            {loginLoading || registerLoading ? (
-              <Spin size="small" />
+          <Button type="link" onClick={() => navigate("/forgot-password")}>
+            Forgot password?
+          </Button>
+
+          <Button type="primary" htmlType="submit" block disabled={formLoading}>
+            {formLoading ? (
+              <>
+                <Spin size="small" />{" "}
+                {isRegister ? "Registering..." : "Logging in..."}
+              </>
             ) : isRegister ? (
               "Register"
             ) : (
@@ -198,6 +213,15 @@ export default function Login() {
           >
             {socialLoading ? <Spin size="small" /> : "Continue with Google"}
           </Button>
+
+          <Button
+            icon={<GithubOutlined />}
+            block
+            onClick={() => handleSocialLogin(githubProvider)}
+            disabled={socialLoading}
+          >
+            {socialLoading ? <Spin size="small" /> : "Continue with GitHub"}
+          </Button>
         </Space>
 
         <div style={{ textAlign: "center" }}>
@@ -205,7 +229,7 @@ export default function Login() {
             type="link"
             onClick={() => {
               setIsRegister(!isRegister);
-              setErrorMessage(null); // clear when switching modes
+              setErrorMessage(null);
             }}
           >
             {isRegister

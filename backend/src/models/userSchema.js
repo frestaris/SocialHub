@@ -8,10 +8,6 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ["creator", "fan"], default: "fan" },
     bio: { type: String },
 
-    // For email/password login
-    passwordHash: { type: String, default: null },
-
-    // For social login providers
     providers: [
       {
         provider: { type: String },

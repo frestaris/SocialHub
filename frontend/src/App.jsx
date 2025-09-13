@@ -1,10 +1,13 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Layout } from "antd";
 import Navigation from "./components/Navigation";
-import Home from "./pages/Home";
-import FeaturedCreators from "./components/FeaturedCreators";
-import HowItWorks from "./components/HowItWorks";
-import Login from "./pages/Login";
+import Home from "./pages/homepage/Home";
+import FeaturedCreators from "./pages/homepage/FeaturedCreators";
+import HowItWorks from "./pages/homepage/HowItWorks";
+import Login from "./pages/auth/Login";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
+import UserSettings from "./pages/auth/UserSettings";
 
 const { Content } = Layout;
 
@@ -30,8 +33,11 @@ export default function App() {
               }
             />
 
-            {/* Login Page */}
+            {/* Auth Page */}
             <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/settings" element={<UserSettings />} />
           </Routes>
         </Content>
       </Layout>

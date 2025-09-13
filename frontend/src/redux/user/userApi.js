@@ -1,10 +1,10 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseURL } from "../../utils/baseURL";
 
-export const authApi = createApi({
-  reducerPath: "authApi",
+export const userApi = createApi({
+  reducerPath: "userApi",
   baseQuery: fetchBaseQuery({
-    baseUrl: `${baseURL}/auth`,
+    baseUrl: `${baseURL}/users`,
     prepareHeaders: (headers, { getState }) => {
       const token = getState().auth.token;
       headers.set("Content-Type", "application/json");
@@ -16,14 +16,10 @@ export const authApi = createApi({
     credentials: "include",
   }),
   endpoints: (builder) => ({
-    firebaseLogin: builder.mutation({
-      query: (token) => ({
-        url: "/firebase-login",
-        method: "POST",
-        body: { token },
-      }),
+    getCurrentUser: builder.query({
+      query: () => `/me`, // now backend extracts user from token
     }),
   }),
 });
 
-export const { useFirebaseLoginMutation } = authApi;
+export const { useGetCurrentUserQuery } = userApi;
