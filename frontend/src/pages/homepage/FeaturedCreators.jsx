@@ -55,8 +55,8 @@ export default function FeaturedCreators() {
           slidesPerView={3.2}
           centeredSlides={false}
           breakpoints={{
-            1024: { slidesPerView: 3 },
-            768: { slidesPerView: 2 },
+            1024: { slidesPerView: 3.2 },
+            768: { slidesPerView: 2.2 },
             0: { slidesPerView: 1.2 }, // 👈 peek effect on mobile
           }}
         >

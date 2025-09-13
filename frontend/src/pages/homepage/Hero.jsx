@@ -1,11 +1,11 @@
 import { Row, Col, Typography, Button } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
-import image from "../../assets/quickpop-homepage.png";
+import image from "../../assets/image-1.jpg";
 
 const { Title, Paragraph } = Typography;
 
-export default function Home() {
+export default function Hero() {
   const handleScroll = () => {
     const nextSection = document.getElementById("how-it-works");
     if (nextSection) {

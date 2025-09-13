@@ -1,13 +1,12 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Layout } from "antd";
 import Navigation from "./components/Navigation";
-import Home from "./pages/homepage/Home";
-import FeaturedCreators from "./pages/homepage/FeaturedCreators";
-import HowItWorks from "./pages/homepage/HowItWorks";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import UserSettings from "./pages/auth/UserSettings";
+import HomePage from "./pages/homepage/HomePage";
+import Explore from "./pages/explore/Explore";
 
 const { Content } = Layout;
 
@@ -22,16 +21,8 @@ export default function App() {
         <Content>
           <Routes>
             {/* Home Page */}
-            <Route
-              path="/"
-              element={
-                <>
-                  <Home />
-                  <HowItWorks />
-                  <FeaturedCreators />
-                </>
-              }
-            />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/explore" element={<Explore />} />
 
             {/* Auth Page */}
             <Route path="/login" element={<Login />} />
