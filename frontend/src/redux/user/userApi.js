@@ -17,9 +17,12 @@ export const userApi = createApi({
   }),
   endpoints: (builder) => ({
     getCurrentUser: builder.query({
-      query: () => `/me`, // now backend extracts user from token
+      query: () => `/me`,
+    }),
+    getUserById: builder.query({
+      query: (id) => `/${id}`,
     }),
   }),
 });
 
-export const { useGetCurrentUserQuery } = userApi;
+export const { useGetCurrentUserQuery, useGetUserByIdQuery } = userApi;

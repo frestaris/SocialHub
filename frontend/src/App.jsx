@@ -9,6 +9,7 @@ import HomePage from "./pages/homepage/HomePage";
 import Explore from "./pages/explore/Explore";
 import Video from "./pages/video/Video";
 import Live from "./pages/live/Live";
+import Profile from "./pages/user/Profile";
 
 const { Content } = Layout;
 
@@ -27,6 +28,8 @@ export default function App() {
             <Route path="/explore" element={<Explore />} />
             <Route path="/video/:id" element={<Video />} />
             <Route path="/live/:id" element={<Live />} />
+
+            <Route path="/profile/:id" element={<Profile />} />
 
             {/* Auth Page */}
             <Route path="/login" element={<Login />} />

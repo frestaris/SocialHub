@@ -12,6 +12,7 @@ const mockPosts = [
     category: "Gaming",
     creator: "Alex",
     img: "https://picsum.photos/400/250?random=1",
+    duration: 420,
   },
   {
     id: 2,
@@ -19,6 +20,7 @@ const mockPosts = [
     category: "Art",
     creator: "Sophia",
     img: "https://picsum.photos/400/250?random=2",
+    duration: 420,
   },
   {
     id: 3,
@@ -26,6 +28,7 @@ const mockPosts = [
     category: "Music",
     creator: "Clara",
     img: "https://picsum.photos/400/250?random=3",
+    duration: 420,
   },
   {
     id: 4,
@@ -33,6 +36,7 @@ const mockPosts = [
     category: "Fitness",
     creator: "George",
     img: "https://picsum.photos/400/250?random=4",
+    duration: 420,
   },
   {
     id: 5,
@@ -40,6 +44,7 @@ const mockPosts = [
     category: "Talk Show",
     creator: "Liam",
     img: "https://picsum.photos/400/250?random=5",
+    duration: 420,
   },
   {
     id: 6,
@@ -47,6 +52,7 @@ const mockPosts = [
     category: "Food",
     creator: "Emma",
     img: "https://picsum.photos/400/250?random=6",
+    duration: 420,
   },
 ];
 
@@ -72,11 +78,33 @@ export default function SuggestedForYou() {
               <Card
                 hoverable
                 cover={
-                  <img
-                    src={post.img}
-                    alt={post.title}
-                    style={{ height: "150px", objectFit: "cover" }}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <img
+                      src={post.img}
+                      alt={post.title}
+                      style={{
+                        height: "150px",
+                        objectFit: "cover",
+                        width: "100%",
+                      }}
+                    />
+                    {/* Duration overlay */}
+                    <span
+                      style={{
+                        position: "absolute",
+                        bottom: "6px",
+                        right: "6px",
+                        background: "rgba(0,0,0,0.75)",
+                        color: "#fff",
+                        fontSize: "12px",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      {Math.floor(post.duration / 60)}:
+                      {(post.duration % 60).toString().padStart(2, "0")}
+                    </span>
+                  </div>
                 }
                 style={{ borderRadius: "12px", overflow: "hidden" }}
               >

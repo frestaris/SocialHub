@@ -46,3 +46,21 @@ export const getCurrentUser = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).select(
+      "username email avatar bio role providers followers"
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error("Get user by ID error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};

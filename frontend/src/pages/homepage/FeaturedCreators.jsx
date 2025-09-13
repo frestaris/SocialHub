@@ -52,12 +52,13 @@ export default function FeaturedCreators() {
         <Swiper
           modules={[Navigation]}
           spaceBetween={20}
+          style={{ paddingBottom: "20px" }}
           slidesPerView={3.2}
           centeredSlides={false}
           breakpoints={{
-            1024: { slidesPerView: 3.2 },
-            768: { slidesPerView: 2.2 },
-            0: { slidesPerView: 1.2 }, // 👈 peek effect on mobile
+            1024: { slidesPerView: 3.4 },
+            768: { slidesPerView: 2.4 },
+            0: { slidesPerView: 1.4 },
           }}
         >
           {creators.map((creator, i) => (

@@ -3,6 +3,8 @@ import { Tag } from "antd";
 import { Link } from "react-router-dom";
 
 export default function MainVideo() {
+  const duration = 360; // mock duration in seconds
+
   return (
     <Link to="/live/:id" style={{ textDecoration: "none" }}>
       <motion.div
@@ -17,11 +19,31 @@ export default function MainVideo() {
           position: "relative",
         }}
       >
-        <img
-          src="https://picsum.photos/1200/600?random=10"
-          alt="Featured livestream"
-          style={{ width: "100%", height: "auto" }}
-        />
+        <div style={{ position: "relative" }}>
+          <img
+            src="https://picsum.photos/1200/600?random=10"
+            alt="Featured livestream"
+            style={{ width: "100%", height: "auto" }}
+          />
+
+          {/* Duration overlay */}
+          <span
+            style={{
+              position: "absolute",
+              bottom: "8px",
+              right: "8px",
+              background: "rgba(0,0,0,0.75)",
+              color: "#fff",
+              fontSize: "13px",
+              padding: "3px 6px",
+              borderRadius: "4px",
+            }}
+          >
+            {Math.floor(duration / 60)}:
+            {(duration % 60).toString().padStart(2, "0")}
+          </span>
+        </div>
+
         <Tag
           color="red"
           style={{
@@ -33,6 +55,7 @@ export default function MainVideo() {
         >
           LIVE
         </Tag>
+
         <div
           style={{
             position: "absolute",

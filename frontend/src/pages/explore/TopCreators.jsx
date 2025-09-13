@@ -1,6 +1,7 @@
 import { Typography } from "antd";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
+import { Link } from "react-router-dom";
 
 const { Title } = Typography;
 
@@ -73,58 +74,63 @@ export default function TopCreators() {
       >
         {mockCreators.map((creator) => (
           <SwiperSlide key={creator.id}>
-            <div
-              style={{
-                background: "#fff",
-                borderRadius: "16px",
-                padding: "20px",
-                textAlign: "center",
-                backgroundClip: "padding-box, border-box",
-                boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
-              }}
+            <Link
+              to={`/profile/${creator.id}`}
+              style={{ textDecoration: "none" }}
             >
-              <img
-                src={creator.img}
-                alt={creator.name}
+              <div
                 style={{
-                  width: "100px",
-                  height: "100px",
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  marginBottom: "12px",
-                  border: "3px solid #eee",
-                }}
-              />
-              <h3 style={{ margin: "0 0 4px", color: "#333" }}>
-                {creator.name}
-              </h3>
-              <p style={{ color: "#777", margin: "0 0 12px" }}>
-                {creator.category}
-              </p>
-              <button
-                style={{
-                  padding: "6px 16px",
-                  borderRadius: "20px",
-                  border: "none",
-                  background: "linear-gradient(90deg, #00c6ff, #0072ff)",
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                  transition: "all 0.3s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scale(1.05)";
-                  e.currentTarget.style.boxShadow =
-                    "0 0 12px rgba(0, 198, 255, 0.7)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow = "none";
+                  background: "#fff",
+                  borderRadius: "16px",
+                  padding: "20px",
+                  textAlign: "center",
+                  backgroundClip: "padding-box, border-box",
+                  boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
                 }}
               >
-                Follow
-              </button>
-            </div>
+                <img
+                  src={creator.img}
+                  alt={creator.name}
+                  style={{
+                    width: "100px",
+                    height: "100px",
+                    borderRadius: "50%",
+                    objectFit: "cover",
+                    marginBottom: "12px",
+                    border: "3px solid #eee",
+                  }}
+                />
+                <h3 style={{ margin: "0 0 4px", color: "#333" }}>
+                  {creator.name}
+                </h3>
+                <p style={{ color: "#777", margin: "0 0 12px" }}>
+                  {creator.category}
+                </p>
+                <button
+                  style={{
+                    padding: "6px 16px",
+                    borderRadius: "20px",
+                    border: "none",
+                    background: "linear-gradient(90deg, #00c6ff, #0072ff)",
+                    color: "#fff",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    transition: "all 0.3s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.05)";
+                    e.currentTarget.style.boxShadow =
+                      "0 0 12px rgba(0, 198, 255, 0.7)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  Follow
+                </button>
+              </div>{" "}
+            </Link>
           </SwiperSlide>
         ))}
       </Swiper>
