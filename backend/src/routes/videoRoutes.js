@@ -8,14 +8,16 @@ import {
   incrementView,
   likeVideo,
   unlikeVideo,
+  getAllVideos,
 } from "../controllers/videoController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Public
-router.get("/:id", getVideoById);
+router.get("/", getAllVideos);
 router.get("/user/:userId", getVideosByUser);
+router.get("/:id", getVideoById);
 router.patch("/:id/view", incrementView);
 
 // Private

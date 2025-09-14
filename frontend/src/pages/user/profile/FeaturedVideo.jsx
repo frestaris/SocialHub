@@ -21,34 +21,40 @@ export default function FeaturedVideo({ video }) {
         overflow: "hidden",
       }}
       cover={
-        <Link to={`/video/${video.id}`}>
+        <Link to={`/video/${video._id}`}>
           <div style={{ position: "relative" }}>
             <img
-              src={video.thumbnail}
+              src={video.thumbnail || "/fallback-thumbnail.jpg"}
               alt={video.title}
-              style={{ maxHeight: "300px", objectFit: "cover", width: "100%" }}
-            />
-            <span
               style={{
-                position: "absolute",
-                bottom: "8px",
-                right: "8px",
-                background: "rgba(0,0,0,0.75)",
-                color: "#fff",
-                fontSize: "13px",
-                padding: "3px 6px",
-                borderRadius: "4px",
+                maxHeight: "300px",
+                objectFit: "cover",
+                width: "100%",
               }}
-            >
-              {Math.floor(video.duration / 60)}:
-              {(video.duration % 60).toString().padStart(2, "0")}
-            </span>
+            />
+            {video.duration > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  bottom: "8px",
+                  right: "8px",
+                  background: "rgba(0,0,0,0.75)",
+                  color: "#fff",
+                  fontSize: "13px",
+                  padding: "3px 6px",
+                  borderRadius: "4px",
+                }}
+              >
+                {Math.floor(video.duration / 60)}:
+                {(video.duration % 60).toString().padStart(2, "0")}
+              </span>
+            )}
           </div>
         </Link>
       }
     >
       <Title level={4}>
-        <Link to={`/video/${video.id}`} style={{ color: "#1677ff" }}>
+        <Link to={`/video/${video._id}`} style={{ color: "#1677ff" }}>
           {video.title}
         </Link>
       </Title>

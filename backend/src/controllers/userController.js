@@ -2,6 +2,7 @@ import User from "../models/userSchema.js";
 import Video from "../models/videoSchema.js";
 import Post from "../models/postSchema.js";
 import Livestream from "../models/livestreamSchema.js";
+import Comment from "../models/commentSchema.js";
 import { firebaseAdmin } from "../config/firebaseAdmin.js";
 
 export const getCurrentUser = async (req, res) => {
@@ -103,6 +104,7 @@ export const deleteUser = async (req, res) => {
       Video.deleteMany({ creatorId: userId }),
       Post.deleteMany({ userId }),
       Livestream.deleteMany({ creatorId: userId }),
+      Comment.deleteMany({ userId }),
     ]);
 
     // Get Firebase UID (prefer uid field, fallback to providers[0].providerId)

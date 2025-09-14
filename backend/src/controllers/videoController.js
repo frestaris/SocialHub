@@ -1,4 +1,5 @@
 import Video from "../models/videoSchema.js";
+import Comment from "../models/commentSchema.js";
 
 // @desc    Create a new video
 // @route   POST /api/videos
@@ -8,7 +9,7 @@ export const createVideo = async (req, res) => {
     const { title, description, category, url, thumbnail, duration } = req.body;
 
     const video = await Video.create({
-      creatorId: req.user._id, // ✅ set by auth middleware
+      creatorId: req.user._id,
       title,
       description,
       category,
@@ -31,7 +32,10 @@ export const getVideoById = async (req, res) => {
   try {
     const video = await Video.findById(req.params.id)
       .populate("creatorId", "username avatar")
-      .populate("comments");
+      .populate({
+        path: "comments",
+        populate: { path: "userId", select: "username avatar" },
+      });
 
     if (!video)
       return res.status(404).json({ success: false, error: "Video not found" });
@@ -43,14 +47,48 @@ export const getVideoById = async (req, res) => {
   }
 };
 
-// @desc    Get all videos for a user
-// @route   GET /api/videos/user/:userId
+// @desc    Get all videos (optionally filter by category)
+// @route   GET /api/videos
+// @access  Public
+export const getAllVideos = async (req, res) => {
+  try {
+    const { category, sort } = req.query;
+
+    let query = {};
+    if (category) {
+      query.category = category;
+    }
+
+    let sortOption = { createdAt: -1 }; // default: newest
+    if (sort === "oldest") sortOption = { createdAt: 1 };
+    if (sort === "popular") sortOption = { views: -1 };
+
+    const videos = await Video.find(query)
+      .populate("creatorId", "username avatar")
+      .sort(sortOption);
+
+    res.json({ success: true, videos });
+  } catch (err) {
+    console.error("Get all videos error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+};
+
+// @desc    Get all videos for a user (with sorting)
+// @route   GET /api/videos/user/:userId?sort=newest|oldest|popular
 // @access  Public
 export const getVideosByUser = async (req, res) => {
   try {
-    const videos = await Video.find({ creatorId: req.params.userId }).sort({
-      createdAt: -1,
-    });
+    const { sort } = req.query;
+
+    let sortOption = { createdAt: -1 };
+    if (sort === "oldest") sortOption = { createdAt: 1 };
+    if (sort === "popular") sortOption = { views: -1 };
+
+    const videos = await Video.find({ creatorId: req.params.userId })
+      .sort(sortOption)
+      .populate("creatorId", "username avatar");
+
     res.json({ success: true, videos });
   } catch (err) {
     console.error("Get user videos error:", err);

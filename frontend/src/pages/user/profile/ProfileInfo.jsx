@@ -3,6 +3,7 @@ import { SettingOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useState } from "react";
 import SettingsModal from "../settings/SettingsModal";
+import { Link } from "react-router-dom";
 
 const { Title, Paragraph } = Typography;
 
@@ -55,9 +56,11 @@ export default function ProfileInfo({ user }) {
               </Button>
             )}
             {isOwner && (
-              <Button type="default" block>
-                Upload
-              </Button>
+              <Link to="/upload">
+                <Button type="default" block>
+                  Upload
+                </Button>
+              </Link>
             )}
           </Space>
         </div>

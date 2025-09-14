@@ -1,49 +1,16 @@
 import { useParams } from "react-router-dom";
-import { Row, Col, Tabs } from "antd";
+import { Row, Col, Tabs, Spin } from "antd";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { useGetUserByIdQuery } from "../../../redux/user/userApi";
+import { useGetVideosByUserQuery } from "../../../redux/video/videoApi";
 
 import ProfileInfo from "./ProfileInfo";
 import SuggestedCreators from "./SuggestedCreators";
 import FeaturedVideo from "./FeaturedVideo";
 import VideoList from "./VideoList";
 import PostFeed from "./PostFeed";
+import { useState } from "react";
 
-const mockVideos = [
-  {
-    id: 1,
-    title: "My First Stream",
-    thumbnail: "https://picsum.photos/600/300?random=20",
-    views: 1500,
-    duration: 360,
-    likes: ["u1", "u2"],
-    comments: ["c1", "c2", "c3"],
-    date: "2025-08-01",
-  },
-  {
-    id: 2,
-    title: "Speedrun Highlights",
-    thumbnail: "https://picsum.photos/600/300?random=21",
-    views: 3200,
-    duration: 480,
-    likes: ["u1"],
-    comments: ["c1"],
-    date: "2025-08-05",
-  },
-  {
-    id: 3,
-    title: "Fan Q&A",
-    thumbnail: "https://picsum.photos/600/300?random=22",
-    views: 900,
-    duration: 300,
-    likes: [],
-    comments: ["c1", "c2"],
-    date: "2025-08-10",
-  },
-];
-
-// Mock posts
 const mockPosts = [
   {
     id: 101,
@@ -70,16 +37,17 @@ const mockLikedCreators = [
 
 export default function Profile() {
   const { id } = useParams();
-  const { data } = useGetUserByIdQuery(id);
-  const user = data?.user;
+  const { data: userData } = useGetUserByIdQuery(id);
+  const user = userData?.user;
 
   const [sortBy, setSortBy] = useState("popularity");
 
-  const sortedVideos = [...mockVideos].sort((a, b) => {
-    if (sortBy === "popularity") return b.views - a.views;
-    if (sortBy === "oldest") return new Date(a.date) - new Date(b.date);
-    return new Date(b.date) - new Date(a.date);
+  const { data: videoData, isLoading } = useGetVideosByUserQuery({
+    userId: id,
+    sort: sortBy,
   });
+
+  const videos = videoData?.videos || [];
 
   return (
     <div
@@ -90,14 +58,8 @@ export default function Profile() {
       }}
     >
       <Row gutter={[24, 24]}>
-        {/* LEFT: Sticky Profile Info */}
         <Col xs={24} md={8}>
-          <div
-            style={{
-              position: "sticky",
-              top: 20, // adjust for navbar height
-            }}
-          >
+          <div style={{ position: "sticky", top: 20 }}>
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
@@ -109,7 +71,6 @@ export default function Profile() {
           </div>
         </Col>
 
-        {/* RIGHT: Content with Tabs */}
         <Col xs={24} md={16}>
           <motion.div
             initial={{ opacity: 0, y: 40 }}
@@ -122,11 +83,22 @@ export default function Profile() {
                 {
                   key: "videos",
                   label: "Videos",
-                  children: (
+                  children: isLoading ? (
+                    <div
+                      style={{
+                        minHeight: "300px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Spin size="large"></Spin>
+                    </div>
+                  ) : (
                     <>
-                      <FeaturedVideo video={sortedVideos[0]} />
+                      {videos[0] && <FeaturedVideo video={videos[0]} />}
                       <VideoList
-                        videos={sortedVideos}
+                        videos={videos}
                         sortBy={sortBy}
                         setSortBy={setSortBy}
                       />

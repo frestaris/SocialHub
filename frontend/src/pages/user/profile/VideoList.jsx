@@ -76,12 +76,12 @@ export default function VideoList({ videos, sortBy, setSortBy }) {
               <Card
                 hoverable
                 cover={
-                  <Link to={`/video/${video.id}`}>
+                  <Link to={`/video/${video._id}`}>
                     {renderThumbnail(video)}
                   </Link>
                 }
               >
-                <Link to={`/video/${video.id}`}>
+                <Link to={`/video/${video._id}`}>
                   <Text
                     strong
                     style={{ display: "block", marginBottom: "8px" }}
@@ -109,7 +109,7 @@ export default function VideoList({ videos, sortBy, setSortBy }) {
               //  Desktop layout
               <List.Item.Meta
                 avatar={
-                  <Link to={`/video/${video.id}`}>
+                  <Link to={`/video/${video._id}`}>
                     {renderThumbnail(video, {
                       width: "120px",
                       height: "80px",
@@ -117,7 +117,7 @@ export default function VideoList({ videos, sortBy, setSortBy }) {
                   </Link>
                 }
                 title={
-                  <Link to={`/video/${video.id}`} style={{ color: "#1677ff" }}>
+                  <Link to={`/video/${video._id}`} style={{ color: "#1677ff" }}>
                     {video.title}
                   </Link>
                 }
