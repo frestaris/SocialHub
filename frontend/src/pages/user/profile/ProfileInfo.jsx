@@ -37,7 +37,13 @@ export default function ProfileInfo({ user }) {
         )}
 
         <div style={{ textAlign: "center" }}>
-          <Avatar src={user?.avatar} size={96} style={{ marginBottom: 16 }} />
+          <Avatar
+            src={user?.avatar || null}
+            size={96}
+            style={{ marginBottom: 16 }}
+          >
+            {!user?.avatar && user?.username?.[0]}
+          </Avatar>
           <Title level={3}>{user?.username}</Title>
           <Paragraph type="secondary">{user?.email}</Paragraph>
           <Paragraph>{user?.bio || "No bio yet."}</Paragraph>

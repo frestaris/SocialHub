@@ -9,26 +9,27 @@ export const firebaseLogin = async (req, res) => {
 
     const email = decoded.email;
     const provider = decoded.firebase?.sign_in_provider || "unknown";
-    const providerId = decoded.uid;
+    const firebaseUid = decoded.uid;
 
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ uid: firebaseUid });
 
     if (user) {
       if (!user.providers) user.providers = [];
       const alreadyLinked = user.providers.some(
-        (p) => p.provider === provider && p.providerId === providerId
+        (p) => p.provider === provider && p.providerId === firebaseUid
       );
       if (!alreadyLinked) {
-        user.providers.push({ provider, providerId });
+        user.providers.push({ provider, providerId: firebaseUid });
         await user.save();
       }
     } else {
       user = await User.create({
+        uid: firebaseUid,
         username: decoded.name || email.split("@")[0],
         email,
         avatar: decoded.picture || "",
         role: role || "fan",
-        providers: [{ provider, providerId }],
+        providers: [{ provider, providerId: firebaseUid }],
       });
     }
 

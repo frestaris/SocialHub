@@ -11,8 +11,24 @@ export const protect = async (req, res, next) => {
     const token = authHeader.split(" ")[1];
     const decoded = await firebaseAdmin.auth().verifyIdToken(token);
 
-    const user = await User.findOne({ email: decoded.email });
-    if (!user) return res.status(401).json({ error: "User not found" });
+    // 🔑 Look up by Firebase UID instead of email
+    let user = await User.findOne({ uid: decoded.uid });
+
+    if (!user) {
+      user = await User.create({
+        uid: decoded.uid,
+        username: decoded.name || decoded.email.split("@")[0],
+        email: decoded.email,
+        avatar: decoded.picture || "",
+        role: "fan",
+        providers: [
+          {
+            provider: decoded.firebase?.sign_in_provider || "unknown",
+            providerId: decoded.uid,
+          },
+        ],
+      });
+    }
 
     req.user = user;
     next();

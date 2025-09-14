@@ -1,4 +1,7 @@
 import User from "../models/userSchema.js";
+import Video from "../models/videoSchema.js";
+import Post from "../models/postSchema.js";
+import Livestream from "../models/livestreamSchema.js";
 import { firebaseAdmin } from "../config/firebaseAdmin.js";
 
 export const getCurrentUser = async (req, res) => {
@@ -89,16 +92,49 @@ export const updateUser = async (req, res) => {
 
 export const deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.user._id); // ✅ no param id
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authorized" });
     }
 
-    // TODO: cascade delete videos/posts/livestreams
-    res.json({ success: true, message: "User and related content deleted" });
+    const userId = req.user._id;
+
+    // Delete user-owned content from MongoDB
+    await Promise.all([
+      Video.deleteMany({ creatorId: userId }),
+      Post.deleteMany({ userId }),
+      Livestream.deleteMany({ creatorId: userId }),
+    ]);
+
+    // Get Firebase UID (prefer uid field, fallback to providers[0].providerId)
+    const firebaseUid =
+      req.user.uid || req.user.providers?.[0]?.providerId || null;
+
+    // Delete user from MongoDB
+    await User.findByIdAndDelete(userId);
+
+    // Delete user from Firebase if UID exists
+    if (firebaseUid) {
+      await firebaseAdmin.auth().deleteUser(firebaseUid);
+    }
+
+    res.json({
+      success: true,
+      message: "User deleted from MongoDB and Firebase",
+    });
   } catch (err) {
-    console.error("Delete user error:", err);
+    console.error("Delete user error:", err.message, err.stack);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const listUsers = async (req, res) => {
+  try {
+    const users = await User.find().select(
+      "username email avatar bio role followers"
+    );
+    res.json({ success: true, users });
+  } catch (err) {
+    console.error("List users error:", err);
     res.status(500).json({ error: "Server error" });
   }
 };

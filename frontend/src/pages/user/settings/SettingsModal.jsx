@@ -18,19 +18,31 @@ import {
   linkWithPopup,
   updatePassword,
 } from "firebase/auth";
-import { useUpdateUserMutation } from "../../../redux/user/userApi";
+import {
+  useUpdateUserMutation,
+  useDeleteUserMutation,
+} from "../../../redux/user/userApi";
 import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logout } from "../../../redux/auth/authSlice";
 
 export default function SettingsModal({ open, onClose, user }) {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState("");
   const [isChanged, setIsChanged] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
   const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
+
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const initialValues = {
     username: user?.username || "",
@@ -41,7 +53,6 @@ export default function SettingsModal({ open, onClose, user }) {
     newPassword: "",
   };
 
-  // Detect if user already has password login
   useEffect(() => {
     if (auth.currentUser) {
       const pw = auth.currentUser.providerData.some(
@@ -51,7 +62,6 @@ export default function SettingsModal({ open, onClose, user }) {
     }
   }, []);
 
-  // Reset form values when modal opens
   useEffect(() => {
     if (open) {
       form.setFieldsValue(initialValues);
@@ -75,7 +85,6 @@ export default function SettingsModal({ open, onClose, user }) {
     setIsChanged(changed);
   };
 
-  // Link providers
   const handleLinkProvider = async (provider) => {
     try {
       if (!auth.currentUser) {
@@ -85,7 +94,6 @@ export default function SettingsModal({ open, onClose, user }) {
       await linkWithPopup(auth.currentUser, provider);
       message.success(`Successfully linked ${provider.providerId}`);
     } catch (err) {
-      console.error("Linking error:", err);
       if (err.code === "auth/credential-already-in-use") {
         message.error("This provider is already linked to another account.");
       } else {
@@ -97,7 +105,6 @@ export default function SettingsModal({ open, onClose, user }) {
   const handleSave = async (values) => {
     setSaving(true);
     try {
-      // 1. Handle password logic only if provided
       if (!hasPassword && values.password) {
         const credential = EmailAuthProvider.credential(
           values.email,
@@ -112,16 +119,13 @@ export default function SettingsModal({ open, onClose, user }) {
           message.success("Password updated successfully!");
         } catch (err) {
           if (err.code === "auth/requires-recent-login") {
-            message.error(
-              "For security reasons, please log out and log in again before changing your password."
-            );
+            message.error("Please re-login before changing your password.");
           } else {
             throw err;
           }
         }
       }
 
-      // 2. Update profile in backend
       await updateUser({
         username: values.username,
         bio: values.bio,
@@ -129,12 +133,9 @@ export default function SettingsModal({ open, onClose, user }) {
       }).unwrap();
 
       message.success("Profile updated successfully");
-
-      setTimeout(() => {
-        setSaving(false);
-        setIsChanged(false);
-        onClose();
-      }, 800);
+      setSaving(false);
+      setIsChanged(false);
+      onClose();
     } catch (err) {
       console.error("Save error:", err);
       message.error("Failed to save settings");
@@ -145,83 +146,105 @@ export default function SettingsModal({ open, onClose, user }) {
   const handleDelete = async () => {
     setDeleting(true);
     try {
-      console.log("Deleting account...");
-      // TODO: call backend deleteUser
-      setTimeout(() => {
-        setDeleting(false);
-        onClose();
-      }, 1500);
+      await deleteUser().unwrap();
+      message.success("Account deleted successfully");
+      setDeleting(false);
+      setConfirmOpen(false);
+      onClose();
+      dispatch(logout());
+      navigate("/explore");
     } catch (err) {
-      console.error("Delete account error:", err);
+      console.error("Delete error:", err);
       message.error("Failed to delete account");
       setDeleting(false);
     }
   };
 
   return (
-    <Modal
-      title="Profile Settings"
-      open={open}
-      onCancel={onClose}
-      footer={null}
-      width="100%"
-      style={{
-        top: 20,
-        maxWidth: 600,
-        padding: "0 16px",
-      }}
-      stylesBody={{
-        maxHeight: "calc(100vh - 120px)",
-        overflowY: "auto",
-        padding: 0,
-      }}
-      destroyOnHidden
-    >
-      {errorMessage && (
-        <Alert
-          type="error"
-          message={errorMessage}
-          showIcon
-          closable
-          onClose={() => setErrorMessage(null)}
-          style={{ marginBottom: 16 }}
-        />
-      )}
-
-      {successMessage && (
-        <Alert
-          type="success"
-          message={successMessage}
-          showIcon
-          closable
-          onClose={() => setSuccessMessage(null)}
-          style={{ marginBottom: 16 }}
-        />
-      )}
-
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={initialValues}
-        onFinish={handleSave}
-        onValuesChange={handleValuesChange}
+    <>
+      <Modal
+        title="Profile Settings"
+        open={open}
+        onCancel={onClose}
+        footer={null}
+        width="100%"
+        style={{
+          top: 20,
+          maxWidth: 600,
+          padding: "0 16px",
+        }}
+        stylesBody={{
+          maxHeight: "calc(100vh - 120px)",
+          overflowY: "auto",
+          padding: 0,
+        }}
+        destroyOnHidden
       >
-        <Divider>Profile Info</Divider>
-        <ProfileInfoForm />
+        {errorMessage && (
+          <Alert
+            type="error"
+            message={errorMessage}
+            showIcon
+            closable
+            onClose={() => setErrorMessage(null)}
+            style={{ marginBottom: 16 }}
+          />
+        )}
+        {successMessage && (
+          <Alert
+            type="success"
+            message={successMessage}
+            showIcon
+            closable
+            onClose={() => setSuccessMessage(null)}
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
-        <Divider>Password</Divider>
-        {!hasPassword ? (
-          <>
-            <Form.Item label="Email" name="email">
-              <Input disabled />
-            </Form.Item>
+        <Form
+          form={form}
+          layout="vertical"
+          initialValues={initialValues}
+          onFinish={handleSave}
+          onValuesChange={handleValuesChange}
+        >
+          <Divider>Profile Info</Divider>
+          <ProfileInfoForm />
+
+          <Divider>Password</Divider>
+          {!hasPassword ? (
+            <>
+              <Form.Item label="Email" name="email">
+                <Input disabled />
+              </Form.Item>
+              <Form.Item
+                label="Set Password"
+                name="password"
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.resolve();
+                      if (value.length < 6) {
+                        return Promise.reject(
+                          new Error("Password must be at least 6 characters")
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+              >
+                <Input.Password placeholder="Leave empty if you don’t want to set a password yet" />
+              </Form.Item>
+            </>
+          ) : (
             <Form.Item
-              label="Set Password"
-              name="password"
+              label="New Password"
+              name="newPassword"
               rules={[
                 {
                   validator: (_, value) => {
-                    if (!value) return Promise.resolve(); // optional
+                    if (!value) return Promise.resolve();
                     if (value.length < 6) {
                       return Promise.reject(
                         new Error("Password must be at least 6 characters")
@@ -232,71 +255,74 @@ export default function SettingsModal({ open, onClose, user }) {
                 },
               ]}
             >
-              <Input.Password placeholder="Leave empty if you don’t want to set a password yet" />
+              <Input.Password placeholder="Leave empty if you don’t want to change it" />
             </Form.Item>
-          </>
-        ) : (
-          <Form.Item
-            label="New Password"
-            name="newPassword"
-            rules={[
-              {
-                validator: (_, value) => {
-                  if (!value) return Promise.resolve(); // optional
-                  if (value.length < 6) {
-                    return Promise.reject(
-                      new Error("Password must be at least 6 characters")
-                    );
-                  }
-                  return Promise.resolve();
-                },
-              },
-            ]}
-          >
-            <Input.Password placeholder="Leave empty if you don’t want to change it" />
-          </Form.Item>
-        )}
+          )}
 
-        <Divider>Linked Accounts</Divider>
-        <Space direction="vertical" style={{ width: "100%" }}>
-          <Button
-            icon={<GoogleOutlined />}
-            block
-            onClick={() => handleLinkProvider(googleProvider)}
-          >
-            Link Google
-          </Button>
-          <Button
-            icon={<GithubOutlined />}
-            block
-            onClick={() => handleLinkProvider(githubProvider)}
-          >
-            Link GitHub
-          </Button>
-        </Space>
+          <Divider>Linked Accounts</Divider>
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <Button
+              icon={<GoogleOutlined />}
+              block
+              onClick={() => handleLinkProvider(googleProvider)}
+            >
+              Link Google
+            </Button>
+            <Button
+              icon={<GithubOutlined />}
+              block
+              onClick={() => handleLinkProvider(githubProvider)}
+            >
+              Link GitHub
+            </Button>
+          </Space>
 
-        <div
-          style={{
-            marginTop: 24,
-            display: "flex",
-            justifyContent: "space-between",
-          }}
-        >
-          <Button danger onClick={handleDelete} disabled={deleting}>
-            {deleting ? <Spin size="small" style={{ marginRight: 8 }} /> : null}
-            {deleting ? "Deleting..." : "Delete Account"}
-          </Button>
-
-          <Button
-            type="primary"
-            htmlType="submit"
-            disabled={!isChanged || saving}
+          <div
+            style={{
+              marginTop: 24,
+              display: "flex",
+              justifyContent: "space-between",
+            }}
           >
-            {saving ? <Spin size="small" style={{ marginRight: 8 }} /> : null}
-            {saving ? "Saving..." : "Save"}
-          </Button>
-        </div>
-      </Form>
-    </Modal>
+            <Button danger onClick={() => setConfirmOpen(true)}>
+              Delete Account
+            </Button>
+            <Button
+              type="primary"
+              htmlType="submit"
+              disabled={!isChanged || saving}
+            >
+              {saving ? <Spin size="small" style={{ marginRight: 8 }} /> : null}
+              {saving ? "Saving..." : "Save"}
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* Confirm Delete Modal */}
+      <Modal
+        title="Confirm Account Deletion"
+        open={confirmOpen}
+        onCancel={() => setConfirmOpen(false)}
+        onOk={handleDelete}
+        okText={deleting ? "Deleting..." : "Confirm Delete"}
+        okButtonProps={{
+          danger: true,
+          disabled: confirmEmail !== user?.email || deleting,
+          loading: deleting,
+        }}
+        centered
+      >
+        <p>
+          This action is <b>permanent</b>. Please type "<b>{user?.email}</b>" to
+          confirm account deletion.
+        </p>
+        <Input
+          placeholder="Enter your email"
+          value={confirmEmail}
+          onChange={(e) => setConfirmEmail(e.target.value)}
+        />
+      </Modal>
+    </>
   );
 }

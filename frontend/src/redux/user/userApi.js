@@ -24,6 +24,9 @@ export const userApi = createApi({
     getUserById: builder.query({
       query: (id) => `/${id}`,
     }),
+    listUsers: builder.query({
+      query: () => `/`,
+    }),
     updateUser: builder.mutation({
       query: (data) => ({
         url: "/me",
@@ -72,6 +75,7 @@ export const userApi = createApi({
 export const {
   useGetCurrentUserQuery,
   useGetUserByIdQuery,
+  useListUsersQuery,
   useUpdateUserMutation,
   useDeleteUserMutation,
 } = userApi;
