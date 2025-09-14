@@ -1,16 +1,36 @@
-import { Modal, Divider, Form, Button, Spin, message } from "antd";
-import { useState } from "react";
+import {
+  Modal,
+  Divider,
+  Form,
+  Button,
+  Spin,
+  message,
+  Input,
+  Alert,
+  Space,
+} from "antd";
+import { useState, useEffect } from "react";
 import ProfileInfoForm from "./ProfileInfoForm";
-import LinkedAccounts from "./LinkedAccounts";
-import PasswordSettings from "./PasswordSettings";
-import { auth } from "../../../firebase";
-import { updatePassword } from "firebase/auth";
+import { auth, googleProvider, githubProvider } from "../../../firebase";
+import {
+  EmailAuthProvider,
+  linkWithCredential,
+  linkWithPopup,
+  updatePassword,
+} from "firebase/auth";
+import { useUpdateUserMutation } from "../../../redux/user/userApi";
+import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
 
 export default function SettingsModal({ open, onClose, user }) {
   const [form] = Form.useForm();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
+
+  const [updateUser] = useUpdateUserMutation();
 
   const initialValues = {
     username: user?.username || "",
@@ -21,48 +41,100 @@ export default function SettingsModal({ open, onClose, user }) {
     newPassword: "",
   };
 
+  // Detect if user already has password login
+  useEffect(() => {
+    if (auth.currentUser) {
+      const pw = auth.currentUser.providerData.some(
+        (p) => p.providerId === "password"
+      );
+      setHasPassword(pw);
+    }
+  }, []);
+
+  // Reset form values when modal opens
+  useEffect(() => {
+    if (open) {
+      form.setFieldsValue(initialValues);
+      setIsChanged(false);
+      setErrorMessage(null);
+      setSuccessMessage(null);
+    }
+  }, [open, user]);
+
   const handleValuesChange = () => {
     const currentValues = form.getFieldsValue();
-
     const changed = Object.keys(initialValues).some((key) => {
-      // Ignore password fields unless user typed something
       if (
         (key === "password" || key === "newPassword") &&
         !currentValues[key]
       ) {
         return false;
       }
-
-      const initial = initialValues[key] ?? "";
-      const current = currentValues[key] ?? "";
-      return initial !== current;
+      return (initialValues[key] ?? "") !== (currentValues[key] ?? "");
     });
-
     setIsChanged(changed);
+  };
+
+  // Link providers
+  const handleLinkProvider = async (provider) => {
+    try {
+      if (!auth.currentUser) {
+        message.error("You must be logged in first.");
+        return;
+      }
+      await linkWithPopup(auth.currentUser, provider);
+      message.success(`Successfully linked ${provider.providerId}`);
+    } catch (err) {
+      console.error("Linking error:", err);
+      if (err.code === "auth/credential-already-in-use") {
+        message.error("This provider is already linked to another account.");
+      } else {
+        message.error("Failed to link account.");
+      }
+    }
   };
 
   const handleSave = async (values) => {
     setSaving(true);
     try {
-      console.log("Saving settings:", values);
-
-      // ✅ Only update password if provided
-      if (values.password || values.newPassword) {
-        const newPass = values.password || values.newPassword;
-        if (auth.currentUser) {
-          await updatePassword(auth.currentUser, newPass);
-          message.success("Password updated successfully");
+      // 1. Handle password logic only if provided
+      if (!hasPassword && values.password) {
+        const credential = EmailAuthProvider.credential(
+          values.email,
+          values.password
+        );
+        await linkWithCredential(auth.currentUser, credential);
+        setHasPassword(true);
+        message.success("Password has been added successfully!");
+      } else if (hasPassword && values.newPassword) {
+        try {
+          await updatePassword(auth.currentUser, values.newPassword);
+          message.success("Password updated successfully!");
+        } catch (err) {
+          if (err.code === "auth/requires-recent-login") {
+            message.error(
+              "For security reasons, please log out and log in again before changing your password."
+            );
+          } else {
+            throw err;
+          }
         }
       }
 
-      // ✅ TODO: Call your API here for profile info updates
-      // await updateUser({ username: values.username, bio: values.bio, avatar: values.avatar })
+      // 2. Update profile in backend
+      await updateUser({
+        username: values.username,
+        bio: values.bio,
+        avatar: values.avatar,
+      }).unwrap();
+
+      message.success("Profile updated successfully");
 
       setTimeout(() => {
         setSaving(false);
-        setIsChanged(false); // disable button again after save
+        setIsChanged(false);
         onClose();
-      }, 1500);
+      }, 800);
     } catch (err) {
       console.error("Save error:", err);
       message.error("Failed to save settings");
@@ -74,9 +146,7 @@ export default function SettingsModal({ open, onClose, user }) {
     setDeleting(true);
     try {
       console.log("Deleting account...");
-      // 🔑 TODO: Call your API here to delete the account
-      // await deleteAccount(user._id)
-
+      // TODO: call backend deleteUser
       setTimeout(() => {
         setDeleting(false);
         onClose();
@@ -98,7 +168,7 @@ export default function SettingsModal({ open, onClose, user }) {
       style={{
         top: 20,
         maxWidth: 600,
-        padding: "16px",
+        padding: "0 16px",
       }}
       stylesBody={{
         maxHeight: "calc(100vh - 120px)",
@@ -107,6 +177,28 @@ export default function SettingsModal({ open, onClose, user }) {
       }}
       destroyOnHidden
     >
+      {errorMessage && (
+        <Alert
+          type="error"
+          message={errorMessage}
+          showIcon
+          closable
+          onClose={() => setErrorMessage(null)}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
+      {successMessage && (
+        <Alert
+          type="success"
+          message={successMessage}
+          showIcon
+          closable
+          onClose={() => setSuccessMessage(null)}
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       <Form
         form={form}
         layout="vertical"
@@ -118,10 +210,70 @@ export default function SettingsModal({ open, onClose, user }) {
         <ProfileInfoForm />
 
         <Divider>Password</Divider>
-        <PasswordSettings />
+        {!hasPassword ? (
+          <>
+            <Form.Item label="Email" name="email">
+              <Input disabled />
+            </Form.Item>
+            <Form.Item
+              label="Set Password"
+              name="password"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve(); // optional
+                    if (value.length < 6) {
+                      return Promise.reject(
+                        new Error("Password must be at least 6 characters")
+                      );
+                    }
+                    return Promise.resolve();
+                  },
+                },
+              ]}
+            >
+              <Input.Password placeholder="Leave empty if you don’t want to set a password yet" />
+            </Form.Item>
+          </>
+        ) : (
+          <Form.Item
+            label="New Password"
+            name="newPassword"
+            rules={[
+              {
+                validator: (_, value) => {
+                  if (!value) return Promise.resolve(); // optional
+                  if (value.length < 6) {
+                    return Promise.reject(
+                      new Error("Password must be at least 6 characters")
+                    );
+                  }
+                  return Promise.resolve();
+                },
+              },
+            ]}
+          >
+            <Input.Password placeholder="Leave empty if you don’t want to change it" />
+          </Form.Item>
+        )}
 
         <Divider>Linked Accounts</Divider>
-        <LinkedAccounts />
+        <Space direction="vertical" style={{ width: "100%" }}>
+          <Button
+            icon={<GoogleOutlined />}
+            block
+            onClick={() => handleLinkProvider(googleProvider)}
+          >
+            Link Google
+          </Button>
+          <Button
+            icon={<GithubOutlined />}
+            block
+            onClick={() => handleLinkProvider(githubProvider)}
+          >
+            Link GitHub
+          </Button>
+        </Space>
 
         <div
           style={{
@@ -130,13 +282,11 @@ export default function SettingsModal({ open, onClose, user }) {
             justifyContent: "space-between",
           }}
         >
-          {/* Delete Account button (left) */}
           <Button danger onClick={handleDelete} disabled={deleting}>
             {deleting ? <Spin size="small" style={{ marginRight: 8 }} /> : null}
             {deleting ? "Deleting..." : "Delete Account"}
           </Button>
 
-          {/* Save button (right) */}
           <Button
             type="primary"
             htmlType="submit"

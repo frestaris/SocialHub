@@ -4,7 +4,6 @@ import Navigation from "./components/Navigation";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
-import UserSettings from "./pages/auth/UserSettings";
 import HomePage from "./pages/homepage/HomePage";
 import Explore from "./pages/explore/Explore";
 import Video from "./pages/video/Video";
@@ -37,7 +36,6 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/settings" element={<UserSettings />} />
           </Routes>
         </Content>
       </Layout>

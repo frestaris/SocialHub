@@ -64,3 +64,41 @@ export const getUserById = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+// Update user profile
+export const updateUser = async (req, res) => {
+  try {
+    const { username, bio, avatar } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { username, bio, avatar },
+      { new: true }
+    ).select("username email avatar bio role providers");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error("Update user error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.user._id); // ✅ no param id
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // TODO: cascade delete videos/posts/livestreams
+    res.json({ success: true, message: "User and related content deleted" });
+  } catch (err) {
+    console.error("Delete user error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};

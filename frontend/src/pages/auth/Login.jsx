@@ -52,7 +52,7 @@ export default function Login() {
       const data = await firebaseLogin(token).unwrap();
       if (data.success) {
         dispatch(setCredentials({ user: data.user, token }));
-        navigate("/settings");
+        navigate(`/profile/${data.user._id}`);
         setErrorMessage(null);
       }
     } catch (err) {
@@ -92,7 +92,7 @@ export default function Login() {
       const data = await firebaseLogin(token).unwrap();
       if (data.success) {
         dispatch(setCredentials({ user: data.user, token }));
-        navigate("/settings");
+        navigate(`/profile/${data.user._id}`);
         setErrorMessage(null);
       }
     } catch (err) {
