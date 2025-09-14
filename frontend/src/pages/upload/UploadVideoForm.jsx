@@ -158,7 +158,6 @@ export default function UploadVideoForm({ onClose }) {
       >
         <Input placeholder="Enter video title" />
       </Form.Item>
-
       {/* Description */}
       <Form.Item
         label="Description"
@@ -170,7 +169,6 @@ export default function UploadVideoForm({ onClose }) {
       >
         <TextArea rows={4} placeholder="Write a description..." />
       </Form.Item>
-
       {/* Category */}
       <Form.Item
         label="Category"
@@ -184,7 +182,6 @@ export default function UploadVideoForm({ onClose }) {
           <Option value="fitness">Fitness</Option>
         </Select>
       </Form.Item>
-
       {/* File Upload */}
       <Form.Item
         label="Upload File"
@@ -192,11 +189,22 @@ export default function UploadVideoForm({ onClose }) {
         valuePropName="fileList"
         getValueFromEvent={(e) => e && e.fileList}
       >
-        <AntUpload beforeUpload={() => false} listType="text" maxCount={1}>
-          <Button icon={<UploadOutlined />}>Select File</Button>
+        <AntUpload
+          accept="video/*"
+          beforeUpload={(file) => {
+            const isUnder50MB = file.size / 1024 / 1024 < 50; // MB
+            if (!isUnder50MB) {
+              message.error("Video must be smaller than 50MB!");
+              return AntUpload.LIST_IGNORE; // ❌ stops upload
+            }
+            return false; // ✅ still manual upload
+          }}
+          listType="text"
+          maxCount={1}
+        >
+          <Button icon={<UploadOutlined />}>Select Video</Button>
         </AntUpload>
       </Form.Item>
-
       {/* External URL */}
       <Form.Item label="Or External URL" name="externalUrl">
         <Input placeholder="Paste YouTube or video URL" />
@@ -208,11 +216,22 @@ export default function UploadVideoForm({ onClose }) {
         valuePropName="fileList"
         getValueFromEvent={(e) => e && e.fileList}
       >
-        <AntUpload beforeUpload={() => false} listType="picture" maxCount={1}>
+        <AntUpload
+          accept="image/*"
+          beforeUpload={(file) => {
+            const isUnder4MB = file.size / 1024 / 1024 < 4; // MB
+            if (!isUnder4MB) {
+              message.error("Thumbnail must be smaller than 4MB!");
+              return AntUpload.LIST_IGNORE;
+            }
+            return false;
+          }}
+          listType="picture"
+          maxCount={1}
+        >
           <Button icon={<UploadOutlined />}>Select Thumbnail</Button>
         </AntUpload>
       </Form.Item>
-
       {/* Progress bar */}
       <Button
         type="primary"
