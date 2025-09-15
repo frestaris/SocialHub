@@ -6,6 +6,9 @@ import {
   Select,
   message,
   Spin,
+  Radio,
+  Row,
+  Col,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
@@ -18,7 +21,6 @@ import { useState } from "react";
 const { TextArea } = Input;
 const { Option } = Select;
 
-// 🔹 Helper: fetch YouTube metadata client-side
 const fetchYouTubeMetadata = async (url) => {
   const match = url.match(/(?:v=|\/)([0-9A-Za-z_-]{11})/);
   if (!match) return null;
@@ -35,7 +37,6 @@ const fetchYouTubeMetadata = async (url) => {
     const item = data.items[0];
     if (!item) return null;
 
-    // Parse ISO8601 duration → seconds
     const parseDuration = (iso) => {
       const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
       const hours = parseInt(match[1] || 0, 10);
@@ -57,12 +58,24 @@ const fetchYouTubeMetadata = async (url) => {
 };
 
 export default function UploadVideoForm({ onClose }) {
+  const [form] = Form.useForm();
   const [createVideo] = useCreateVideoMutation();
   const currentUser = useSelector((state) => state.auth.user);
   const userId = currentUser?.uid;
   const navigate = useNavigate();
+
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadMode, setUploadMode] = useState("file");
+
+  const handleModeChange = (value) => {
+    setUploadMode(value);
+    if (value === "file") {
+      form.setFieldsValue({ externalUrl: undefined });
+    } else {
+      form.setFieldsValue({ file: [] });
+    }
+  };
 
   const handleFinish = async (values) => {
     try {
@@ -72,16 +85,12 @@ export default function UploadVideoForm({ onClose }) {
       let title = values.title;
       let description = values.description;
 
-      if (values.externalUrl) {
-        // ✅ External (YouTube, etc.)
+      if (uploadMode === "url") {
         fileURL = values.externalUrl.trim();
-
-        // Always normalize to https://
         if (!fileURL.startsWith("http")) {
           fileURL = `https://${fileURL}`;
         }
 
-        // Handle YouTube
         if (fileURL.includes("youtube.com") || fileURL.includes("youtu.be")) {
           try {
             const meta = await fetchYouTubeMetadata(fileURL);
@@ -92,35 +101,28 @@ export default function UploadVideoForm({ onClose }) {
               duration = meta.duration || duration;
             }
           } catch (err) {
-            console.warn(
-              "Failed to fetch YouTube metadata, falling back:",
-              err
-            );
+            console.warn("Failed to fetch YouTube metadata:", err);
           }
         }
       } else {
-        // ✅ Firebase upload
         const file = values.file?.[0]?.originFileObj;
         if (!file) {
-          message.error(
-            "Please upload a video file or provide an external URL"
-          );
+          message.error("Please upload a video file");
           return;
         }
 
         setUploadProgress(0);
-
-        fileURL = await uploadToFirebase(file, userId, (progress) => {
-          setUploadProgress(progress);
-        });
+        fileURL = await uploadToFirebase(file, userId, (progress) =>
+          setUploadProgress(progress)
+        );
         duration = await getVideoDuration(file);
       }
+
       if (values.thumbnail && values.thumbnail[0]?.originFileObj) {
         const thumbFile = values.thumbnail[0].originFileObj;
-        thumbnail = await uploadToFirebase(thumbFile, userId, null); // reuse upload function
+        thumbnail = await uploadToFirebase(thumbFile, userId, null);
       }
 
-      // 🔹 Final payload
       const videoData = {
         title,
         description,
@@ -146,7 +148,7 @@ export default function UploadVideoForm({ onClose }) {
   };
 
   return (
-    <Form layout="vertical" onFinish={handleFinish}>
+    <Form layout="vertical" form={form} onFinish={handleFinish}>
       {/* Title */}
       <Form.Item
         label="Title"
@@ -158,6 +160,7 @@ export default function UploadVideoForm({ onClose }) {
       >
         <Input placeholder="Enter video title" />
       </Form.Item>
+
       {/* Description */}
       <Form.Item
         label="Description"
@@ -169,6 +172,7 @@ export default function UploadVideoForm({ onClose }) {
       >
         <TextArea rows={4} placeholder="Write a description..." />
       </Form.Item>
+
       {/* Category */}
       <Form.Item
         label="Category"
@@ -182,57 +186,99 @@ export default function UploadVideoForm({ onClose }) {
           <Option value="fitness">Fitness</Option>
         </Select>
       </Form.Item>
-      {/* File Upload */}
-      <Form.Item
-        label="Upload File"
-        name="file"
-        valuePropName="fileList"
-        getValueFromEvent={(e) => e && e.fileList}
-      >
-        <AntUpload
-          accept="video/*"
-          beforeUpload={(file) => {
-            const isUnder50MB = file.size / 1024 / 1024 < 50; // MB
-            if (!isUnder50MB) {
-              message.error("Video must be smaller than 50MB!");
-              return AntUpload.LIST_IGNORE; // ❌ stops upload
-            }
-            return false; // ✅ still manual upload
-          }}
-          listType="text"
-          maxCount={1}
+
+      {/* Toggle Mode */}
+      <Form.Item label="Upload Mode">
+        <Radio.Group
+          value={uploadMode}
+          onChange={(e) => handleModeChange(e.target.value)}
         >
-          <Button icon={<UploadOutlined />}>Select Video</Button>
-        </AntUpload>
+          <Radio value="file">Upload from Computer</Radio>
+          <Radio value="url">Use External URL</Radio>
+        </Radio.Group>
       </Form.Item>
-      {/* External URL */}
-      <Form.Item label="Or External URL" name="externalUrl">
-        <Input placeholder="Paste YouTube or video URL" />
-      </Form.Item>
-      {/* Thumbnail Upload */}
-      <Form.Item
-        label="Upload Thumbnail"
-        name="thumbnail"
-        valuePropName="fileList"
-        getValueFromEvent={(e) => e && e.fileList}
-      >
-        <AntUpload
-          accept="image/*"
-          beforeUpload={(file) => {
-            const isUnder4MB = file.size / 1024 / 1024 < 4; // MB
-            if (!isUnder4MB) {
-              message.error("Thumbnail must be smaller than 4MB!");
-              return AntUpload.LIST_IGNORE;
-            }
-            return false;
-          }}
-          listType="picture"
-          maxCount={1}
+
+      {/* File OR URL */}
+      {uploadMode === "file" ? (
+        <Row gutter={16}>
+          <Col xs={24} md={12}>
+            <Form.Item
+              label="Upload File"
+              name="file"
+              valuePropName="fileList"
+              getValueFromEvent={(e) => e && e.fileList}
+              rules={[
+                {
+                  required: uploadMode === "file",
+                  message: "Please upload a video file",
+                },
+              ]}
+            >
+              <AntUpload
+                accept="video/*"
+                beforeUpload={(file) => {
+                  const isUnder50MB = file.size / 1024 / 1024 < 50;
+                  if (!isUnder50MB) {
+                    message.error("Video must be smaller than 50MB!");
+                    return AntUpload.LIST_IGNORE;
+                  }
+                  return false;
+                }}
+                listType="text"
+                maxCount={1}
+              >
+                <Button icon={<UploadOutlined />}>Select Video</Button>
+              </AntUpload>
+            </Form.Item>
+          </Col>
+
+          <Col xs={24} md={12}>
+            <Form.Item
+              label="Upload Thumbnail"
+              name="thumbnail"
+              valuePropName="fileList"
+              getValueFromEvent={(e) => e && e.fileList}
+              rules={[
+                {
+                  required: true,
+                  message: "Please upload a thumbnail",
+                },
+              ]}
+            >
+              <AntUpload
+                accept="image/*"
+                beforeUpload={(file) => {
+                  const isUnder4MB = file.size / 1024 / 1024 < 4;
+                  if (!isUnder4MB) {
+                    message.error("Thumbnail must be smaller than 4MB!");
+                    return AntUpload.LIST_IGNORE;
+                  }
+                  return false;
+                }}
+                listType="picture"
+                maxCount={1}
+              >
+                <Button icon={<UploadOutlined />}>Select Thumbnail</Button>
+              </AntUpload>
+            </Form.Item>
+          </Col>
+        </Row>
+      ) : (
+        <Form.Item
+          label="External URL"
+          name="externalUrl"
+          rules={[
+            {
+              required: uploadMode === "url",
+              message: "Please provide a video URL",
+            },
+          ]}
         >
-          <Button icon={<UploadOutlined />}>Select Thumbnail</Button>
-        </AntUpload>
-      </Form.Item>
-      {/* Progress bar */}
+          <Input placeholder="Paste YouTube or video URL" />
+        </Form.Item>
+      )}
+
+      {/* Submit */}
       <Button
         type="primary"
         htmlType="submit"
