@@ -1,7 +1,6 @@
 import User from "../models/userSchema.js";
 import Video from "../models/videoSchema.js";
 import Post from "../models/postSchema.js";
-import Livestream from "../models/livestreamSchema.js";
 import Comment from "../models/commentSchema.js";
 import { firebaseAdmin } from "../config/firebaseAdmin.js";
 
@@ -103,7 +102,6 @@ export const deleteUser = async (req, res) => {
     await Promise.all([
       Video.deleteMany({ creatorId: userId }),
       Post.deleteMany({ userId }),
-      Livestream.deleteMany({ creatorId: userId }),
       Comment.deleteMany({ userId }),
     ]);
 

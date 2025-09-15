@@ -17,11 +17,6 @@ const commentSchema = new mongoose.Schema(
       ref: "Video",
       default: null,
     },
-    liveStreamId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Livestream",
-      default: null,
-    },
     content: {
       type: String,
       required: true,

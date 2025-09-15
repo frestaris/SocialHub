@@ -19,12 +19,6 @@ const postSchema = new mongoose.Schema(
       default: null,
     },
 
-    liveStreamId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Livestream",
-      default: null,
-    },
-
     content: { type: String },
     category: { type: String },
 

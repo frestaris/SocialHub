@@ -7,7 +7,6 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import HomePage from "./pages/homepage/HomePage";
 import Explore from "./pages/explore/Explore";
 import Video from "./pages/video/Video";
-import Live from "./pages/live/Live";
 import Profile from "./pages/user/profile/Profile";
 import Upload from "./pages/upload/Upload";
 
@@ -27,7 +26,6 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/explore" element={<Explore />} />
             <Route path="/video/:id" element={<Video />} />
-            <Route path="/live/:id" element={<Live />} />
 
             <Route path="/profile/:id" element={<Profile />} />
             <Route path="/upload" element={<Upload />} />

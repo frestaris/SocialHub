@@ -1,12 +1,7 @@
 import { Tabs } from "antd";
-import {
-  VideoCameraOutlined,
-  FileTextOutlined,
-  UploadOutlined,
-} from "@ant-design/icons";
+import { FileTextOutlined, UploadOutlined } from "@ant-design/icons";
 
 import UploadVideoForm from "./UploadVideoForm";
-import LivestreamForm from "./LivestreamForm";
 import PostForm from "./PostForm";
 
 export default function Upload() {
@@ -41,15 +36,6 @@ export default function Upload() {
                 </span>
               ),
               children: <UploadVideoForm />,
-            },
-            {
-              key: "live",
-              label: (
-                <span>
-                  <VideoCameraOutlined /> Start Livestream
-                </span>
-              ),
-              children: <LivestreamForm />,
             },
             {
               key: "post",

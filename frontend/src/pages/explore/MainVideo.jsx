@@ -1,12 +1,27 @@
 import { motion } from "framer-motion";
-import { Tag } from "antd";
-import { Link } from "react-router-dom";
+import { Tag, Spin, Typography } from "antd";
+import { Link, useParams } from "react-router-dom";
+import { useGetVideoByIdQuery } from "../../redux/video/videoApi";
+
+const { Text } = Typography;
 
 export default function MainVideo() {
-  const duration = 360; // mock duration in seconds
+  const { id } = useParams();
+  const { data, isLoading } = useGetVideoByIdQuery(id);
+
+  if (isLoading) {
+    return <Spin />;
+  }
+
+  const video = data?.video;
+  if (!video) {
+    return <Text type="danger">Video not found</Text>;
+  }
+
+  const duration = video.duration || 0;
 
   return (
-    <Link to="/live/:id" style={{ textDecoration: "none" }}>
+    <Link to={`/video/${video._id}`} style={{ textDecoration: "none" }}>
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -21,41 +36,30 @@ export default function MainVideo() {
       >
         <div style={{ position: "relative" }}>
           <img
-            src="https://picsum.photos/1200/600?random=10"
-            alt="Featured livestream"
+            src={video.thumbnail || "/fallback-thumbnail.jpg"}
+            alt={video.title}
             style={{ width: "100%", height: "auto" }}
           />
 
           {/* Duration overlay */}
-          <span
-            style={{
-              position: "absolute",
-              bottom: "8px",
-              right: "8px",
-              background: "rgba(0,0,0,0.75)",
-              color: "#fff",
-              fontSize: "13px",
-              padding: "3px 6px",
-              borderRadius: "4px",
-            }}
-          >
-            {Math.floor(duration / 60)}:
-            {(duration % 60).toString().padStart(2, "0")}
-          </span>
+          {duration > 0 && (
+            <span
+              style={{
+                position: "absolute",
+                bottom: "8px",
+                right: "8px",
+                background: "rgba(0,0,0,0.75)",
+                color: "#fff",
+                fontSize: "13px",
+                padding: "3px 6px",
+                borderRadius: "4px",
+              }}
+            >
+              {Math.floor(duration / 60)}:
+              {(duration % 60).toString().padStart(2, "0")}
+            </span>
+          )}
         </div>
-
-        <Tag
-          color="red"
-          style={{
-            position: "absolute",
-            top: "12px",
-            left: "12px",
-            fontWeight: "bold",
-          }}
-        >
-          LIVE
-        </Tag>
-
         <div
           style={{
             position: "absolute",
@@ -67,7 +71,7 @@ export default function MainVideo() {
             borderRadius: "6px",
           }}
         >
-          Featured Stream: CreatorXYZ
+          {video.title} — {video.creatorId?.username || "Unknown"}
         </div>
       </motion.div>
     </Link>
