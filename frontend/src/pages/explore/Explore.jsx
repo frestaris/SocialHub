@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layout, Drawer, Button } from "antd";
+import { Layout, Drawer, Button, Spin, Typography } from "antd";
 import { MenuUnfoldOutlined } from "@ant-design/icons";
 
 import Sidebar from "./Sidebar";
@@ -9,15 +9,23 @@ import TopCreators from "./TopCreators";
 import HotNow from "./HotNow";
 import SuggestedForYou from "./SuggestedForYou";
 
+import { useGetAllVideosQuery } from "../../redux/video/videoApi";
+
 const { Sider, Content } = Layout;
+const { Title } = Typography;
 
 export default function Explore() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // 🔹 Fetch all videos
+  const { data, isLoading } = useGetAllVideosQuery({ sort: "popular" });
+  const videos = data?.videos || [];
+  const featured = videos.length > 0 ? videos[0] : null;
+  console.log(videos);
   return (
     <Layout style={{ minHeight: "calc(100vh - 64px)" }}>
-      {/* Desktop sidebar */}
+      {/* Sidebar */}
       <Sider
         width={200}
         breakpoint="sm"
@@ -42,7 +50,6 @@ export default function Explore() {
 
       {/* Main Content */}
       <Layout style={{ flex: 1 }}>
-        {/* Header */}
         <div
           style={{
             display: "flex",
@@ -64,7 +71,13 @@ export default function Explore() {
         </div>
 
         <Content style={{ background: "#fff", padding: "16px" }}>
-          <MainVideo />
+          {isLoading && <Spin />}
+          {featured && (
+            <>
+              <Title level={3}>Featured Video</Title>
+              <MainVideo video={featured} />
+            </>
+          )}
           <TopCreators />
           <HotNow />
           <SuggestedForYou />

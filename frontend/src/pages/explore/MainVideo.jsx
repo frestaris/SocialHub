@@ -1,22 +1,8 @@
 import { motion } from "framer-motion";
-import { Tag, Spin, Typography } from "antd";
-import { Link, useParams } from "react-router-dom";
-import { useGetVideoByIdQuery } from "../../redux/video/videoApi";
+import { Link } from "react-router-dom";
 
-const { Text } = Typography;
-
-export default function MainVideo() {
-  const { id } = useParams();
-  const { data, isLoading } = useGetVideoByIdQuery(id);
-
-  if (isLoading) {
-    return <Spin />;
-  }
-
-  const video = data?.video;
-  if (!video) {
-    return <Text type="danger">Video not found</Text>;
-  }
+export default function MainVideo({ video }) {
+  if (!video?._id) return null;
 
   const duration = video.duration || 0;
 
@@ -27,6 +13,9 @@ export default function MainVideo() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         style={{
+          maxHeight: "70vh",
+          aspectRatio: "16/9",
+          width: "100%",
           marginBottom: "40px",
           background: "#000",
           borderRadius: "12px",
