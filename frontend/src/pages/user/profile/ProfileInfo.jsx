@@ -25,15 +25,15 @@ export default function ProfileInfo({ user }) {
       >
         {/* Settings Icon */}
         {isOwner && (
-          <SettingOutlined
+          <Button
+            type="text"
+            shape="circle"
+            icon={<SettingOutlined style={{ fontSize: 18, color: "#555" }} />}
             onClick={() => setIsSettingsModalOpen(true)}
             style={{
               position: "absolute",
               top: 16,
               right: 16,
-              fontSize: "18px",
-              color: "#555",
-              cursor: "pointer",
             }}
           />
         )}

@@ -1,11 +1,15 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { Grid } from "antd";
+const { useBreakpoint } = Grid;
 
 export default function MainVideo({ video }) {
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
+
   if (!video?._id) return null;
 
   const duration = video.duration || 0;
-
   return (
     <Link to={`/video/${video._id}`} style={{ textDecoration: "none" }}>
       <motion.div
@@ -23,14 +27,17 @@ export default function MainVideo({ video }) {
           position: "relative",
         }}
       >
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", width: "100%", height: "100%" }}>
           <img
             src={video.thumbnail || "/fallback-thumbnail.jpg"}
             alt={video.title}
-            style={{ width: "100%", height: "auto" }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: isMobile ? "cover" : "contain",
+            }}
           />
 
-          {/* Duration overlay */}
           {duration > 0 && (
             <span
               style={{
@@ -49,6 +56,7 @@ export default function MainVideo({ video }) {
             </span>
           )}
         </div>
+
         <div
           style={{
             position: "absolute",

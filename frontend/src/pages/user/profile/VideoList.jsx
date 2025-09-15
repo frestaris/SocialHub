@@ -9,6 +9,7 @@ import {
   Form,
   Input,
   message,
+  Dropdown,
 } from "antd";
 import {
   EyeOutlined,
@@ -17,6 +18,7 @@ import {
   CalendarOutlined,
   EditOutlined,
   DeleteOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import moment from "moment";
@@ -74,16 +76,12 @@ export default function VideoList({
       if (!deletingVideo) return;
 
       const deleteFromFirebase = async (fileUrl) => {
-        if (!fileUrl) return; // nothing to delete
-
+        if (!fileUrl) return;
         try {
           let path;
-
           if (fileUrl.includes("/o/")) {
-            // Handle public download URLs
             path = decodeURIComponent(fileUrl.split("/o/")[1].split("?")[0]);
           } else if (fileUrl.startsWith("gs://")) {
-            // Handle gs:// bucket refs
             path = fileUrl.replace(
               `gs://${storage.app.options.storageBucket}/`,
               ""
@@ -92,7 +90,6 @@ export default function VideoList({
             console.warn("⚠️ Not a Firebase Storage URL, skipping:", fileUrl);
             return;
           }
-
           const fileRef = ref(storage, path);
           await deleteObject(fileRef);
         } catch (err) {
@@ -103,9 +100,7 @@ export default function VideoList({
       await deleteFromFirebase(deletingVideo.url);
       await deleteFromFirebase(deletingVideo.thumbnail);
 
-      // 🔹 Delete from MongoDB
       await deleteVideo(deletingVideo._id).unwrap();
-
       message.success("Video deleted from Firebase and MongoDB!");
       setDeletingVideo(null);
     } catch (err) {
@@ -170,34 +165,20 @@ export default function VideoList({
           itemLayout={isMobile ? "vertical" : "horizontal"}
           dataSource={videos}
           renderItem={(video) => (
-            <List.Item
-              actions={
-                video.creatorId?._id?.toString() === currentUserId?.toString()
-                  ? [
-                      <Button
-                        key="edit"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEdit(video)}
-                      ></Button>,
-                      <Button
-                        key="delete"
-                        icon={<DeleteOutlined />}
-                        danger
-                        onClick={() => setDeletingVideo(video)}
-                      ></Button>,
-                    ]
-                  : []
-              }
-            >
+            <List.Item style={{ position: "relative" }}>
               {isMobile ? (
                 <Card
                   hoverable
                   cover={
-                    <Link to={`/video/${video._id}`}>
-                      {renderThumbnail(video)}
-                    </Link>
+                    <div style={{ padding: "12px" }}>
+                      <Link to={`/video/${video._id}`}>
+                        {renderThumbnail(video)}
+                      </Link>
+                    </div>
                   }
+                  style={{ marginBottom: 12 }}
                 >
+                  {/* Title */}
                   <Link to={`/video/${video._id}`}>
                     <Text
                       strong
@@ -206,6 +187,8 @@ export default function VideoList({
                       {video.title}
                     </Text>
                   </Link>
+
+                  {/* Stats */}
                   <Space size="middle" wrap>
                     <Text>
                       <EyeOutlined /> {video.views}
@@ -220,42 +203,123 @@ export default function VideoList({
                       <CalendarOutlined /> {moment(video.createdAt).fromNow()}
                     </Text>
                   </Space>
+
+                  {/* Mobile-only buttons below content */}
+                  {video.creatorId?._id?.toString() ===
+                    currentUserId?.toString() && (
+                    <div
+                      style={{
+                        marginTop: 12,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                      }}
+                    >
+                      <Button
+                        icon={<EditOutlined />}
+                        onClick={() => handleEdit(video)}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        icon={<DeleteOutlined />}
+                        danger
+                        onClick={() => setDeletingVideo(video)}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  )}
                 </Card>
               ) : (
-                <List.Item.Meta
-                  avatar={
-                    <Link to={`/video/${video._id}`}>
-                      {renderThumbnail(video, {
-                        width: "120px",
-                        height: "80px",
-                      })}
-                    </Link>
-                  }
-                  title={
-                    <Link
-                      to={`/video/${video._id}`}
-                      style={{ color: "#1677ff" }}
+                <Card style={{ width: "100%", position: "relative" }}>
+                  <List.Item.Meta
+                    avatar={
+                      <Link to={`/video/${video._id}`}>
+                        {renderThumbnail(video, {
+                          width: "200px",
+                          height: "110px",
+                        })}
+                      </Link>
+                    }
+                    title={
+                      <>
+                        <Link
+                          to={`/video/${video._id}`}
+                          style={{ color: "#1677ff", fontWeight: 600 }}
+                        >
+                          {video.title}
+                        </Link>
+                        {video.description && (
+                          <div style={{ marginTop: 4 }}>
+                            <Text type="secondary" style={{ fontSize: 14 }}>
+                              {video.description}
+                            </Text>
+                          </div>
+                        )}
+                      </>
+                    }
+                    description={
+                      <Space size="middle" wrap>
+                        <Text>
+                          <EyeOutlined /> {video.views}
+                        </Text>
+                        <Text>
+                          <LikeOutlined /> {video.likes?.length || 0}
+                        </Text>
+                        <Text>
+                          <CommentOutlined /> {video.comments?.length || 0}
+                        </Text>
+                        <Text>
+                          <CalendarOutlined />{" "}
+                          {moment(video.createdAt).fromNow()}
+                        </Text>
+                      </Space>
+                    }
+                  />
+
+                  {/* Desktop-only dropdown */}
+                  {video.creatorId?._id?.toString() ===
+                    currentUserId?.toString() && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        zIndex: 10,
+                      }}
                     >
-                      {video.title}
-                    </Link>
-                  }
-                  description={
-                    <Space size="middle" wrap>
-                      <Text>
-                        <EyeOutlined /> {video.views}
-                      </Text>
-                      <Text>
-                        <LikeOutlined /> {video.likes?.length || 0}
-                      </Text>
-                      <Text>
-                        <CommentOutlined /> {video.comments?.length || 0}
-                      </Text>
-                      <Text>
-                        <CalendarOutlined /> {moment(video.createdAt).fromNow()}
-                      </Text>
-                    </Space>
-                  }
-                />
+                      <Dropdown
+                        menu={{
+                          items: [
+                            {
+                              key: "edit",
+                              label: "Edit",
+                              icon: <EditOutlined />,
+                              onClick: () => handleEdit(video),
+                            },
+                            {
+                              key: "delete",
+                              label: "Delete",
+                              danger: true,
+                              icon: <DeleteOutlined />,
+                              onClick: () => setDeletingVideo(video),
+                            },
+                          ],
+                        }}
+                        trigger={["click"]}
+                        placement="bottomRight"
+                      >
+                        <Button
+                          type="text"
+                          size="large"
+                          icon={<MoreOutlined style={{ fontSize: 20 }} />}
+                          shape="circle"
+                        />
+                      </Dropdown>
+                    </div>
+                  )}
+                </Card>
               )}
             </List.Item>
           )}
