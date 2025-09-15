@@ -22,7 +22,7 @@ export default function Explore() {
   const { data, isLoading } = useGetAllVideosQuery({ sort: "popular" });
   const videos = data?.videos || [];
   const featured = videos.length > 0 ? videos[0] : null;
-  console.log(videos);
+
   return (
     <Layout style={{ minHeight: "calc(100vh - 64px)" }}>
       {/* Sidebar */}

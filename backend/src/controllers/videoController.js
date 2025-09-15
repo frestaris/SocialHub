@@ -1,5 +1,4 @@
 import Video from "../models/videoSchema.js";
-import Comment from "../models/commentSchema.js";
 
 // @desc    Create a new video
 // @route   POST /api/videos

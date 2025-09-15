@@ -3,7 +3,7 @@ import { SettingOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useState } from "react";
 import SettingsModal from "../settings/SettingsModal";
-import { Link } from "react-router-dom";
+import Upload from "../../upload/Upload";
 
 const { Title, Paragraph } = Typography;
 
@@ -11,7 +11,8 @@ export default function ProfileInfo({ user }) {
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner = currentUser && user && currentUser.email === user.email;
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // ✅ separate state
 
   return (
     <>
@@ -25,7 +26,7 @@ export default function ProfileInfo({ user }) {
         {/* Settings Icon */}
         {isOwner && (
           <SettingOutlined
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsSettingsModalOpen(true)}
             style={{
               position: "absolute",
               top: 16,
@@ -47,7 +48,7 @@ export default function ProfileInfo({ user }) {
           </Avatar>
           <Title level={3}>{user?.username}</Title>
           <Paragraph type="secondary">{user?.email}</Paragraph>
-          <Paragraph>{user?.bio || "No bio yet."}</Paragraph>
+          <Paragraph>{user?.bio || ""}</Paragraph>
 
           <Space direction="vertical" style={{ width: "100%" }}>
             {!isOwner && (
@@ -56,20 +57,29 @@ export default function ProfileInfo({ user }) {
               </Button>
             )}
             {isOwner && (
-              <Link to="/upload">
-                <Button type="default" block>
-                  Upload
-                </Button>
-              </Link>
+              <Button
+                type="default"
+                block
+                onClick={() => setIsUploadModalOpen(true)}
+              >
+                Upload
+              </Button>
             )}
           </Space>
         </div>
       </Card>
 
+      {/* Settings Modal */}
       <SettingsModal
-        open={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        open={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
         user={user}
+      />
+
+      {/* Upload Modal */}
+      <Upload
+        open={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
       />
     </>
   );

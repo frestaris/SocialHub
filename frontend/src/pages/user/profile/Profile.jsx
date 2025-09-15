@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { Row, Col, Tabs, Spin } from "antd";
+import { Row, Col, Tabs, Spin, Result } from "antd";
 import { motion } from "framer-motion";
 import { useGetUserByIdQuery } from "../../../redux/user/userApi";
 import { useGetVideosByUserQuery } from "../../../redux/video/videoApi";
@@ -10,6 +10,7 @@ import FeaturedVideo from "./FeaturedVideo";
 import VideoList from "./VideoList";
 import PostFeed from "./PostFeed";
 import { useState } from "react";
+import { useSelector } from "react-redux";
 
 const mockPosts = [
   {
@@ -37,8 +38,9 @@ const mockLikedCreators = [
 
 export default function Profile() {
   const { id } = useParams();
-  const { data: userData } = useGetUserByIdQuery(id);
+  const { data: userData, isLoading: userLoading } = useGetUserByIdQuery(id);
   const user = userData?.user;
+  const { user: currentUser } = useSelector((state) => state.auth);
 
   const [sortBy, setSortBy] = useState("popularity");
 
@@ -48,6 +50,42 @@ export default function Profile() {
   });
 
   const videos = videoData?.videos || [];
+
+  if (userLoading) {
+    return (
+      <div
+        style={{
+          minHeight: "calc(100vh - 64px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#fafafa",
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div
+        style={{
+          minHeight: "calc(100vh - 64px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#fafafa",
+        }}
+      >
+        <Result
+          status="404"
+          title="User Not Found"
+          subTitle="Sorry, we couldn’t find the profile you’re looking for."
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -101,6 +139,7 @@ export default function Profile() {
                         videos={videos}
                         sortBy={sortBy}
                         setSortBy={setSortBy}
+                        currentUserId={currentUser?._id}
                       />
                     </>
                   ),

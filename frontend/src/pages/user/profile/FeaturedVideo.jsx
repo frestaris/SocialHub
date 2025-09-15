@@ -8,7 +8,7 @@ import {
 import { Link } from "react-router-dom";
 import moment from "moment";
 
-const { Title, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 export default function FeaturedVideo({ video }) {
   if (!video) return null;
@@ -58,6 +58,16 @@ export default function FeaturedVideo({ video }) {
           {video.title}
         </Link>
       </Title>
+
+      {/* Description under title */}
+      {video.description && (
+        <Paragraph
+          ellipsis={{ rows: 3, expandable: false }}
+          style={{ marginBottom: "12px" }}
+        >
+          {video.description}
+        </Paragraph>
+      )}
 
       <Space size="middle" wrap>
         <Text>

@@ -8,7 +8,6 @@ import HomePage from "./pages/homepage/HomePage";
 import Explore from "./pages/explore/Explore";
 import Video from "./pages/video/Video";
 import Profile from "./pages/user/profile/Profile";
-import Upload from "./pages/upload/Upload";
 
 const { Content } = Layout;
 
@@ -28,7 +27,6 @@ export default function App() {
             <Route path="/video/:id" element={<Video />} />
 
             <Route path="/profile/:id" element={<Profile />} />
-            <Route path="/upload" element={<Upload />} />
 
             {/* Auth Page */}
             <Route path="/login" element={<Login />} />

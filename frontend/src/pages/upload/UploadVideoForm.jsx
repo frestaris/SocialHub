@@ -95,8 +95,8 @@ export default function UploadVideoForm({ onClose }) {
           try {
             const meta = await fetchYouTubeMetadata(fileURL);
             if (meta) {
-              title = meta.title || title;
-              description = meta.description || description;
+              if (!values.title) title = meta.title;
+              if (!values.description) description = meta.description;
               thumbnail = meta.thumbnail || thumbnail;
               duration = meta.duration || duration;
             }
