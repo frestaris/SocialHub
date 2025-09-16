@@ -12,7 +12,7 @@ export default function ProfileInfoForm() {
       </Form.Item>
 
       <Form.Item label="Bio" name="bio">
-        <Input.TextArea rows={3} />
+        <Input.TextArea rows={1} />
       </Form.Item>
 
       <Form.Item label="Avatar URL" name="avatar">

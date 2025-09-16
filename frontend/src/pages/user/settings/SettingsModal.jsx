@@ -208,10 +208,7 @@ export default function SettingsModal({ open, onClose, user }) {
           onFinish={handleSave}
           onValuesChange={handleValuesChange}
         >
-          <Divider>Profile Info</Divider>
           <ProfileInfoForm />
-
-          <Divider>Password</Divider>
           {!hasPassword ? (
             <>
               <Form.Item label="Email" name="email">

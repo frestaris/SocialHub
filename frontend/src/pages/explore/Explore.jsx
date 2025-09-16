@@ -71,7 +71,19 @@ export default function Explore() {
         </div>
 
         <Content style={{ background: "#fff", padding: "16px" }}>
-          {isLoading && <Spin />}
+          {isLoading && (
+            <div
+              style={{
+                minHeight: "calc(100vh - 64px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Spin size="large"></Spin>
+            </div>
+          )}
+
           {featured && (
             <>
               <Title level={3}>Featured Video</Title>
