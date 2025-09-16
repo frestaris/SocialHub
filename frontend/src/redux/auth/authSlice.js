@@ -26,6 +26,10 @@ const authSlice = createSlice({
       localStorage.setItem("user", JSON.stringify(action.payload.user));
       localStorage.setItem("token", action.payload.token);
     },
+    setUser: (state, action) => {
+      state.user = action.payload; // replace with updated Mongo user
+      localStorage.setItem("user", JSON.stringify(state.user));
+    },
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -35,5 +39,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setCredentials, logout } = authSlice.actions;
+export const { setCredentials, setUser, logout } = authSlice.actions;
 export default authSlice.reducer;

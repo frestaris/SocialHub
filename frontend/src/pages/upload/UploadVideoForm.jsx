@@ -6,7 +6,8 @@ import {
   Select,
   message,
   Spin,
-  Radio,
+  Space,
+  Switch,
   Row,
   Col,
 } from "antd";
@@ -17,7 +18,7 @@ import { uploadToFirebase } from "../../utils/uploadToFirebase";
 import { getVideoDuration } from "../../utils/getVideoDuration";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-
+import { auth } from "../../firebase";
 const { TextArea } = Input;
 const { Option } = Select;
 
@@ -61,7 +62,7 @@ export default function UploadVideoForm({ onClose }) {
   const [form] = Form.useForm();
   const [createVideo] = useCreateVideoMutation();
   const currentUser = useSelector((state) => state.auth.user);
-  const userId = currentUser?.uid;
+  const userId = auth.currentUser?.uid;
   const navigate = useNavigate();
 
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -189,13 +190,14 @@ export default function UploadVideoForm({ onClose }) {
 
       {/* Toggle Mode */}
       <Form.Item label="Upload Mode">
-        <Radio.Group
-          value={uploadMode}
-          onChange={(e) => handleModeChange(e.target.value)}
-        >
-          <Radio value="file">Upload from Computer</Radio>
-          <Radio value="url">Use External URL</Radio>
-        </Radio.Group>
+        <Space>
+          <span>File</span>
+          <Switch
+            checked={uploadMode === "url"}
+            onChange={(checked) => handleModeChange(checked ? "url" : "file")}
+          />
+          <span>URL</span>
+        </Space>
       </Form.Item>
 
       {/* File OR URL */}

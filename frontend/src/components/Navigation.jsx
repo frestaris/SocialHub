@@ -113,8 +113,12 @@ export default function Navigation() {
               <Dropdown menu={avatarMenu} placement="bottomRight">
                 <Space style={{ cursor: "pointer" }}>
                   <Avatar
-                    src={currentUser.avatar || null}
-                    icon={!currentUser.avatar && <UserOutlined />}
+                    src={
+                      currentUser?.avatar
+                        ? `${currentUser.avatar}?t=${currentUser._id}`
+                        : null
+                    }
+                    icon={!currentUser?.avatar && <UserOutlined />}
                   />
                 </Space>
               </Dropdown>

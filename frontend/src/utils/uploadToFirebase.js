@@ -1,10 +1,15 @@
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../firebase";
 
-export const uploadToFirebase = (file, userId, onProgress) => {
+export const uploadToFirebase = (
+  file,
+  userId,
+  onProgress,
+  folder = "videos"
+) => {
   return new Promise((resolve, reject) => {
     try {
-      const filePath = `videos/${userId}/${Date.now()}_${file.name}`;
+      const filePath = `${folder}/${userId}/${Date.now()}_${file.name}`;
       const storageRef = ref(storage, filePath);
 
       const uploadTask = uploadBytesResumable(storageRef, file);
@@ -14,7 +19,6 @@ export const uploadToFirebase = (file, userId, onProgress) => {
         (snapshot) => {
           const progress =
             (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-
           if (onProgress) onProgress(progress);
         },
         (error) => reject(error),

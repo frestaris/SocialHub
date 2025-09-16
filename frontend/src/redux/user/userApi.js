@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseURL } from "../../utils/baseURL";
 import { auth } from "../../firebase";
+import { setUser } from "../auth/authSlice";
 
 export const userApi = createApi({
   reducerPath: "userApi",
@@ -37,7 +38,9 @@ export const userApi = createApi({
         try {
           const { data: updated } = await queryFulfilled;
 
-          // Update getCurrentUser cache
+          dispatch(setUser(updated.user));
+
+          // ✅ Update getCurrentUser cache
           dispatch(
             userApi.util.updateQueryData(
               "getCurrentUser",
@@ -48,7 +51,7 @@ export const userApi = createApi({
             )
           );
 
-          // Update getUserById cache if it exists
+          // ✅ Update getUserById cache too
           dispatch(
             userApi.util.updateQueryData(
               "getUserById",

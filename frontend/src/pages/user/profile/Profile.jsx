@@ -41,7 +41,6 @@ export default function Profile() {
   const { data: userData, isLoading: userLoading } = useGetUserByIdQuery(id);
   const user = userData?.user;
   const { user: currentUser } = useSelector((state) => state.auth);
-
   const [sortBy, setSortBy] = useState("popularity");
 
   const { data: videoData, isLoading } = useGetVideosByUserQuery({

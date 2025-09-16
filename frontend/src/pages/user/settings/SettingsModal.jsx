@@ -26,6 +26,7 @@ import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/auth/authSlice";
+import { uploadToFirebase } from "../../../utils/uploadToFirebase";
 
 export default function SettingsModal({ open, onClose, user }) {
   const [form] = Form.useForm();
@@ -105,6 +106,7 @@ export default function SettingsModal({ open, onClose, user }) {
   const handleSave = async (values) => {
     setSaving(true);
     try {
+      // 🔹 Handle password logic
       if (!hasPassword && values.password) {
         const credential = EmailAuthProvider.credential(
           values.email,
@@ -126,10 +128,31 @@ export default function SettingsModal({ open, onClose, user }) {
         }
       }
 
+      // 🔹 Handle avatar (URL or file upload to Firebase)
+      let avatarUrl = values.avatar; // from URL field if present
+      if (values.avatarFile?.[0]?.originFileObj) {
+        const file = values.avatarFile[0].originFileObj;
+
+        if (file.size / 1024 / 1024 > 4) {
+          message.error("Avatar must be smaller than 4MB!");
+          setSaving(false);
+          return;
+        }
+
+        // Upload avatar to Firebase under avatars/
+        avatarUrl = await uploadToFirebase(
+          file,
+          auth.currentUser.uid,
+          null,
+          "avatars"
+        );
+      }
+
+      // 🔹 Save to backend
       await updateUser({
         username: values.username,
         bio: values.bio,
-        avatar: values.avatar,
+        avatar: avatarUrl,
       }).unwrap();
 
       message.success("Profile updated successfully");
@@ -211,9 +234,6 @@ export default function SettingsModal({ open, onClose, user }) {
           <ProfileInfoForm />
           {!hasPassword ? (
             <>
-              <Form.Item label="Email" name="email">
-                <Input disabled />
-              </Form.Item>
               <Form.Item
                 label="Set Password"
                 name="password"

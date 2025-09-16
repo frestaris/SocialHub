@@ -10,7 +10,6 @@ const { Title, Paragraph } = Typography;
 export default function ProfileInfo({ user }) {
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner = currentUser && user && currentUser.email === user.email;
-
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // ✅ separate state
 
