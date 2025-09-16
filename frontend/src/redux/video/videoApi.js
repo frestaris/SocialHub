@@ -65,6 +65,7 @@ export const videoApi = createApi({
         { type: "Video", id },
         "AllVideos",
         "UserVideos",
+        "Post",
       ],
     }),
 
@@ -74,7 +75,7 @@ export const videoApi = createApi({
         url: `/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["AllVideos", "UserVideos"],
+      invalidatesTags: ["AllVideos", "UserVideos", "Post"],
     }),
   }),
 });

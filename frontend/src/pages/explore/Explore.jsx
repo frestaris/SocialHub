@@ -1,27 +1,20 @@
 import { useState } from "react";
-import { Layout, Drawer, Button, Spin, Typography } from "antd";
+import { Layout, Drawer, Button } from "antd";
 import { MenuUnfoldOutlined } from "@ant-design/icons";
 
 import Sidebar from "./Sidebar";
 import SearchBar from "./SearchBar";
-import MainVideo from "./MainVideo";
 import TopCreators from "./TopCreators";
 import HotNow from "./HotNow";
 import SuggestedForYou from "./SuggestedForYou";
 
-import { useGetAllVideosQuery } from "../../redux/video/videoApi";
+import Feed from "./Feed";
 
 const { Sider, Content } = Layout;
-const { Title } = Typography;
 
 export default function Explore() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-
-  // 🔹 Fetch all videos
-  const { data, isLoading } = useGetAllVideosQuery({ sort: "popular" });
-  const videos = data?.videos || [];
-  const featured = videos.length > 0 ? videos[0] : null;
 
   return (
     <Layout style={{ minHeight: "calc(100vh - 64px)" }}>
@@ -55,7 +48,7 @@ export default function Explore() {
             display: "flex",
             alignItems: "center",
             padding: "8px 16px",
-            background: "#fff",
+            background: "#fafafa",
             gap: "12px",
           }}
         >
@@ -70,26 +63,8 @@ export default function Explore() {
           <SearchBar />
         </div>
 
-        <Content style={{ background: "#fff", padding: "16px" }}>
-          {isLoading && (
-            <div
-              style={{
-                minHeight: "calc(100vh - 64px)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Spin size="large"></Spin>
-            </div>
-          )}
-
-          {featured && (
-            <>
-              <Title level={3}>Featured Video</Title>
-              <MainVideo video={featured} />
-            </>
-          )}
+        <Content style={{ background: "#fafafa", padding: "16px" }}>
+          <Feed />
           <TopCreators />
           <HotNow />
           <SuggestedForYou />

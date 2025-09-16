@@ -1,5 +1,5 @@
 import { Modal, Tabs } from "antd";
-import { FileTextOutlined, UploadOutlined } from "@ant-design/icons";
+import { FileTextOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import UploadVideoForm from "./UploadVideoForm";
 import PostForm from "./PostForm";
 
@@ -30,13 +30,13 @@ export default function Upload({ open, onClose }) {
                   <FileTextOutlined /> Create Post
                 </span>
               ),
-              children: <PostForm />,
+              children: <PostForm onClose={onClose} />,
             },
             {
               key: "video",
               label: (
                 <span>
-                  <UploadOutlined /> Upload Video
+                  <VideoCameraOutlined /> Upload Video
                 </span>
               ),
               children: <UploadVideoForm onClose={onClose} />,

@@ -9,7 +9,7 @@ const postSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["video", "live", "text"],
+      enum: ["video", "text"],
       required: true,
     },
 
@@ -21,7 +21,7 @@ const postSchema = new mongoose.Schema(
 
     content: { type: String },
     category: { type: String },
-
+    image: { type: String, default: null },
     views: { type: Number, default: 0 },
 
     likes: [

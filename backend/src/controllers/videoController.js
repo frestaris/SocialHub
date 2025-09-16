@@ -1,4 +1,5 @@
 import Video from "../models/videoSchema.js";
+import Post from "../models/postSchema.js";
 
 // @desc    Create a new video
 // @route   POST /api/videos
@@ -15,6 +16,13 @@ export const createVideo = async (req, res) => {
       url,
       thumbnail,
       duration,
+    });
+    await Post.create({
+      userId: req.user._id,
+      type: "video",
+      videoId: video._id,
+      content: description || "",
+      category,
     });
 
     res.status(201).json({ success: true, video });
