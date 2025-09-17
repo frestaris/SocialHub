@@ -26,6 +26,7 @@ import {
 import { useState } from "react";
 import EditPostForm from "./EditPostForm";
 import EditVideoForm from "./EditVideoForm";
+import CategoryBadge from "../../../components/CategoryBadge";
 
 const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -98,9 +99,12 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
               marginBottom: 12,
             }}
           >
-            <Text type="secondary" style={{ fontSize: "12px" }}>
-              {moment(item.createdAt).fromNow()}
-            </Text>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              {item.category && <CategoryBadge category={item.category} />}
+              <Text type="secondary" style={{ fontSize: "12px" }}>
+                {moment(item.createdAt).fromNow()}
+              </Text>
+            </div>
 
             {currentUserId === (item.userId?._id || item.creatorId?._id) && (
               <Dropdown
@@ -242,6 +246,13 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
         title="Edit Post"
         onCancel={() => setEditingPost(null)}
         footer={null}
+        width={isMobile ? "100%" : "70%"}
+        style={{
+          top: isMobile ? 5 : 30,
+          maxWidth: isMobile ? "100%" : 600,
+          padding: "0 16px",
+        }}
+        destroyOnHidden
       >
         {editingPost?.type === "video" ? (
           <EditVideoForm

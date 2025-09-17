@@ -15,6 +15,7 @@ import {
 import { uploadToFirebase } from "../../utils/uploadToFirebase";
 import { auth } from "../../firebase";
 import { useState } from "react";
+import { categories } from "../../utils/categories";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -79,10 +80,11 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
         rules={[{ required: true, message: "Please select a category" }]}
       >
         <Select placeholder="Select category">
-          <Option value="gaming">Gaming</Option>
-          <Option value="music">Music</Option>
-          <Option value="art">Art</Option>
-          <Option value="fitness">Fitness</Option>
+          {categories.map((cat) => (
+            <Select.Option key={cat.key} value={cat.key}>
+              {cat.label}
+            </Select.Option>
+          ))}
         </Select>
       </Form.Item>
 

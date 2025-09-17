@@ -1,17 +1,5 @@
 import { Menu } from "antd";
-import {
-  HomeOutlined,
-  FireOutlined,
-  PlayCircleOutlined,
-  CustomerServiceOutlined,
-} from "@ant-design/icons";
-
-const categories = [
-  { key: "gaming", icon: <PlayCircleOutlined />, label: "Gaming" },
-  { key: "music", icon: <CustomerServiceOutlined />, label: "Music" },
-  { key: "art", icon: <FireOutlined />, label: "Art" },
-  { key: "fitness", icon: <HomeOutlined />, label: "Fitness" },
-];
+import { categories } from "../../utils/categories";
 
 export default function Sidebar() {
   return (
@@ -19,7 +7,11 @@ export default function Sidebar() {
       mode="inline"
       defaultSelectedKeys={["gaming"]}
       style={{ position: "sticky", height: "100%", borderRight: 0 }}
-      items={categories}
+      items={categories.map((c) => ({
+        key: c.key,
+        icon: <c.icon />,
+        label: c.label,
+      }))}
     />
   );
 }

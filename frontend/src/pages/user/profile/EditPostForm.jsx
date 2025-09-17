@@ -11,6 +11,7 @@ import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
 import { useEffect, useState } from "react";
 import { uploadToFirebase } from "../../../utils/uploadToFirebase";
 import { auth } from "../../../firebase";
+import { categories } from "../../../utils/categories";
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -96,12 +97,17 @@ export default function EditPostForm({
         <TextArea rows={4} />
       </Form.Item>
 
-      <Form.Item label="Category" name="category" rules={[{ required: true }]}>
-        <Select>
-          <Option value="gaming">Gaming</Option>
-          <Option value="music">Music</Option>
-          <Option value="art">Art</Option>
-          <Option value="fitness">Fitness</Option>
+      <Form.Item
+        label="Category"
+        name="category"
+        rules={[{ required: true, message: "Please select a category" }]}
+      >
+        <Select placeholder="Select category">
+          {categories.map((cat) => (
+            <Select.Option key={cat.key} value={cat.key}>
+              {cat.label}
+            </Select.Option>
+          ))}
         </Select>
       </Form.Item>
 

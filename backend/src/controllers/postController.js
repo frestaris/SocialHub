@@ -155,7 +155,10 @@ export const updatePost = async (req, res) => {
         if (video.title !== undefined) linkedVideo.title = video.title;
         if (video.description !== undefined)
           linkedVideo.description = video.description;
-        if (video.category !== undefined) linkedVideo.category = video.category;
+        if (video.category !== undefined) {
+          linkedVideo.category = video.category;
+          post.category = video.category;
+        }
         if (video.url !== undefined) linkedVideo.url = video.url;
         if (video.thumbnail !== undefined)
           linkedVideo.thumbnail = video.thumbnail;

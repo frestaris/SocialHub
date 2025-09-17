@@ -192,14 +192,9 @@ export default function SettingsModal({ open, onClose, user }) {
         footer={null}
         width="100%"
         style={{
-          top: 20,
+          top: 10,
           maxWidth: 600,
           padding: "0 16px",
-        }}
-        stylesBody={{
-          maxHeight: "calc(100vh - 120px)",
-          overflowY: "auto",
-          padding: 0,
         }}
         destroyOnHidden
       >

@@ -5,10 +5,12 @@ import {
   EyeOutlined,
   VideoCameraOutlined,
   FileTextOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
 import { useGetPostsQuery } from "../../redux/post/postApi";
 import { Link } from "react-router-dom";
+import CategoryBadge from "../../components/CategoryBadge";
 
 const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -74,7 +76,14 @@ export default function Feed() {
             }}
           >
             <Space>
-              <Avatar src={post.userId?.avatar || null} />
+              <Avatar
+                src={
+                  post.userId?.avatar
+                    ? `${post.userId.avatar}?t=${post.userId._id}`
+                    : null
+                }
+                icon={!post.userId?.avatar && <UserOutlined />}
+              />
               <div>
                 <Text strong>{post.userId?.username}</Text>
                 <br />
@@ -201,6 +210,7 @@ export default function Feed() {
           )}
 
           <Space style={{ marginTop: 12 }}>
+            <CategoryBadge category={post.category} />
             <Tag
               color="default"
               style={{
@@ -218,7 +228,6 @@ export default function Feed() {
                 ? post.videoId.views || 0
                 : post.views || 0}
             </Tag>
-
             <Tag
               color="default"
               style={{
@@ -233,7 +242,6 @@ export default function Feed() {
             >
               <LikeOutlined /> {post.likes?.length || 0}
             </Tag>
-
             <Tag
               color="default"
               style={{

@@ -1,13 +1,17 @@
-import { Modal, Tabs, message } from "antd";
+import { Modal, Grid, Tabs, message } from "antd";
 import { FileTextOutlined, VideoCameraOutlined } from "@ant-design/icons";
 import UploadVideoForm from "./UploadVideoForm";
 import PostForm from "./PostForm";
 import { useCreatePostMutation } from "../../redux/post/postApi";
 import { useNavigate } from "react-router-dom";
 
+const { useBreakpoint } = Grid;
+
 export default function Upload({ open, onClose }) {
   const [createPost, { isLoading }] = useCreatePostMutation();
   const navigate = useNavigate();
+  const screens = useBreakpoint();
+  const isMobile = !screens.sm;
 
   const handleCreatePost = async (data) => {
     try {
@@ -27,7 +31,12 @@ export default function Upload({ open, onClose }) {
       open={open}
       onCancel={onClose}
       footer={null}
-      width="70%"
+      width={isMobile ? "100%" : "70%"}
+      style={{
+        top: isMobile ? 10 : 30,
+        maxWidth: isMobile ? "100%" : 600,
+        padding: "0 16px",
+      }}
       destroyOnHidden
     >
       <div style={{ background: "#fff", borderRadius: "12px" }}>
