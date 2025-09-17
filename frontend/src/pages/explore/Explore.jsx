@@ -7,7 +7,6 @@ import SearchBar from "./SearchBar";
 import TopCreators from "./TopCreators";
 import HotNow from "./HotNow";
 import SuggestedForYou from "./SuggestedForYou";
-
 import Feed from "./Feed";
 
 const { Sider, Content } = Layout;
@@ -24,10 +23,25 @@ export default function Explore() {
         breakpoint="sm"
         collapsedWidth="0"
         trigger={null}
-        style={{ background: "#fff", borderRight: "1px solid #eee" }}
+        style={{
+          background: "#fafafa",
+          borderRight: "none",
+          paddingLeft: isMobile ? 0 : 16,
+          paddingTop: isMobile ? 0 : 8,
+        }}
         onBreakpoint={(broken) => setIsMobile(broken)}
       >
-        <Sidebar />
+        <div
+          style={{
+            position: "sticky",
+            top: 20,
+            borderRadius: "12px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            overflow: "hidden",
+          }}
+        >
+          <Sidebar />
+        </div>
       </Sider>
 
       {/* Mobile drawer */}
@@ -36,7 +50,6 @@ export default function Explore() {
         placement="left"
         onClose={() => setMobileOpen(false)}
         open={mobileOpen}
-        stylesBody={{ padding: 0 }}
       >
         <Sidebar />
       </Drawer>

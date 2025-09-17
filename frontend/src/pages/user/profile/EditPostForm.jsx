@@ -7,33 +7,56 @@ import {
   Space,
   Switch,
 } from "antd";
-import {
-  FileTextOutlined,
-  UploadOutlined,
-  LinkOutlined,
-} from "@ant-design/icons";
-import { uploadToFirebase } from "../../utils/uploadToFirebase";
-import { auth } from "../../firebase";
-import { useState } from "react";
+import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
+import { useEffect, useState } from "react";
+import { uploadToFirebase } from "../../../utils/uploadToFirebase";
+import { auth } from "../../../firebase";
 
 const { TextArea } = Input;
 const { Option } = Select;
 
-export default function PostForm({ onClose, onCreatePost, loading }) {
+export default function EditPostForm({
+  post,
+  open,
+  onClose,
+  onUpdate,
+  loading,
+}) {
   const [form] = Form.useForm();
   const [isUploading, setIsUploading] = useState(false);
-  const [useUrl, setUseUrl] = useState(false);
+  const [useUrl, setUseUrl] = useState(
+    !!post?.image && post.image.startsWith("http")
+  );
+  const [isChanged, setIsChanged] = useState(false);
+
+  const initialValues = {
+    content: post?.content,
+    category: post?.category,
+    imageUrl: post?.image || null,
+  };
+
+  useEffect(() => {
+    if (open) {
+      form.setFieldsValue(initialValues);
+      setIsChanged(false);
+    }
+  }, [open, post]);
+
+  const handleValuesChange = (_, allValues) => {
+    const changed = Object.keys(initialValues).some(
+      (key) => allValues[key] !== initialValues[key]
+    );
+    setIsChanged(changed);
+  };
 
   const handleFinish = async (values) => {
     try {
       let imageUrl = null;
 
       if (!useUrl && values.image && values.image[0]?.originFileObj) {
-        // Upload file to Firebase
         setIsUploading(true);
-        const file = values.image[0].originFileObj;
         imageUrl = await uploadToFirebase(
-          file,
+          values.image[0].originFileObj,
           auth.currentUser?.uid,
           null,
           "posts"
@@ -43,42 +66,38 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
         imageUrl = values.imageUrl.trim();
       }
 
-      await onCreatePost({
-        type: "text",
+      await onUpdate({
+        id: post._id,
         content: values.content,
         category: values.category,
         image: imageUrl,
       });
 
-      form.resetFields();
       if (onClose) onClose();
     } catch (err) {
-      console.error("Create post error:", err);
+      console.error("Update post error:", err);
       setIsUploading(false);
     }
   };
 
   return (
-    <Form form={form} layout="vertical" onFinish={handleFinish}>
-      {/* Post Content */}
+    <Form
+      form={form}
+      layout="vertical"
+      initialValues={initialValues}
+      onValuesChange={handleValuesChange}
+      onFinish={handleFinish}
+    >
       <Form.Item
         label="Post Content"
         name="content"
-        rules={[
-          { required: true, message: "Content is required" },
-          { min: 10, message: "Content must be at least 10 characters long" },
-        ]}
+        rules={[{ required: true, message: "Content is required" }]}
       >
-        <TextArea rows={4} placeholder="What's on your mind?" />
+        <TextArea rows={4} />
       </Form.Item>
 
-      {/* Category */}
-      <Form.Item
-        label="Category"
-        name="category"
-        rules={[{ required: true, message: "Please select a category" }]}
-      >
-        <Select placeholder="Select category">
+      <Form.Item label="Category" name="category" rules={[{ required: true }]}>
+        <Select>
           <Option value="gaming">Gaming</Option>
           <Option value="music">Music</Option>
           <Option value="art">Art</Option>
@@ -86,22 +105,20 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
         </Select>
       </Form.Item>
 
-      {/* Toggle: File or URL */}
       <Form.Item label="Image Mode (optional)">
         <Space>
           <span>File</span>
-          <Switch checked={useUrl} onChange={(checked) => setUseUrl(checked)} />
+          <Switch checked={useUrl} onChange={setUseUrl} />
           <span>URL</span>
         </Space>
       </Form.Item>
 
-      {/* Image Upload OR URL */}
       {!useUrl ? (
         <Form.Item
-          label="Attach Image "
+          label="Attach Image"
           name="image"
           valuePropName="fileList"
-          getValueFromEvent={(e) => e && e.fileList}
+          getValueFromEvent={(e) => e?.fileList}
         >
           <AntUpload
             accept="image/*"
@@ -116,25 +133,20 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
         <Form.Item
           label="Image URL"
           name="imageUrl"
-          rules={[{ type: "url", message: "Please enter a valid URL" }]}
+          rules={[{ type: "url", message: "Invalid URL" }]}
         >
-          <Input prefix={<LinkOutlined />} placeholder="Paste image URL" />
+          <Input prefix={<LinkOutlined />} />
         </Form.Item>
       )}
 
-      {/* Submit */}
       <Button
         type="primary"
         htmlType="submit"
-        icon={<FileTextOutlined />}
         block
         loading={isUploading || loading}
+        disabled={!isChanged}
       >
-        {isUploading
-          ? "Uploading..."
-          : loading
-          ? "Publishing..."
-          : "Publish Post"}
+        Save Changes
       </Button>
     </Form>
   );

@@ -18,7 +18,7 @@ export default function Sidebar() {
     <Menu
       mode="inline"
       defaultSelectedKeys={["gaming"]}
-      style={{ height: "100%", borderRight: 0 }}
+      style={{ position: "sticky", height: "100%", borderRight: 0 }}
       items={categories}
     />
   );

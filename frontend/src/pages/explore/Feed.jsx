@@ -2,7 +2,6 @@ import { Card, Avatar, Typography, Space, Grid, Spin, Result, Tag } from "antd";
 import {
   LikeOutlined,
   CommentOutlined,
-  CalendarOutlined,
   EyeOutlined,
   VideoCameraOutlined,
   FileTextOutlined,
@@ -75,12 +74,20 @@ export default function Feed() {
             }}
           >
             <Space>
-              <Avatar src={post.userId?.avatar} />
+              <Avatar src={post.userId?.avatar || null} />
               <div>
                 <Text strong>{post.userId?.username}</Text>
                 <br />
-                <Text type="secondary">
-                  <CalendarOutlined /> {moment(post.createdAt).fromNow()}
+                <Text
+                  type="secondary"
+                  style={{
+                    fontSize: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                  }}
+                >
+                  {moment(post.createdAt).fromNow()}
                 </Text>
               </div>
             </Space>

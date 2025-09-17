@@ -17,74 +17,14 @@ export const videoApi = createApi({
     },
     credentials: "include",
   }),
-  tagTypes: ["Video", "UserVideos", "AllVideos"],
+  tagTypes: ["Video", "UserVideos", "AllVideos", "Feed"],
   endpoints: (builder) => ({
-    // Get all videos (Explore)
-    getAllVideos: builder.query({
-      query: ({ category, sort }) => {
-        const params = new URLSearchParams();
-        if (category) params.append("category", category);
-        if (sort) params.append("sort", sort);
-        return `?${params.toString()}`;
-      },
-      providesTags: ["AllVideos"],
-    }),
-
-    // Get videos by user
-    getVideosByUser: builder.query({
-      query: ({ userId, sort }) => `/user/${userId}?sort=${sort}`,
-      providesTags: (result, error, { userId }) => [
-        { type: "UserVideos", id: userId },
-      ],
-    }),
-
     // Get video by ID
     getVideoById: builder.query({
       query: (id) => `/${id}`,
       providesTags: (result, error, id) => [{ type: "Video", id }],
     }),
-
-    // Create video
-    createVideo: builder.mutation({
-      query: (data) => ({
-        url: "/",
-        method: "POST",
-        body: data,
-      }),
-      invalidatesTags: ["AllVideos", "UserVideos"],
-    }),
-
-    // Update video
-    updateVideo: builder.mutation({
-      query: ({ id, ...patch }) => ({
-        url: `/${id}`,
-        method: "PUT",
-        body: patch,
-      }),
-      invalidatesTags: (result, error, { id }) => [
-        { type: "Video", id },
-        "AllVideos",
-        "UserVideos",
-        "Post",
-      ],
-    }),
-
-    // Delete video
-    deleteVideo: builder.mutation({
-      query: (id) => ({
-        url: `/${id}`,
-        method: "DELETE",
-      }),
-      invalidatesTags: ["AllVideos", "UserVideos", "Post"],
-    }),
   }),
 });
 
-export const {
-  useGetAllVideosQuery,
-  useGetVideosByUserQuery,
-  useGetVideoByIdQuery,
-  useCreateVideoMutation,
-  useUpdateVideoMutation,
-  useDeleteVideoMutation,
-} = videoApi;
+export const { useGetVideoByIdQuery } = videoApi;
