@@ -1,6 +1,10 @@
 import { Divider, Spin, Result, Button } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
-import { useGetPostByIdQuery } from "../../redux/post/postApi";
+import {
+  useGetPostByIdQuery,
+  useIncrementPostViewsMutation,
+} from "../../redux/post/postApi";
+import { useEffect } from "react";
 
 import PostInfo from "./PostInfo";
 import CommentsSection from "./CommentsSection";
@@ -10,6 +14,13 @@ export default function Post() {
   const navigate = useNavigate();
   const { data, isLoading } = useGetPostByIdQuery(id);
   const post = data?.post;
+  const [incrementPostViews] = useIncrementPostViewsMutation();
+
+  useEffect(() => {
+    if (id) {
+      incrementPostViews(id);
+    }
+  }, [id, incrementPostViews]);
 
   if (isLoading) {
     return (

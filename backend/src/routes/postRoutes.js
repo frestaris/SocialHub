@@ -7,6 +7,7 @@ import {
   updatePost,
   deletePost,
   getUserFeed,
+  incrementPostViews,
 } from "../controllers/postController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -17,6 +18,7 @@ router.get("/", getPosts);
 router.get("/user/:userId", getPostsByUser);
 router.get("/:id", getPostById);
 router.get("/feed/:userId", getUserFeed);
+router.patch("/:id/views", incrementPostViews);
 
 // Private
 router.post("/", protect, createPost);

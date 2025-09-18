@@ -78,7 +78,10 @@ export const updateUser = async (req, res) => {
       req.user._id,
       { username, bio, avatar },
       { new: true }
-    ).select("username email avatar bio role providers");
+    )
+      .populate("followers", "username avatar")
+      .populate("following", "username avatar")
+      .select("username email avatar bio role providers followers following");
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });

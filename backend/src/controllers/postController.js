@@ -238,3 +238,25 @@ export const getUserFeed = async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
+
+// INCREMENT POST VIEWS
+export const incrementPostViews = async (req, res) => {
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { views: 1 } }, // 👈 increment by 1
+      { new: true }
+    )
+      .populate("userId", "username avatar")
+      .populate("videoId", "title thumbnail url duration description");
+
+    if (!post) {
+      return res.status(404).json({ success: false, error: "Post not found" });
+    }
+
+    res.json({ success: true, views: post.views });
+  } catch (err) {
+    console.error("Increment views error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+};

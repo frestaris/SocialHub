@@ -159,10 +159,7 @@ export default function PostInfo({ post }) {
             margin: 0,
           }}
         >
-          <EyeOutlined />
-          {post.type === "video" && post.videoId
-            ? post.videoId.views || 0
-            : post.views || 0}
+          <EyeOutlined /> {post.views || 0}
         </Tag>
         <Tag
           style={{

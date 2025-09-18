@@ -146,6 +146,39 @@ export const postApi = createApi({
       },
       invalidatesTags: ["Post", "Feed"],
     }),
+    //  ---- INCREMENT VIEWS ----
+    incrementPostViews: builder.mutation({
+      query: (postId) => ({
+        url: `/${postId}/views`,
+        method: "PATCH",
+      }),
+      async onQueryStarted(postId, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+
+          // ✅ Update getPostById cache
+          dispatch(
+            postApi.util.updateQueryData("getPostById", postId, (draft) => {
+              if (draft?.post) {
+                draft.post.views = data.views;
+              }
+            })
+          );
+
+          // ✅ Update getPosts cache
+          dispatch(
+            postApi.util.updateQueryData("getPosts", undefined, (draft) => {
+              const idx = draft.posts.findIndex((p) => p._id === postId);
+              if (idx !== -1) {
+                draft.posts[idx].views = data.views;
+              }
+            })
+          );
+        } catch (err) {
+          console.error("Increment views error:", err);
+        }
+      },
+    }),
   }),
 });
 
@@ -157,4 +190,5 @@ export const {
   useGetPostByIdQuery,
   useUpdatePostMutation,
   useDeletePostMutation,
+  useIncrementPostViewsMutation,
 } = postApi;

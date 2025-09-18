@@ -27,6 +27,7 @@ import { useState } from "react";
 import EditPostForm from "./EditPostForm";
 import EditVideoForm from "./EditVideoForm";
 import CategoryBadge from "../../../components/CategoryBadge";
+import { Link } from "react-router-dom";
 
 const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -166,49 +167,55 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
                     position: "relative",
                   }}
                 >
-                  <img
-                    src={item.videoId.thumbnail}
-                    alt="Video thumbnail"
-                    style={{
-                      width: "100%",
-                      borderRadius: 8,
-                      height: isMobile ? "auto" : "180px",
-                      objectFit: isMobile ? "contain" : "cover",
-                    }}
-                  />
-                  {item.videoId?.duration > 0 && (
-                    <span
+                  <Link to={`/post/${item._id}`}>
+                    <img
+                      src={item.videoId.thumbnail}
+                      alt="Video thumbnail"
                       style={{
-                        position: "absolute",
-                        bottom: "8px",
-                        right: "8px",
-                        background: "rgba(0,0,0,0.75)",
-                        color: "#fff",
-                        fontSize: "12px",
-                        padding: "2px 6px",
-                        borderRadius: "4px",
+                        width: "100%",
+                        borderRadius: 8,
+                        height: isMobile ? "auto" : "180px",
+                        objectFit: isMobile ? "contain" : "cover",
                       }}
-                    >
-                      {Math.floor(item.videoId.duration / 60)}:
-                      {(item.videoId.duration % 60).toString().padStart(2, "0")}
-                    </span>
-                  )}
+                    />
+                    {item.videoId?.duration > 0 && (
+                      <span
+                        style={{
+                          position: "absolute",
+                          bottom: "8px",
+                          right: "8px",
+                          background: "rgba(0,0,0,0.75)",
+                          color: "#fff",
+                          fontSize: "12px",
+                          padding: "2px 6px",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        {Math.floor(item.videoId.duration / 60)}:
+                        {(item.videoId.duration % 60)
+                          .toString()
+                          .padStart(2, "0")}
+                      </span>
+                    )}
+                  </Link>
                 </div>
               )}
 
               {/* Text Post Image */}
               {item.type === "text" && item.image && (
                 <div style={{ flex: isMobile ? "0 0 100%" : "0 0 50%" }}>
-                  <img
-                    src={item.image}
-                    alt="Post image"
-                    style={{
-                      width: "100%",
-                      borderRadius: 8,
-                      height: isMobile ? "auto" : "180px",
-                      objectFit: isMobile ? "contain" : "cover",
-                    }}
-                  />
+                  <Link to={`/post/${item._id}`}>
+                    <img
+                      src={item.image}
+                      alt="Post image"
+                      style={{
+                        width: "100%",
+                        borderRadius: 8,
+                        height: isMobile ? "auto" : "180px",
+                        objectFit: isMobile ? "contain" : "cover",
+                      }}
+                    />
+                  </Link>
                 </div>
               )}
 
@@ -217,9 +224,11 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
                 ? item.videoId?.description
                 : item.content) && (
                 <Paragraph style={{ flex: 1, margin: 0 }}>
-                  {item.type === "video"
-                    ? item.videoId?.description
-                    : item.content}
+                  <Link to={`/post/${item._id}`} style={{ color: "inherit" }}>
+                    {item.type === "video"
+                      ? item.videoId?.description
+                      : item.content}
+                  </Link>
                 </Paragraph>
               )}
             </div>

@@ -211,7 +211,7 @@ export default function Feed() {
                   ellipsis={{ rows: 2 }}
                   style={{ margin: 0 }}
                 >
-                  {post.content}
+                  {post.videoId.description}
                 </Paragraph>
               </div>
             </div>
@@ -231,10 +231,7 @@ export default function Feed() {
                 margin: 0,
               }}
             >
-              <EyeOutlined />{" "}
-              {post.type === "video" && post.videoId
-                ? post.videoId.views || 0
-                : post.views || 0}
+              <EyeOutlined /> {post.views || 0}
             </Tag>
             <Tag
               color="default"

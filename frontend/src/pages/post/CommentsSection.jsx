@@ -9,7 +9,7 @@ import {
 } from "../../redux/comment/commentApi";
 import { postApi } from "../../redux/post/postApi";
 import { useDispatch } from "react-redux";
-
+import { Link } from "react-router-dom";
 const { Text } = Typography;
 
 export default function CommentsSection({ postId }) {
@@ -108,12 +108,14 @@ export default function CommentsSection({ postId }) {
                 <Avatar src={item.userId?.avatar} icon={<UserOutlined />} />
               }
               title={
-                <Text strong>
-                  {item.userId?.username}{" "}
+                <Link to={`/profile/${item.userId?._id}`}>
+                  <Text style={{ color: "#1677ff" }} strong>
+                    {item.userId?.username}
+                  </Text>{" "}
                   <Text type="secondary" style={{ fontSize: "12px" }}>
                     {moment(item.createdAt).fromNow()}
                   </Text>
-                </Text>
+                </Link>
               }
               description={item.content}
             />
