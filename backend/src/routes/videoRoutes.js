@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  getVideoById,
   incrementView,
   likeVideo,
   unlikeVideo,
@@ -10,7 +9,6 @@ import { protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // Public
-router.get("/:id", getVideoById);
 router.patch("/:id/view", incrementView);
 
 // Private

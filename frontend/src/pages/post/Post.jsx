@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useGetPostByIdQuery } from "../../redux/post/postApi";
 
 import PostInfo from "./PostInfo";
-import VideoPlayer from "./VideoPlayer";
 import CommentsSection from "./CommentsSection";
 
 export default function Post() {
@@ -26,7 +25,6 @@ export default function Post() {
       </div>
     );
   }
-
   if (!post) {
     return (
       <div
@@ -62,7 +60,7 @@ export default function Post() {
       <PostInfo post={post} />
 
       <Divider />
-      <CommentsSection comments={post.comments || []} />
+      <CommentsSection postId={post._id || []} />
     </div>
   );
 }

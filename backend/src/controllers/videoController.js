@@ -1,25 +1,5 @@
 import Video from "../models/videoSchema.js";
 
-// GET VIDEO BY ID
-export const getVideoById = async (req, res) => {
-  try {
-    const video = await Video.findById(req.params.id)
-      .populate("creatorId", "username avatar")
-      .populate({
-        path: "comments",
-        populate: { path: "userId", select: "username avatar" },
-      });
-
-    if (!video)
-      return res.status(404).json({ success: false, error: "Video not found" });
-
-    res.json({ success: true, video });
-  } catch (err) {
-    console.error("Get video error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
-  }
-};
-
 // INCREMENT VIEW
 export const incrementView = async (req, res) => {
   try {
