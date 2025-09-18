@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseURL } from "../../utils/baseURL";
+import { setCredentials } from "./authSlice";
 
 export const authApi = createApi({
   reducerPath: "authApi",
@@ -22,6 +23,15 @@ export const authApi = createApi({
         method: "POST",
         body: { token },
       }),
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          // Save user + token to Redux + localStorage
+          dispatch(setCredentials({ user: data.user, token: arg }));
+        } catch (err) {
+          console.error("Login failed:", err);
+        }
+      },
     }),
   }),
 });

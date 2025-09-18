@@ -85,7 +85,11 @@ export default function Feed() {
                 icon={!post.userId?.avatar && <UserOutlined />}
               />
               <div>
-                <Text strong>{post.userId?.username}</Text>
+                <Link to={`/profile/${post.userId._id}`}>
+                  <Text style={{ color: "#1677ff" }} strong>
+                    {post.userId?.username}
+                  </Text>
+                </Link>
                 <br />
                 <Text
                   type="secondary"

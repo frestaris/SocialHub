@@ -86,7 +86,10 @@ export default function Profile() {
               transition={{ duration: 0.6 }}
             >
               <ProfileInfo user={user} />
-              <SuggestedCreators creators={mockLikedCreators} />
+              <SuggestedCreators
+                creators={mockLikedCreators}
+                followers={user.followers}
+              />
             </motion.div>
           </div>
         </Col>

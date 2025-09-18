@@ -1,17 +1,47 @@
 import { Card, Avatar, Typography, Button, Space } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import SettingsModal from "../settings/SettingsModal";
 import Upload from "../../upload/Upload";
+import {
+  useFollowUserMutation,
+  useUnfollowUserMutation,
+} from "../../../redux/user/userApi";
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 export default function ProfileInfo({ user }) {
   const currentUser = useSelector((state) => state.auth.user);
-  const isOwner = currentUser && user && currentUser.email === user.email;
+
+  // ✅ safer owner check by _id
+  const isOwner = currentUser && user && currentUser._id === user._id;
+
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false); // ✅ separate state
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  const [followUser, { isLoading: isFollowing }] = useFollowUserMutation();
+  const [unfollowUser, { isLoading: isUnfollowing }] =
+    useUnfollowUserMutation();
+
+  // ✅ Check if current user already follows this profile
+  const isFollowingUser = useMemo(() => {
+    if (!currentUser || !user) return false;
+    return user.followers?.some((f) => f._id === currentUser._id);
+  }, [user, currentUser]);
+
+  const handleFollowToggle = async () => {
+    if (!currentUser) return; // not logged in
+    try {
+      if (isFollowingUser) {
+        await unfollowUser(user._id).unwrap();
+      } else {
+        await followUser(user._id).unwrap();
+      }
+    } catch (err) {
+      console.error("Follow/unfollow error:", err);
+    }
+  };
 
   return (
     <>
@@ -51,8 +81,13 @@ export default function ProfileInfo({ user }) {
 
           <Space direction="vertical" style={{ width: "100%" }}>
             {!isOwner && (
-              <Button type="primary" block>
-                Follow
+              <Button
+                type={isFollowingUser ? "default" : "primary"}
+                block
+                loading={isFollowing || isUnfollowing}
+                onClick={handleFollowToggle}
+              >
+                {isFollowingUser ? "Unfollow" : "Follow"}
               </Button>
             )}
             {isOwner && (

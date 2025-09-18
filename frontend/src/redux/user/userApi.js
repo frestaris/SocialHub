@@ -71,6 +71,52 @@ export const userApi = createApi({
         url: "/me",
         method: "DELETE",
       }),
+    }), // FOLLOW user
+    followUser: builder.mutation({
+      query: (userId) => ({
+        url: `/${userId}/follow`,
+        method: "POST",
+      }),
+      async onQueryStarted(userId, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data.currentUser) {
+            dispatch(setUser(data.currentUser)); // update auth.user
+          }
+          if (data.targetUser) {
+            dispatch(
+              userApi.util.updateQueryData("getUserById", userId, (draft) => {
+                draft.user = data.targetUser;
+              })
+            );
+          }
+        } catch (err) {
+          console.error("Follow mutation failed:", err);
+        }
+      },
+    }),
+    unfollowUser: builder.mutation({
+      query: (userId) => ({
+        url: `/${userId}/unfollow`,
+        method: "POST",
+      }),
+      async onQueryStarted(userId, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          if (data.currentUser) {
+            dispatch(setUser(data.currentUser));
+          }
+          if (data.targetUser) {
+            dispatch(
+              userApi.util.updateQueryData("getUserById", userId, (draft) => {
+                draft.user = data.targetUser;
+              })
+            );
+          }
+        } catch (err) {
+          console.error("Unfollow mutation failed:", err);
+        }
+      },
     }),
   }),
 });
@@ -81,4 +127,6 @@ export const {
   useListUsersQuery,
   useUpdateUserMutation,
   useDeleteUserMutation,
+  useFollowUserMutation,
+  useUnfollowUserMutation,
 } = userApi;

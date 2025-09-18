@@ -30,8 +30,14 @@ export const firebaseLogin = async (req, res) => {
         avatar: decoded.picture || "",
         role: role || "fan",
         providers: [{ provider, providerId: firebaseUid }],
+        followers: [],
+        following: [],
       });
     }
+
+    user = await User.findById(user._id)
+      .populate("followers", "username avatar")
+      .populate("following", "username avatar");
 
     res.json({ success: true, user });
   } catch (err) {
