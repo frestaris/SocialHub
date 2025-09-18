@@ -1,16 +1,16 @@
 import { Divider, Spin, Result, Button } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
-import { useGetVideoByIdQuery } from "../../redux/video/videoApi";
+import { useGetPostByIdQuery } from "../../redux/post/postApi";
 
+import PostInfo from "./PostInfo";
 import VideoPlayer from "./VideoPlayer";
-import VideoInfo from "./VideoInfo";
 import CommentsSection from "./CommentsSection";
 
-export default function Video() {
+export default function Post() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, isLoading } = useGetVideoByIdQuery(id);
-  const video = data?.video;
+  const { data, isLoading } = useGetPostByIdQuery(id);
+  const post = data?.post;
 
   if (isLoading) {
     return (
@@ -22,12 +22,12 @@ export default function Video() {
           justifyContent: "center",
         }}
       >
-        <Spin size="large"></Spin>
+        <Spin size="large" />
       </div>
     );
   }
 
-  if (!video) {
+  if (!post) {
     return (
       <div
         style={{
@@ -39,8 +39,8 @@ export default function Video() {
       >
         <Result
           status="404"
-          title="Video Not Found"
-          subTitle="Sorry, the video you are looking for does not exist or has been removed."
+          title="Post Not Found"
+          subTitle="Sorry, the post you are looking for does not exist or has been removed."
           extra={
             <Button type="primary" onClick={() => navigate("/")}>
               Back Home
@@ -52,11 +52,17 @@ export default function Video() {
   }
 
   return (
-    <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "20px" }}>
-      <VideoPlayer src={video.url} title={video.title} />
-      <VideoInfo video={video} />
+    <div
+      style={{
+        maxWidth: post.type === "video" ? "1200px" : "900px",
+        margin: "0 auto",
+        padding: "20px",
+      }}
+    >
+      <PostInfo post={post} />
+
       <Divider />
-      <CommentsSection comments={video.comments || []} />
+      <CommentsSection comments={post.comments || []} />
     </div>
   );
 }

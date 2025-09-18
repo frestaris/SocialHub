@@ -41,6 +41,11 @@ export const postApi = createApi({
         { type: "Post", id: userId },
       ],
     }),
+    // ---- GET POST BY ID ----
+    getPostById: builder.query({
+      query: (id) => `/${id}`,
+      providesTags: (result, error, id) => [{ type: "Post", id }],
+    }),
 
     // ---- GET USER FEED ----
     getUserFeed: builder.query({
@@ -149,6 +154,7 @@ export const {
   useGetPostsQuery,
   useGetPostsByUserQuery,
   useGetUserFeedQuery,
+  useGetPostByIdQuery,
   useUpdatePostMutation,
   useDeletePostMutation,
 } = postApi;

@@ -2,6 +2,7 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseURL } from "../../utils/baseURL";
 import { auth } from "../../firebase";
 import { setUser } from "../auth/authSlice";
+import { postApi } from "../post/postApi";
 
 export const userApi = createApi({
   reducerPath: "userApi",
@@ -71,7 +72,7 @@ export const userApi = createApi({
         url: "/me",
         method: "DELETE",
       }),
-    }), // FOLLOW user
+    }),
     followUser: builder.mutation({
       query: (userId) => ({
         url: `/${userId}/follow`,
@@ -80,13 +81,24 @@ export const userApi = createApi({
       async onQueryStarted(userId, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
+
           if (data.currentUser) {
             dispatch(setUser(data.currentUser)); // update auth.user
           }
           if (data.targetUser) {
+            // ✅ Update getUserById cache
             dispatch(
               userApi.util.updateQueryData("getUserById", userId, (draft) => {
                 draft.user = data.targetUser;
+              })
+            );
+
+            // ✅ Update getPostById cache
+            dispatch(
+              postApi.util.updateQueryData("getPostById", userId, (draft) => {
+                if (draft.post?.userId?._id === data.targetUser._id) {
+                  draft.post.userId = data.targetUser;
+                }
               })
             );
           }
@@ -95,6 +107,7 @@ export const userApi = createApi({
         }
       },
     }),
+
     unfollowUser: builder.mutation({
       query: (userId) => ({
         url: `/${userId}/unfollow`,
@@ -103,13 +116,24 @@ export const userApi = createApi({
       async onQueryStarted(userId, { dispatch, queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
+
           if (data.currentUser) {
             dispatch(setUser(data.currentUser));
           }
           if (data.targetUser) {
+            // ✅ Update getUserById cache
             dispatch(
               userApi.util.updateQueryData("getUserById", userId, (draft) => {
                 draft.user = data.targetUser;
+              })
+            );
+
+            // ✅ Update getPostById cache
+            dispatch(
+              postApi.util.updateQueryData("getPostById", userId, (draft) => {
+                if (draft.post?.userId?._id === data.targetUser._id) {
+                  draft.post.userId = data.targetUser;
+                }
               })
             );
           }

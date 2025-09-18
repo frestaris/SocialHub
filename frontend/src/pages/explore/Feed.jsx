@@ -127,21 +127,28 @@ export default function Feed() {
 
           {/* Content */}
           {post.type === "text" && (
-            <Paragraph style={{ marginTop: 8 }}>{post.content}</Paragraph>
+            <Paragraph style={{ marginTop: 8 }}>
+              <Link to={`/post/${post._id}`} style={{ color: "inherit" }}>
+                {post.content}
+              </Link>
+            </Paragraph>
           )}
+
           {post.image && (
             <div style={{ marginTop: 12 }}>
-              <img
-                src={post.image}
-                alt="Post attachment"
-                style={{
-                  width: isDesktop ? "50%" : "100%",
-                  borderRadius: "8px",
-                  objectFit: "cover",
-                  maxHeight: "220px",
-                  display: "block",
-                }}
-              />
+              <Link to={`/post/${post._id}`}>
+                <img
+                  src={post.image}
+                  alt="Post attachment"
+                  style={{
+                    width: isDesktop ? "50%" : "100%",
+                    borderRadius: "8px",
+                    objectFit: "cover",
+                    maxHeight: "220px",
+                    display: "block",
+                  }}
+                />
+              </Link>
             </div>
           )}
 
@@ -161,7 +168,7 @@ export default function Feed() {
                   flex: isDesktop ? "1 1 50%" : "1 1 100%",
                 }}
               >
-                <Link to={`/video/${post.videoId._id}`}>
+                <Link to={`/post/${post._id}`}>
                   <img
                     src={post.videoId.thumbnail || "/fallback-thumbnail.jpg"}
                     alt={post.videoId.title}
@@ -195,10 +202,7 @@ export default function Feed() {
               {/* Info */}
               <div style={{ flex: isDesktop ? "1 1 40%" : "1 1 100%" }}>
                 <Paragraph style={{ margin: "8px 0 4px" }}>
-                  <Link
-                    to={`/video/${post.videoId._id}`}
-                    style={{ color: "#1677ff" }}
-                  >
+                  <Link to={`/post/${post._id}`} style={{ color: "#1677ff" }}>
                     {post.videoId.title}
                   </Link>
                 </Paragraph>

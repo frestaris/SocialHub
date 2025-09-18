@@ -6,8 +6,8 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import HomePage from "./pages/homepage/HomePage";
 import Explore from "./pages/explore/Explore";
-import Video from "./pages/video/Video";
 import Profile from "./pages/user/profile/Profile";
+import Post from "./pages/post/Post";
 
 const { Content } = Layout;
 
@@ -24,7 +24,7 @@ export default function App() {
             {/* Home Page */}
             <Route path="/" element={<HomePage />} />
             <Route path="/explore" element={<Explore />} />
-            <Route path="/video/:id" element={<Video />} />
+            <Route path="/post/:id" element={<Post />} />
 
             <Route path="/profile/:id" element={<Profile />} />
 

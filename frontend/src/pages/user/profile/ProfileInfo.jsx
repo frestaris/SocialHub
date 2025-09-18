@@ -1,4 +1,4 @@
-import { Card, Avatar, Typography, Button, Space } from "antd";
+import { Card, Avatar, Typography, Button, Space, notification } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useState, useMemo } from "react";
@@ -8,11 +8,13 @@ import {
   useFollowUserMutation,
   useUnfollowUserMutation,
 } from "../../../redux/user/userApi";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Paragraph, Text } = Typography;
 
 export default function ProfileInfo({ user }) {
   const currentUser = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
 
   // ✅ safer owner check by _id
   const isOwner = currentUser && user && currentUser._id === user._id;
@@ -31,7 +33,26 @@ export default function ProfileInfo({ user }) {
   }, [user, currentUser]);
 
   const handleFollowToggle = async () => {
-    if (!currentUser) return; // not logged in
+    if (!currentUser) {
+      notification.warning({
+        message: "Login Required",
+        description: "You need to log in to follow users.",
+        actions: (
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => {
+              notification.destroy();
+              navigate("/login", { state: { from: `/profile/${user._id}` } });
+            }}
+          >
+            Go to Login
+          </Button>
+        ),
+        duration: 3,
+      });
+      return;
+    }
     try {
       if (isFollowingUser) {
         await unfollowUser(user._id).unwrap();

@@ -5,7 +5,7 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { auth, googleProvider, githubProvider } from "../../firebase";
 import { useFirebaseLoginMutation } from "../../redux/auth/authApi";
 import { setCredentials, logout } from "../../redux/auth/authSlice";
@@ -24,6 +24,7 @@ import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
 const { Title } = Typography;
 
 export default function Login() {
+  const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -36,6 +37,7 @@ export default function Login() {
   const [errorMessage, setErrorMessage] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
+  const from = location.state?.from || "/explore";
   // Handle Firebase → backend error sync
   useEffect(() => {
     if (socialError) {
@@ -52,8 +54,9 @@ export default function Login() {
       const data = await firebaseLogin(token).unwrap();
       if (data.success) {
         dispatch(setCredentials({ user: data.user, token }));
-        navigate(`/profile/${data.user._id}`);
         setErrorMessage(null);
+
+        navigate(from, { replace: true });
       }
     } catch (err) {
       if (err.code === "auth/account-exists-with-different-credential") {
@@ -88,12 +91,13 @@ export default function Login() {
       }
 
       const token = await fbUser.user.getIdToken();
-
       const data = await firebaseLogin(token).unwrap();
+
       if (data.success) {
         dispatch(setCredentials({ user: data.user, token }));
-        navigate(`/profile/${data.user._id}`);
         setErrorMessage(null);
+
+        navigate(from, { replace: true });
       }
     } catch (err) {
       console.error("❌ Firebase error:", err);

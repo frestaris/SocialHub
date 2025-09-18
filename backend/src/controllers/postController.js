@@ -79,7 +79,7 @@ export const getPostById = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate("userId", "username avatar")
-      .populate("videoId", "title thumbnail url duration");
+      .populate("videoId");
 
     if (!post) return res.status(404).json({ error: "Post not found" });
 
