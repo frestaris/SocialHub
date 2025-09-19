@@ -7,15 +7,20 @@ import {
   Spin,
   Result,
   Tag,
+  Dropdown,
+  Button,
+  Modal,
+  message,
   notification,
 } from "antd";
 import {
   LikeOutlined,
   CommentOutlined,
   EyeOutlined,
-  VideoCameraOutlined,
-  FileTextOutlined,
   UserOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  MoreOutlined,
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useToggleLikePostMutation } from "../../redux/post/postApi";
@@ -23,17 +28,47 @@ import moment from "moment";
 import { useGetPostsQuery } from "../../redux/post/postApi";
 import { Link } from "react-router-dom";
 import CategoryBadge from "../../components/CategoryBadge";
+import {
+  useUpdatePostMutation,
+  useDeletePostMutation,
+} from "../../redux/post/postApi";
+import { useState } from "react";
+import EditPostForm from "../user/profile/EditPostForm";
+import EditVideoForm from "../user/profile/EditVideoForm";
+import Masonry from "react-masonry-css";
 
+const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
 const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
 export default function Feed() {
   const screens = useBreakpoint();
-  const isDesktop = screens.lg;
+  const isDesktop = screens.md;
+  const isSmall = !screens.sm;
   const currentUser = useSelector((state) => state.auth.user);
   const [toggleLikePost] = useToggleLikePostMutation();
+  const [editingPost, setEditingPost] = useState(null);
+  const [deletingPost, setDeletingPost] = useState(null);
+
+  const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
+  const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
 
   const { data, isLoading, isError } = useGetPostsQuery();
+  const handleDeleteConfirm = async () => {
+    try {
+      if (!deletingPost) return;
+      await deletePost({
+        id: deletingPost._id,
+        userId: deletingPost.userId?._id,
+        sort: "newest",
+      }).unwrap();
+      message.success("Post deleted!");
+      setDeletingPost(null);
+    } catch (err) {
+      console.error("❌ Error deleting post:", err);
+      message.error("Failed to delete post");
+    }
+  };
 
   const handleLikeToggle = async (post) => {
     if (!currentUser) {
@@ -54,7 +89,16 @@ export default function Feed() {
       console.error("❌ Like toggle failed:", err);
     }
   };
-
+  const tagStyle = {
+    background: "#f0f0f0",
+    borderRadius: "16px",
+    padding: "2px 10px",
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    margin: 0,
+    cursor: "pointer",
+  };
   if (isLoading) {
     return (
       <div
@@ -93,24 +137,36 @@ export default function Feed() {
   }
 
   return (
-    <div style={{ margin: "0 auto" }}>
+    <Masonry
+      breakpointCols={breakpointColumns}
+      className="masonry-grid"
+      columnClassName="masonry-grid_column"
+    >
       {posts.map((post) => (
         <Card
           key={post._id}
-          style={{ marginBottom: 24, borderRadius: 12 }}
-          stylesbody={{ padding: "16px" }}
+          hoverable
+          style={{
+            breakInside: "avoid",
+            marginBottom: 16,
+            borderRadius: 12,
+            overflow: "hidden",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+          }}
+          stylesbody={{ padding: "12px" }}
         >
-          {/* User info + type icon */}
+          {/* Header: avatar + username + time */}
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              marginBottom: 12,
+              marginBottom: 8,
             }}
           >
-            <Space>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Avatar
+                size="large"
                 src={
                   post.userId?.avatar
                     ? `${post.userId.avatar}?t=${post.userId._id}`
@@ -119,164 +175,177 @@ export default function Feed() {
                 icon={!post.userId?.avatar && <UserOutlined />}
               />
               <div>
-                <Link to={`/profile/${post.userId._id}`}>
-                  <Text style={{ color: "#1677ff" }} strong>
+                <Text
+                  strong
+                  style={{ display: "block", fontSize: isSmall ? 12 : 14 }}
+                >
+                  <Link to={`/profile/${post.userId._id}`}>
                     {post.userId?.username}
-                  </Text>
-                </Link>
-                <br />
+                  </Link>
+                </Text>
                 <Text
                   type="secondary"
                   style={{
-                    fontSize: "12px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
+                    fontSize: isSmall ? 10 : 12,
                   }}
                 >
                   {moment(post.createdAt).fromNow()}
                 </Text>
               </div>
-            </Space>
-
-            <div
-              style={{
-                background: "#f0f0f0",
-                borderRadius: "50%",
-                width: 32,
-                height: 32,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-              }}
-            >
-              {post.type === "video" ? (
-                <VideoCameraOutlined style={{ color: "#1677ff" }} />
-              ) : (
-                <FileTextOutlined style={{ color: "#52c41a" }} />
-              )}
             </div>
+
+            {/* Dropdown if current user is owner */}
+            {currentUser?._id === post.userId?._id && (
+              <Dropdown
+                menu={{
+                  items: [
+                    {
+                      key: "edit",
+                      label: "Edit",
+                      icon: <EditOutlined />,
+                      onClick: () => setEditingPost(post),
+                    },
+                    {
+                      key: "delete",
+                      label: "Delete",
+                      danger: true,
+                      icon: <DeleteOutlined />,
+                      onClick: () => setDeletingPost(post),
+                    },
+                  ],
+                }}
+                trigger={["click"]}
+                placement="bottomRight"
+              >
+                <Button
+                  type="text"
+                  size="large"
+                  icon={<MoreOutlined style={{ fontSize: 20 }} />}
+                  shape="circle"
+                />
+              </Dropdown>
+            )}
           </div>
 
-          {/* Content */}
-          {post.type === "text" && (
-            <Paragraph style={{ marginTop: 8 }}>
+          {/* Media (video thumbnail or image) */}
+          {post.type === "video" && post.videoId && (
+            <Link to={`/post/${post._id}`}>
+              <div
+                style={{
+                  position: "relative",
+                  marginBottom: 8,
+                  aspectRatio: "16/9",
+                  overflow: "hidden",
+                  borderRadius: "8px",
+                }}
+              >
+                <img
+                  src={post.videoId.thumbnail || "/fallback-thumbnail.jpg"}
+                  alt={post.videoId.title}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+                {post.videoId.duration > 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: "8px",
+                      right: "8px",
+                      background: "rgba(0,0,0,0.75)",
+                      color: "#fff",
+                      fontSize: "12px",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    {Math.floor(post.videoId.duration / 60)}:
+                    {(post.videoId.duration % 60).toString().padStart(2, "0")}
+                  </span>
+                )}
+              </div>
+            </Link>
+          )}
+
+          {post.image && (
+            <Link to={`/post/${post._id}`}>
+              <div
+                style={{
+                  position: "relative",
+                  marginBottom: 8,
+                  aspectRatio: "16/9",
+                  overflow: "hidden",
+                  borderRadius: "8px",
+                }}
+              >
+                <img
+                  src={post.image}
+                  alt="Post attachment"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                  }}
+                />
+              </div>
+            </Link>
+          )}
+
+          {/* Title & description/content */}
+          {post.type === "video" ? (
+            <>
+              {/* Title */}
+              <Paragraph
+                style={{ margin: "0 0 4px", fontSize: isSmall ? 13 : 15 }}
+                ellipsis={{ rows: 2 }}
+              >
+                <Link
+                  to={`/post/${post._id}`}
+                  style={{ color: "#000", fontWeight: 600 }}
+                >
+                  {post.videoId?.title}
+                </Link>
+              </Paragraph>
+
+              {/* Description */}
+              <Paragraph
+                type="secondary"
+                ellipsis={{ rows: 2 }}
+                style={{ margin: 0, fontSize: isSmall ? 13 : 15 }}
+              >
+                {post.videoId?.description}
+              </Paragraph>
+            </>
+          ) : (
+            /* Text post */
+            <Paragraph
+              type="secondary"
+              ellipsis={{ rows: 3 }}
+              style={{ margin: "4px 0 0" }}
+            >
               <Link to={`/post/${post._id}`} style={{ color: "inherit" }}>
                 {post.content}
               </Link>
             </Paragraph>
           )}
 
-          {post.image && (
-            <div style={{ marginTop: 12 }}>
-              <Link to={`/post/${post._id}`}>
-                <img
-                  src={post.image}
-                  alt="Post attachment"
-                  style={{
-                    width: isDesktop ? "50%" : "100%",
-                    borderRadius: "8px",
-                    objectFit: "cover",
-                    maxHeight: "220px",
-                    display: "block",
-                  }}
-                />
-              </Link>
-            </div>
-          )}
-
-          {post.type === "video" && post.videoId && (
-            <div
-              style={{
-                marginTop: 12,
-                display: "flex",
-                flexDirection: isDesktop ? "row" : "column",
-                gap: "16px",
-              }}
-            >
-              {/* Thumbnail */}
-              <div
-                style={{
-                  position: "relative",
-                  flex: isDesktop ? "1 1 50%" : "1 1 100%",
-                }}
-              >
-                <Link to={`/post/${post._id}`}>
-                  <img
-                    src={post.videoId.thumbnail || "/fallback-thumbnail.jpg"}
-                    alt={post.videoId.title}
-                    style={{
-                      width: "100%",
-                      borderRadius: "8px",
-                      objectFit: "cover",
-                      maxHeight: isDesktop ? "220px" : "300px",
-                    }}
-                  />
-                  {post.videoId.duration > 0 && (
-                    <span
-                      style={{
-                        position: "absolute",
-                        bottom: "8px",
-                        right: "8px",
-                        background: "rgba(0,0,0,0.75)",
-                        color: "#fff",
-                        fontSize: "12px",
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                      }}
-                    >
-                      {Math.floor(post.videoId.duration / 60)}:
-                      {(post.videoId.duration % 60).toString().padStart(2, "0")}
-                    </span>
-                  )}
-                </Link>
-              </div>
-
-              {/* Info */}
-              <div style={{ flex: isDesktop ? "1 1 40%" : "1 1 100%" }}>
-                <Paragraph style={{ margin: "8px 0 4px" }}>
-                  <Link to={`/post/${post._id}`} style={{ color: "#1677ff" }}>
-                    {post.videoId.title}
-                  </Link>
-                </Paragraph>
-                <Paragraph
-                  type="secondary"
-                  ellipsis={{ rows: 2 }}
-                  style={{ margin: 0 }}
-                >
-                  {post.videoId.description}
-                </Paragraph>
-              </div>
-            </div>
-          )}
-
-          <Space style={{ marginTop: 12 }}>
+          {/* Footer badges */}
+          <Space style={{ marginTop: 12, flexWrap: "wrap" }}>
             <CategoryBadge category={post.category} />
             <Tag
-              color="default"
               style={{
-                background: "#f0f0f0",
-                borderRadius: "16px",
-                padding: "2px 10px",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                margin: 0,
+                ...tagStyle,
+                fontSize: isSmall ? 11 : 13,
               }}
             >
               <EyeOutlined /> {post.views || 0}
             </Tag>
             <Tag
               style={{
-                background: "#f0f0f0",
-                borderRadius: "16px",
-                padding: "2px 10px",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                margin: 0,
-                cursor: "pointer",
+                ...tagStyle,
+                fontSize: isSmall ? 11 : 13,
               }}
               onClick={() => handleLikeToggle(post)}
             >
@@ -288,20 +357,13 @@ export default function Feed() {
                     ? "#1677ff"
                     : "#555",
                 }}
-              />
+              />{" "}
               {post.likes?.length || 0}
             </Tag>
-
             <Tag
-              color="default"
               style={{
-                background: "#f0f0f0",
-                borderRadius: "16px",
-                padding: "2px 10px",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                margin: 0,
+                ...tagStyle,
+                fontSize: isSmall ? 11 : 13,
               }}
             >
               <CommentOutlined /> {post.comments?.length || 0}
@@ -309,6 +371,57 @@ export default function Feed() {
           </Space>
         </Card>
       ))}
-    </div>
+      {/* ---- Edit Modal ---- */}
+      <Modal
+        open={!!editingPost}
+        title="Edit Post"
+        onCancel={() => setEditingPost(null)}
+        footer={null}
+        width={isDesktop ? "70%" : "100%"}
+        style={{
+          top: isDesktop ? 30 : 5,
+          maxWidth: isDesktop ? 600 : "100%",
+          padding: "0 16px",
+        }}
+        destroyOnHidden
+      >
+        {editingPost?.type === "video" ? (
+          <EditVideoForm
+            post={editingPost}
+            open={!!editingPost}
+            onUpdate={updatePost}
+            onClose={() => setEditingPost(null)}
+            loading={isUpdatingPost}
+          />
+        ) : (
+          <EditPostForm
+            post={editingPost}
+            open={!!editingPost}
+            onUpdate={updatePost}
+            onClose={() => setEditingPost(null)}
+            loading={isUpdatingPost}
+          />
+        )}
+      </Modal>
+
+      {/* ---- Delete Modal ---- */}
+      <Modal
+        open={!!deletingPost}
+        title="Confirm Delete"
+        okText="Yes, delete"
+        okType="danger"
+        confirmLoading={isDeletingPost}
+        onCancel={() => setDeletingPost(null)}
+        onOk={handleDeleteConfirm}
+      >
+        Are you sure you want to delete{" "}
+        <b>
+          {deletingPost?.type === "video"
+            ? deletingPost?.videoId?.title
+            : "this post"}
+        </b>
+        ?
+      </Modal>
+    </Masonry>
   );
 }

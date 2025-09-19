@@ -107,17 +107,6 @@ export default function Login() {
     }
   };
 
-  if (user) {
-    return (
-      <div style={{ textAlign: "center", marginTop: "50px" }}>
-        <Title level={3}>Welcome, {user.username || user.email}!</Title>
-        <Button type="primary" danger onClick={() => dispatch(logout())}>
-          Logout
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div
       style={{

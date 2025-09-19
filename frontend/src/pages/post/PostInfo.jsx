@@ -79,11 +79,7 @@ export default function PostInfo({ post }) {
     }
 
     try {
-      const res = await toggleFollowUser(post.userId._id).unwrap();
-      console.log(
-        "👉 Follow toggled:",
-        res.isFollowing ? "Now following" : "Unfollowed"
-      );
+      await toggleFollowUser(post.userId._id).unwrap();
     } catch (err) {
       console.error("❌ Toggle follow error:", err);
     }
