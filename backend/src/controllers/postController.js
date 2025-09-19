@@ -273,7 +273,7 @@ export const likePost = async (req, res) => {
       await post.save();
     }
 
-    res.json({ success: true, likes: post.likes.length });
+    res.json({ success: true, likes: post.likes });
   } catch (err) {
     console.error("Like post error:", err);
     res.status(500).json({ success: false, error: "Server error" });
@@ -292,7 +292,7 @@ export const unlikePost = async (req, res) => {
     );
     await post.save();
 
-    res.json({ success: true, likes: post.likes.length });
+    res.json({ success: true, likes: post.likes });
   } catch (err) {
     console.error("Unlike post error:", err);
     res.status(500).json({ success: false, error: "Server error" });

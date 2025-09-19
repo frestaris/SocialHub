@@ -13,6 +13,10 @@ import {
   useFollowUserMutation,
   useUnfollowUserMutation,
 } from "../../redux/user/userApi";
+import {
+  useLikePostMutation,
+  useUnlikePostMutation,
+} from "../../redux/post/postApi";
 import VideoPlayer from "./VideoPlayer";
 import CategoryBadge from "../../components/CategoryBadge";
 
@@ -27,6 +31,10 @@ export default function PostInfo({ post }) {
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner =
     currentUser && post.userId && currentUser._id === post.userId._id;
+  const [likePost] = useLikePostMutation();
+  const [unlikePost] = useUnlikePostMutation();
+
+  const hasLiked = post.likes?.some((id) => id.toString() === currentUser?._id);
 
   const [followUser, { isLoading: isFollowing }] = useFollowUserMutation();
   const [unfollowUser, { isLoading: isUnfollowing }] =
@@ -36,6 +44,30 @@ export default function PostInfo({ post }) {
     if (!currentUser || !post?.userId) return false;
     return currentUser.following?.some((f) => f._id === post.userId._id);
   }, [currentUser, post]);
+
+  const handleLikeToggle = async () => {
+    if (!currentUser) {
+      notification.warning({
+        message: "Login Required",
+        description: "Please log in to like posts.",
+      });
+      return;
+    }
+
+    try {
+      if (hasLiked) {
+        await unlikePost(post._id).unwrap();
+      } else {
+        await likePost(post._id).unwrap();
+      }
+    } catch (err) {
+      console.error("❌ Like/Unlike failed:", err);
+      notification.error({
+        message: "Error",
+        description: "Failed to update like",
+      });
+    }
+  };
 
   const handleFollowToggle = async () => {
     if (!currentUser) {
@@ -170,10 +202,14 @@ export default function PostInfo({ post }) {
             alignItems: "center",
             gap: "6px",
             margin: 0,
+            cursor: "pointer",
           }}
+          onClick={handleLikeToggle}
         >
-          <LikeOutlined /> {post.likes?.length || 0}
+          <LikeOutlined style={{ color: hasLiked ? "#1677ff" : "#555" }} />{" "}
+          {post.likes?.length || 0}
         </Tag>
+
         <Tag
           style={{
             background: "#f0f0f0",
