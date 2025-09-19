@@ -102,3 +102,36 @@ export const updateComment = async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
+
+//  Delete Comment
+export const deleteComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const comment = await Comment.findById(id);
+    if (!comment) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Comment not found" });
+    }
+
+    // Only owner can delete
+    if (comment.userId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ success: false, error: "Not authorized" });
+    }
+
+    // Remove from Post.comments
+    if (comment.postId) {
+      await Post.findByIdAndUpdate(comment.postId, {
+        $pull: { comments: comment._id },
+      });
+    }
+
+    await comment.deleteOne();
+
+    res.json({ success: true, id });
+  } catch (err) {
+    console.error("Delete comment error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+};

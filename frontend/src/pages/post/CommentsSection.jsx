@@ -20,6 +20,7 @@ import {
   useGetCommentsByPostQuery,
   useCreateCommentMutation,
   useUpdateCommentMutation,
+  useDeleteCommentMutation,
 } from "../../redux/comment/commentApi";
 import { postApi } from "../../redux/post/postApi";
 import { Link } from "react-router-dom";
@@ -32,6 +33,7 @@ export default function CommentsSection({ postId }) {
   const [content, setContent] = useState("");
   const [editingComment, setEditingComment] = useState(null);
   const dispatch = useDispatch();
+  const [deleteComment] = useDeleteCommentMutation();
 
   const { data, isLoading } = useGetCommentsByPostQuery(postId);
 
@@ -129,6 +131,21 @@ export default function CommentsSection({ postId }) {
       });
     }
   };
+  //  ---- Handle Delete ---
+  const handleDelete = async (commentId) => {
+    try {
+      await deleteComment({ id: commentId, postId }).unwrap();
+      notification.success({
+        message: "Comment Deleted",
+        description: "Your comment has been deleted successfully.",
+      });
+    } catch (err) {
+      notification.error({
+        message: "Delete Failed",
+        description: err?.data?.error || "Failed to delete comment",
+      });
+    }
+  };
 
   return (
     <div>
@@ -178,7 +195,7 @@ export default function CommentsSection({ postId }) {
                         label: "Delete",
                         danger: true,
                         icon: <DeleteOutlined />,
-                        // TODO: hook up deleteComment here
+                        onClick: () => handleDelete(item._id),
                       },
                     ],
                   }}

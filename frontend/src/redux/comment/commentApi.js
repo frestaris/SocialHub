@@ -1,6 +1,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseURL } from "../../utils/baseURL";
 import { auth } from "../../firebase";
+import { postApi } from "../post/postApi";
 
 export const commentApi = createApi({
   reducerPath: "commentApi",
@@ -72,6 +73,42 @@ export const commentApi = createApi({
         return ["Comment"];
       },
     }),
+    //  Delete comment
+    deleteComment: builder.mutation({
+      query: ({ id }) => ({
+        url: `/${id}`,
+        method: "DELETE",
+      }),
+      async onQueryStarted({ id, postId }, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled;
+
+          // Remove from cached comments list
+          if (postId) {
+            dispatch(
+              commentApi.util.updateQueryData(
+                "getCommentsByPost",
+                postId,
+                (draft) => {
+                  draft.comments = draft.comments.filter((c) => c._id !== id);
+                }
+              )
+            );
+
+            // Also update Post cache (so comment length updates in PostInfo)
+            dispatch(
+              postApi.util.updateQueryData("getPostById", postId, (draft) => {
+                draft.post.comments = draft.post.comments.filter(
+                  (c) => c._id !== id
+                );
+              })
+            );
+          }
+        } catch (err) {
+          console.error("Delete comment cache update failed:", err);
+        }
+      },
+    }),
   }),
 });
 
@@ -79,4 +116,5 @@ export const {
   useGetCommentsByPostQuery,
   useCreateCommentMutation,
   useUpdateCommentMutation,
+  useDeleteCommentMutation,
 } = commentApi;

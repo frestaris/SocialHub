@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createComment,
+  deleteComment,
   getComments,
   updateComment,
 } from "../controllers/commentController.js";
@@ -13,5 +14,6 @@ router.post("/", protect, createComment);
 
 router.get("/post/:postId", getComments);
 router.put("/:id", protect, updateComment);
+router.delete("/:id", protect, deleteComment);
 
 export default router;
