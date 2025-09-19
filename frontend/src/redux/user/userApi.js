@@ -2,7 +2,6 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseURL } from "../../utils/baseURL";
 import { auth } from "../../firebase";
 import { setUser } from "../auth/authSlice";
-import { postApi } from "../post/postApi";
 
 export const userApi = createApi({
   reducerPath: "userApi",
@@ -73,72 +72,50 @@ export const userApi = createApi({
         method: "DELETE",
       }),
     }),
-    followUser: builder.mutation({
+    toggleFollowUser: builder.mutation({
       query: (userId) => ({
         url: `/${userId}/follow`,
-        method: "POST",
+        method: "PATCH",
       }),
-      async onQueryStarted(userId, { dispatch, queryFulfilled }) {
+      async onQueryStarted(userId, { dispatch, getState, queryFulfilled }) {
+        const currentUserId = getState().auth.user?._id;
+
+        // ---- Optimistic update target user ----
+        const patchResult = dispatch(
+          userApi.util.updateQueryData("getUserById", userId, (draft) => {
+            if (!draft.user) return;
+            const isFollowing = draft.user.followers.some(
+              (f) => f._id?.toString() === currentUserId
+            );
+            if (isFollowing) {
+              draft.user.followers = draft.user.followers.filter(
+                (f) => f._id?.toString() !== currentUserId
+              );
+            } else {
+              draft.user.followers.push({ _id: currentUserId });
+            }
+          })
+        );
+
         try {
           const { data } = await queryFulfilled;
 
-          if (data.currentUser) {
-            dispatch(setUser(data.currentUser)); // update auth.user
-          }
-          if (data.targetUser) {
-            // ✅ Update getUserById cache
-            dispatch(
-              userApi.util.updateQueryData("getUserById", userId, (draft) => {
-                draft.user = data.targetUser;
-              })
-            );
-
-            // ✅ Update getPostById cache
-            dispatch(
-              postApi.util.updateQueryData("getPostById", userId, (draft) => {
-                if (draft.post?.userId?._id === data.targetUser._id) {
-                  draft.post.userId = data.targetUser;
-                }
-              })
-            );
-          }
-        } catch (err) {
-          console.error("Follow mutation failed:", err);
-        }
-      },
-    }),
-
-    unfollowUser: builder.mutation({
-      query: (userId) => ({
-        url: `/${userId}/unfollow`,
-        method: "POST",
-      }),
-      async onQueryStarted(userId, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
-
+          // ✅ update auth.user (so PostInfo sees the new following state)
           if (data.currentUser) {
             dispatch(setUser(data.currentUser));
           }
+
+          // ✅ optionally patch target user with server’s truth
           if (data.targetUser) {
-            // ✅ Update getUserById cache
             dispatch(
               userApi.util.updateQueryData("getUserById", userId, (draft) => {
                 draft.user = data.targetUser;
               })
             );
-
-            // ✅ Update getPostById cache
-            dispatch(
-              postApi.util.updateQueryData("getPostById", userId, (draft) => {
-                if (draft.post?.userId?._id === data.targetUser._id) {
-                  draft.post.userId = data.targetUser;
-                }
-              })
-            );
           }
         } catch (err) {
-          console.error("Unfollow mutation failed:", err);
+          patchResult.undo(); // rollback optimistic change
+          console.error("❌ Toggle follow failed, rolled back:", err);
         }
       },
     }),
@@ -151,6 +128,5 @@ export const {
   useListUsersQuery,
   useUpdateUserMutation,
   useDeleteUserMutation,
-  useFollowUserMutation,
-  useUnfollowUserMutation,
+  useToggleFollowUserMutation,
 } = userApi;

@@ -4,13 +4,10 @@ import { useSelector } from "react-redux";
 import { useState, useMemo } from "react";
 import SettingsModal from "../settings/SettingsModal";
 import Upload from "../../upload/Upload";
-import {
-  useFollowUserMutation,
-  useUnfollowUserMutation,
-} from "../../../redux/user/userApi";
+import { useToggleFollowUserMutation } from "../../../redux/user/userApi";
 import { useNavigate } from "react-router-dom";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
 export default function ProfileInfo({ user }) {
   const currentUser = useSelector((state) => state.auth.user);
@@ -22,9 +19,8 @@ export default function ProfileInfo({ user }) {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  const [followUser, { isLoading: isFollowing }] = useFollowUserMutation();
-  const [unfollowUser, { isLoading: isUnfollowing }] =
-    useUnfollowUserMutation();
+  const [toggleFollowUser, { isLoading: isFollowLoading }] =
+    useToggleFollowUserMutation();
 
   // ✅ Check if current user already follows this profile
   const isFollowingUser = useMemo(() => {
@@ -54,13 +50,13 @@ export default function ProfileInfo({ user }) {
       return;
     }
     try {
-      if (isFollowingUser) {
-        await unfollowUser(user._id).unwrap();
-      } else {
-        await followUser(user._id).unwrap();
-      }
+      const res = await toggleFollowUser(user._id).unwrap();
+      console.log(
+        "👉 Follow toggled:",
+        res.isFollowing ? "Now following" : "Unfollowed"
+      );
     } catch (err) {
-      console.error("Follow/unfollow error:", err);
+      console.error("❌ Toggle follow error:", err);
     }
   };
 
@@ -105,7 +101,7 @@ export default function ProfileInfo({ user }) {
               <Button
                 type={isFollowingUser ? "default" : "primary"}
                 block
-                loading={isFollowing || isUnfollowing}
+                loading={isFollowLoading}
                 onClick={handleFollowToggle}
               >
                 {isFollowingUser ? "Unfollow" : "Follow"}

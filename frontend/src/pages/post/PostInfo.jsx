@@ -9,10 +9,7 @@ import {
 import moment from "moment";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {
-  useFollowUserMutation,
-  useUnfollowUserMutation,
-} from "../../redux/user/userApi";
+import { useToggleFollowUserMutation } from "../../redux/user/userApi";
 import { useToggleLikePostMutation } from "../../redux/post/postApi";
 import VideoPlayer from "./VideoPlayer";
 import CategoryBadge from "../../components/CategoryBadge";
@@ -31,9 +28,8 @@ export default function PostInfo({ post }) {
   const [toggleLikePost] = useToggleLikePostMutation();
 
   const hasLiked = post.likes?.some((id) => id.toString() === currentUser?._id);
-  const [followUser, { isLoading: isFollowing }] = useFollowUserMutation();
-  const [unfollowUser, { isLoading: isUnfollowing }] =
-    useUnfollowUserMutation();
+  const [toggleFollowUser, { isLoading: isFollowLoading }] =
+    useToggleFollowUserMutation();
 
   const isFollowingUser = useMemo(() => {
     if (!currentUser || !post?.userId) return false;
@@ -81,14 +77,15 @@ export default function PostInfo({ post }) {
       });
       return;
     }
+
     try {
-      if (isFollowingUser) {
-        await unfollowUser(post.userId._id).unwrap();
-      } else {
-        await followUser(post.userId._id).unwrap();
-      }
+      const res = await toggleFollowUser(post.userId._id).unwrap();
+      console.log(
+        "👉 Follow toggled:",
+        res.isFollowing ? "Now following" : "Unfollowed"
+      );
     } catch (err) {
-      console.error("Follow/unfollow error:", err);
+      console.error("❌ Toggle follow error:", err);
     }
   };
 
@@ -153,7 +150,7 @@ export default function PostInfo({ post }) {
           <Button
             type={isFollowingUser ? "default" : "primary"}
             size="small"
-            loading={isFollowing || isUnfollowing}
+            loading={isFollowLoading}
             onClick={handleFollowToggle}
           >
             {isFollowingUser ? "Unfollow" : "Follow"}

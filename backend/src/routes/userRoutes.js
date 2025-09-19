@@ -1,11 +1,10 @@
 import express from "express";
 import {
   deleteUser,
-  followUser,
   getCurrentUser,
   getUserById,
   listUsers,
-  unfollowUser,
+  toggleFollow,
   updateUser,
 } from "../controllers/userController.js";
 import { protect } from "../middleware/authMiddleware.js";
@@ -18,7 +17,6 @@ router.get("/me", protect, getCurrentUser);
 router.put("/:me", protect, updateUser);
 router.delete("/me", protect, deleteUser);
 
-router.post("/:id/follow", protect, followUser);
-router.post("/:id/unfollow", protect, unfollowUser);
+router.patch("/:id/follow", protect, toggleFollow);
 
 export default router;

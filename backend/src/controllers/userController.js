@@ -145,8 +145,7 @@ export const listUsers = async (req, res) => {
   }
 };
 
-// ✅ Follow a user
-export const followUser = async (req, res) => {
+export const toggleFollow = async (req, res) => {
   try {
     const { id } = req.params; // target user
     const currentUserId = req.user._id;
@@ -162,14 +161,23 @@ export const followUser = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    if (targetUser.followers.includes(currentUserId)) {
-      return res
-        .status(200)
-        .json({ success: true, message: "Already following" });
-    }
+    const isFollowing = targetUser.followers.some(
+      (f) => f.toString() === currentUserId.toString()
+    );
 
-    targetUser.followers.push(currentUserId);
-    currentUser.following.push(targetUser._id);
+    if (isFollowing) {
+      // ✅ Unfollow
+      targetUser.followers = targetUser.followers.filter(
+        (f) => f.toString() !== currentUserId.toString()
+      );
+      currentUser.following = currentUser.following.filter(
+        (f) => f.toString() !== targetUser._id.toString()
+      );
+    } else {
+      // ✅ Follow
+      targetUser.followers.push(currentUserId);
+      currentUser.following.push(targetUser._id);
+    }
 
     await Promise.all([targetUser.save(), currentUser.save()]);
 
@@ -184,53 +192,12 @@ export const followUser = async (req, res) => {
 
     res.json({
       success: true,
+      isFollowing: !isFollowing, // new state
       targetUser: updatedTarget,
       currentUser: updatedCurrent,
     });
   } catch (err) {
-    console.error("Follow user error:", err);
-    res.status(500).json({ error: "Server error" });
-  }
-};
-
-// ✅ Unfollow a user
-export const unfollowUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const currentUserId = req.user._id;
-
-    const targetUser = await User.findById(id);
-    const currentUser = await User.findById(currentUserId);
-
-    if (!targetUser || !currentUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    targetUser.followers = targetUser.followers.filter(
-      (f) => f.toString() !== currentUserId.toString()
-    );
-    currentUser.following = currentUser.following.filter(
-      (f) => f.toString() !== targetUser._id.toString()
-    );
-
-    await Promise.all([targetUser.save(), currentUser.save()]);
-
-    // Re-fetch both users with populate
-    const updatedTarget = await User.findById(id)
-      .populate("followers", "username avatar")
-      .populate("following", "username avatar");
-
-    const updatedCurrent = await User.findById(currentUserId)
-      .populate("followers", "username avatar")
-      .populate("following", "username avatar");
-
-    res.json({
-      success: true,
-      targetUser: updatedTarget,
-      currentUser: updatedCurrent,
-    });
-  } catch (err) {
-    console.error("Unfollow user error:", err);
+    console.error("Toggle follow error:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
