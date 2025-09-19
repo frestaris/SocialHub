@@ -38,8 +38,45 @@ export const commentApi = createApi({
         return ["Comment"];
       },
     }),
+    //  Update comment
+    updateComment: builder.mutation({
+      query: ({ id, ...patch }) => ({
+        url: `/${id}`,
+        method: "PUT",
+        body: patch,
+      }),
+      async onQueryStarted({ id, postId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+
+          //  Update getCommentsByPost cache instantly
+          if (postId) {
+            dispatch(
+              commentApi.util.updateQueryData(
+                "getCommentsByPost",
+                postId,
+                (draft) => {
+                  const idx = draft.comments?.findIndex((c) => c._id === id);
+                  if (idx !== -1) draft.comments[idx] = data.comment;
+                }
+              )
+            );
+          }
+        } catch (err) {
+          console.error("Comment cache update failed:", err);
+        }
+      },
+      invalidatesTags: (result, error, { postId, videoId }) => {
+        if (postId) return [{ type: "Comment", id: postId }];
+        if (videoId) return [{ type: "Comment", id: videoId }];
+        return ["Comment"];
+      },
+    }),
   }),
 });
 
-export const { useGetCommentsByPostQuery, useCreateCommentMutation } =
-  commentApi;
+export const {
+  useGetCommentsByPostQuery,
+  useCreateCommentMutation,
+  useUpdateCommentMutation,
+} = commentApi;

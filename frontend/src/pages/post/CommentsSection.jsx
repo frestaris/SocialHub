@@ -1,28 +1,48 @@
-import { useState } from "react";
-import { List, Avatar, Input, Button, Typography, notification } from "antd";
-import { UserOutlined } from "@ant-design/icons";
+import { useState, useRef } from "react";
+import {
+  List,
+  Avatar,
+  Input,
+  Button,
+  Typography,
+  notification,
+  Dropdown,
+} from "antd";
+import {
+  UserOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  MoreOutlined,
+} from "@ant-design/icons";
 import moment from "moment";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import {
   useGetCommentsByPostQuery,
   useCreateCommentMutation,
+  useUpdateCommentMutation,
 } from "../../redux/comment/commentApi";
 import { postApi } from "../../redux/post/postApi";
-import { useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
+
 const { Text } = Typography;
 
 export default function CommentsSection({ postId }) {
   const currentUser = useSelector((state) => state.auth.user);
+  const currentUserId = currentUser?._id;
   const [content, setContent] = useState("");
+  const [editingComment, setEditingComment] = useState(null);
   const dispatch = useDispatch();
 
   const { data, isLoading } = useGetCommentsByPostQuery(postId);
 
   const [createComment, { isLoading: isPosting }] = useCreateCommentMutation();
+  const [updateComment, { isLoading: isUpdating }] = useUpdateCommentMutation();
+
+  const textareaRef = useRef(null); // 👈 add ref for textarea
 
   const comments = data?.comments || [];
 
+  // ---- Submit new comment ----
   const handleSubmit = async () => {
     if (!currentUser) {
       notification.warning({
@@ -39,9 +59,6 @@ export default function CommentsSection({ postId }) {
       });
       return;
     }
-
-    // Optimistic UI update rollback backup
-    let rolledBack = false;
 
     try {
       const newComment = await createComment({ postId, content }).unwrap();
@@ -60,40 +77,82 @@ export default function CommentsSection({ postId }) {
 
       setContent("");
     } catch (err) {
-      rolledBack = true;
-
       notification.error({
         message: "Comment Failed",
         description:
           err?.data?.error ||
           "Something went wrong while posting your comment.",
       });
-
       console.error("Failed to add comment:", err);
-    } finally {
-      if (rolledBack) {
-        // Optionally: refetch post to ensure data consistency
-        dispatch(postApi.util.invalidateTags([{ type: "Post", id: postId }]));
+    }
+  };
+
+  // ---- Handle Edit ----
+  const handleEdit = (item) => {
+    setEditingComment(item);
+    setContent(item.content); // load existing text
+    // scroll into view after short delay (so state update renders textarea first)
+    setTimeout(() => {
+      const el = textareaRef.current?.resizableTextArea?.textArea;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        const scrollTop = window.scrollY + rect.top - 200;
+        window.scrollTo({ top: scrollTop, behavior: "smooth" });
+        el.focus({ preventScroll: true });
       }
+    }, 100);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingComment) return;
+
+    try {
+      await updateComment({
+        id: editingComment._id,
+        postId,
+        content,
+      }).unwrap();
+
+      notification.success({
+        message: "Comment Updated",
+        description: "Your comment has been updated successfully.",
+      });
+
+      setEditingComment(null);
+      setContent("");
+    } catch (err) {
+      notification.error({
+        message: "Update Failed",
+        description:
+          err?.data?.error ||
+          "Something went wrong while updating your comment.",
+      });
     }
   };
 
   return (
     <div>
       <Input.TextArea
+        ref={textareaRef}
         rows={3}
-        placeholder="Add a comment..."
+        placeholder={
+          editingComment ? "Edit your comment..." : "Add a comment..."
+        }
         value={content}
         onChange={(e) => setContent(e.target.value)}
         style={{ marginBottom: "12px" }}
       />
       <Button
         type="primary"
-        onClick={handleSubmit}
-        loading={isPosting}
-        disabled={!currentUser}
+        onClick={editingComment ? handleUpdate : handleSubmit}
+        loading={isPosting || isUpdating}
+        disabled={
+          !currentUser ||
+          (!editingComment && !content.trim()) ||
+          (editingComment && content.trim() === editingComment.content.trim())
+        }
       >
-        Comment
+        {editingComment ? "Update Comment" : "Comment"}
       </Button>
 
       <List
@@ -102,7 +161,40 @@ export default function CommentsSection({ postId }) {
         dataSource={comments}
         style={{ marginTop: "16px" }}
         renderItem={(item) => (
-          <List.Item>
+          <List.Item
+            actions={[
+              currentUserId === item.userId?._id && (
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: "edit",
+                        label: "Edit",
+                        icon: <EditOutlined />,
+                        onClick: () => handleEdit(item),
+                      },
+                      {
+                        key: "delete",
+                        label: "Delete",
+                        danger: true,
+                        icon: <DeleteOutlined />,
+                        // TODO: hook up deleteComment here
+                      },
+                    ],
+                  }}
+                  trigger={["click"]}
+                  placement="bottomRight"
+                >
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<MoreOutlined style={{ fontSize: 16 }} />}
+                    shape="circle"
+                  />
+                </Dropdown>
+              ),
+            ]}
+          >
             <List.Item.Meta
               avatar={
                 <Avatar src={item.userId?.avatar} icon={<UserOutlined />} />
@@ -114,6 +206,9 @@ export default function CommentsSection({ postId }) {
                   </Text>{" "}
                   <Text type="secondary" style={{ fontSize: "12px" }}>
                     {moment(item.createdAt).fromNow()}
+                    {item.edited && (
+                      <span style={{ marginLeft: 6 }}>(edited)</span>
+                    )}
                   </Text>
                 </Link>
               }

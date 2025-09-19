@@ -1,6 +1,5 @@
 import Comment from "../models/commentSchema.js";
 import Post from "../models/postSchema.js";
-import Video from "../models/videoSchema.js";
 
 export const createComment = async (req, res) => {
   try {
@@ -62,6 +61,44 @@ export const getComments = async (req, res) => {
     res.json({ success: true, comments });
   } catch (err) {
     console.error("Get comments error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+};
+
+// Update Comment
+export const updateComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+
+    let comment = await Comment.findById(id);
+    if (!comment) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Comment not found" });
+    }
+
+    // Only owner can edit
+    if (comment.userId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ success: false, error: "Not authorized" });
+    }
+    if (content && content !== comment.content) {
+      comment.content = content;
+      comment.edited = true;
+    }
+
+    if (content) comment.content = content;
+    const updatedComment = await comment.save();
+
+    // Repopulate with user
+    const populated = await Comment.findById(updatedComment._id).populate(
+      "userId",
+      "username avatar"
+    );
+
+    res.json({ success: true, comment: populated });
+  } catch (err) {
+    console.error("Update comment error:", err);
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
