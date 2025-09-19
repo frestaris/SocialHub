@@ -261,40 +261,29 @@ export const incrementPostViews = async (req, res) => {
   }
 };
 
-// LIKE POST
-export const likePost = async (req, res) => {
+// TOGGLE LIKE POST
+export const toggleLikePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
-    if (!post)
+    if (!post) {
       return res.status(404).json({ success: false, error: "Post not found" });
-
-    if (!post.likes.includes(req.user._id)) {
-      post.likes.push(req.user._id);
-      await post.save();
     }
 
-    res.json({ success: true, likes: post.likes });
-  } catch (err) {
-    console.error("Like post error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
-  }
-};
+    const userId = req.user._id.toString();
 
-// UNLIKE POST
-export const unlikePost = async (req, res) => {
-  try {
-    const post = await Post.findById(req.params.id);
-    if (!post)
-      return res.status(404).json({ success: false, error: "Post not found" });
+    if (post.likes.some((id) => id.toString() === userId)) {
+      // ✅ Unlike
+      post.likes = post.likes.filter((id) => id.toString() !== userId);
+    } else {
+      // ✅ Like
+      post.likes.push(userId);
+    }
 
-    post.likes = post.likes.filter(
-      (id) => id.toString() !== req.user._id.toString()
-    );
     await post.save();
 
     res.json({ success: true, likes: post.likes });
   } catch (err) {
-    console.error("Unlike post error:", err);
+    console.error("Toggle like error:", err);
     res.status(500).json({ success: false, error: "Server error" });
   }
 };

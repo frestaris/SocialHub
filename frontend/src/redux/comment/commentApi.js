@@ -33,12 +33,48 @@ export const commentApi = createApi({
         method: "POST",
         body: commentData,
       }),
-      invalidatesTags: (result, error, { postId, videoId }) => {
-        if (postId) return [{ type: "Comment", id: postId }];
-        if (videoId) return [{ type: "Comment", id: videoId }];
-        return ["Comment"];
+      async onQueryStarted({ postId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+
+          // Update getCommentsByPost cache
+          if (postId) {
+            dispatch(
+              commentApi.util.updateQueryData(
+                "getCommentsByPost",
+                postId,
+                (draft) => {
+                  draft.comments.unshift(data.comment);
+                }
+              )
+            );
+
+            // Update getPostById cache (so PostInfo comment count updates)
+            dispatch(
+              postApi.util.updateQueryData("getPostById", postId, (draft) => {
+                if (!draft.post.comments) draft.post.comments = [];
+                draft.post.comments.push(data.comment._id); // 👈 ONLY push the ID
+              })
+            );
+
+            // Update getPosts cache (so Feed comment count updates)
+            dispatch(
+              postApi.util.updateQueryData("getPosts", undefined, (draft) => {
+                const idx = draft.posts?.findIndex((p) => p._id === postId);
+                if (idx !== -1) {
+                  if (!draft.posts[idx].comments)
+                    draft.posts[idx].comments = [];
+                  draft.posts[idx].comments.push(data.comment._id); // 👈 ONLY push the ID
+                }
+              })
+            );
+          }
+        } catch (err) {
+          console.error("Create comment cache update failed:", err);
+        }
       },
     }),
+
     //  Update comment
     updateComment: builder.mutation({
       query: ({ id, ...patch }) => ({

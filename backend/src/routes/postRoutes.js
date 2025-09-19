@@ -8,8 +8,7 @@ import {
   deletePost,
   getUserFeed,
   incrementPostViews,
-  likePost,
-  unlikePost,
+  toggleLikePost,
 } from "../controllers/postController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -26,7 +25,6 @@ router.patch("/:id/views", incrementPostViews);
 router.post("/", protect, createPost);
 router.put("/:id", protect, updatePost);
 router.delete("/:id", protect, deletePost);
-router.patch("/:id/like", protect, likePost);
-router.patch("/:id/unlike", protect, unlikePost);
+router.patch("/:id/like", protect, toggleLikePost);
 
 export default router;

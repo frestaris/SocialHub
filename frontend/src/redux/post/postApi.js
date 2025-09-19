@@ -179,57 +179,68 @@ export const postApi = createApi({
         }
       },
     }),
-    likePost: builder.mutation({
+    toggleLikePost: builder.mutation({
       query: (id) => ({
         url: `/${id}/like`,
         method: "PATCH",
       }),
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
-        try {
-          const { data } = await queryFulfilled;
+      async onQueryStarted(id, { dispatch, getState, queryFulfilled }) {
+        // Grab current user from auth state
+        const currentUserId = getState().auth.user?._id;
 
-          // data.likes is now full array of userIds
+        // ---- Optimistic update ----
+        const patchResults = [];
+
+        // Update single post
+        patchResults.push(
           dispatch(
             postApi.util.updateQueryData("getPostById", id, (draft) => {
-              draft.post.likes = data.likes;
-            })
-          );
+              if (!draft.post.likes) draft.post.likes = [];
 
+              const hasLiked = draft.post.likes.some(
+                (uid) => uid.toString() === currentUserId
+              );
+
+              if (hasLiked) {
+                draft.post.likes = draft.post.likes.filter(
+                  (uid) => uid.toString() !== currentUserId
+                );
+              } else {
+                draft.post.likes.push(currentUserId);
+              }
+            })
+          )
+        );
+
+        // Update all posts list
+        patchResults.push(
           dispatch(
             postApi.util.updateQueryData("getPosts", undefined, (draft) => {
               const idx = draft.posts?.findIndex((p) => p._id === id);
-              if (idx !== -1) draft.posts[idx].likes = data.likes;
-            })
-          );
-        } catch (err) {
-          console.error("Like cache update failed:", err);
-        }
-      },
-    }),
+              if (idx !== -1) {
+                if (!draft.posts[idx].likes) draft.posts[idx].likes = [];
 
-    unlikePost: builder.mutation({
-      query: (id) => ({
-        url: `/${id}/unlike`,
-        method: "PATCH",
-      }),
-      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+                const hasLiked = draft.posts[idx].likes.some(
+                  (uid) => uid.toString() === currentUserId
+                );
+
+                if (hasLiked) {
+                  draft.posts[idx].likes = draft.posts[idx].likes.filter(
+                    (uid) => uid.toString() !== currentUserId
+                  );
+                } else {
+                  draft.posts[idx].likes.push(currentUserId);
+                }
+              }
+            })
+          )
+        );
+
         try {
-          const { data } = await queryFulfilled;
-
-          dispatch(
-            postApi.util.updateQueryData("getPostById", id, (draft) => {
-              draft.post.likes = data.likes;
-            })
-          );
-
-          dispatch(
-            postApi.util.updateQueryData("getPosts", undefined, (draft) => {
-              const idx = draft.posts?.findIndex((p) => p._id === id);
-              if (idx !== -1) draft.posts[idx].likes = data.likes;
-            })
-          );
+          await queryFulfilled; // server confirms
         } catch (err) {
-          console.error("Unlike cache update failed:", err);
+          console.error("❌ Toggle like failed, rolling back:", err);
+          patchResults.forEach((p) => p.undo()); // rollback if error
         }
       },
     }),
@@ -245,6 +256,5 @@ export const {
   useUpdatePostMutation,
   useDeletePostMutation,
   useIncrementPostViewsMutation,
-  useLikePostMutation,
-  useUnlikePostMutation,
+  useToggleLikePostMutation,
 } = postApi;

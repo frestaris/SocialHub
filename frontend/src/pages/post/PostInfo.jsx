@@ -13,10 +13,7 @@ import {
   useFollowUserMutation,
   useUnfollowUserMutation,
 } from "../../redux/user/userApi";
-import {
-  useLikePostMutation,
-  useUnlikePostMutation,
-} from "../../redux/post/postApi";
+import { useToggleLikePostMutation } from "../../redux/post/postApi";
 import VideoPlayer from "./VideoPlayer";
 import CategoryBadge from "../../components/CategoryBadge";
 
@@ -31,11 +28,9 @@ export default function PostInfo({ post }) {
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner =
     currentUser && post.userId && currentUser._id === post.userId._id;
-  const [likePost] = useLikePostMutation();
-  const [unlikePost] = useUnlikePostMutation();
+  const [toggleLikePost] = useToggleLikePostMutation();
 
   const hasLiked = post.likes?.some((id) => id.toString() === currentUser?._id);
-
   const [followUser, { isLoading: isFollowing }] = useFollowUserMutation();
   const [unfollowUser, { isLoading: isUnfollowing }] =
     useUnfollowUserMutation();
@@ -55,15 +50,11 @@ export default function PostInfo({ post }) {
     }
 
     try {
-      if (hasLiked) {
-        await unlikePost(post._id).unwrap();
-      } else {
-        await likePost(post._id).unwrap();
-      }
+      await toggleLikePost(post._id).unwrap();
     } catch (err) {
-      console.error("❌ Like/Unlike failed:", err);
       notification.error({
         message: "Error",
+        err,
         description: "Failed to update like",
       });
     }

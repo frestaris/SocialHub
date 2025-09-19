@@ -15,14 +15,13 @@ import {
   MoreOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
-import { useSelector, useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import {
   useGetCommentsByPostQuery,
   useCreateCommentMutation,
   useUpdateCommentMutation,
   useDeleteCommentMutation,
 } from "../../redux/comment/commentApi";
-import { postApi } from "../../redux/post/postApi";
 import { Link } from "react-router-dom";
 
 const { Text } = Typography;
@@ -32,7 +31,6 @@ export default function CommentsSection({ postId }) {
   const currentUserId = currentUser?._id;
   const [content, setContent] = useState("");
   const [editingComment, setEditingComment] = useState(null);
-  const dispatch = useDispatch();
   const [deleteComment] = useDeleteCommentMutation();
 
   const { data, isLoading } = useGetCommentsByPostQuery(postId);
@@ -63,14 +61,7 @@ export default function CommentsSection({ postId }) {
     }
 
     try {
-      const newComment = await createComment({ postId, content }).unwrap();
-
-      // ✅ Optimistically update post cache
-      dispatch(
-        postApi.util.updateQueryData("getPostById", postId, (draft) => {
-          draft.post.comments.push(newComment.comment);
-        })
-      );
+      await createComment({ postId, content }).unwrap();
 
       notification.success({
         message: "Comment Added",

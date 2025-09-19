@@ -1,4 +1,14 @@
-import { Card, Avatar, Typography, Space, Grid, Spin, Result, Tag } from "antd";
+import {
+  Card,
+  Avatar,
+  Typography,
+  Space,
+  Grid,
+  Spin,
+  Result,
+  Tag,
+  notification,
+} from "antd";
 import {
   LikeOutlined,
   CommentOutlined,
@@ -7,6 +17,8 @@ import {
   FileTextOutlined,
   UserOutlined,
 } from "@ant-design/icons";
+import { useSelector } from "react-redux";
+import { useToggleLikePostMutation } from "../../redux/post/postApi";
 import moment from "moment";
 import { useGetPostsQuery } from "../../redux/post/postApi";
 import { Link } from "react-router-dom";
@@ -18,8 +30,30 @@ const { useBreakpoint } = Grid;
 export default function Feed() {
   const screens = useBreakpoint();
   const isDesktop = screens.lg;
+  const currentUser = useSelector((state) => state.auth.user);
+  const [toggleLikePost] = useToggleLikePostMutation();
 
   const { data, isLoading, isError } = useGetPostsQuery();
+
+  const handleLikeToggle = async (post) => {
+    if (!currentUser) {
+      notification.warning({
+        message: "Login Required",
+        description: "Please log in to like posts.",
+      });
+      return;
+    }
+
+    try {
+      await toggleLikePost(post._id).unwrap();
+    } catch (err) {
+      notification.error({
+        message: "Error",
+        description: "Failed to update like",
+      });
+      console.error("❌ Like toggle failed:", err);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -234,7 +268,6 @@ export default function Feed() {
               <EyeOutlined /> {post.views || 0}
             </Tag>
             <Tag
-              color="default"
               style={{
                 background: "#f0f0f0",
                 borderRadius: "16px",
@@ -243,10 +276,22 @@ export default function Feed() {
                 alignItems: "center",
                 gap: "6px",
                 margin: 0,
+                cursor: "pointer",
               }}
+              onClick={() => handleLikeToggle(post)}
             >
-              <LikeOutlined /> {post.likes?.length || 0}
+              <LikeOutlined
+                style={{
+                  color: post.likes?.some(
+                    (id) => id.toString() === currentUser?._id
+                  )
+                    ? "#1677ff"
+                    : "#555",
+                }}
+              />
+              {post.likes?.length || 0}
             </Tag>
+
             <Tag
               color="default"
               style={{
