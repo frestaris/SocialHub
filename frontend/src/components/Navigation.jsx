@@ -44,12 +44,6 @@ export default function Navigation() {
   const avatarMenu = {
     items: [
       {
-        key: "post",
-        icon: <PlusOutlined />,
-        label: "Post",
-        onClick: () => setUploadOpen(true),
-      },
-      {
         key: "profile",
         icon: <ProfileOutlined />,
         label: "Profile",
@@ -96,6 +90,7 @@ export default function Navigation() {
         {/* Right section */}
         {screens.sm ? (
           <div style={{ display: "flex", alignItems: "center" }}>
+            {/* Menu */}
             <Menu
               mode="horizontal"
               selectable={false}
@@ -105,23 +100,35 @@ export default function Navigation() {
               ]}
             />
 
-            {!currentUser ? (
+            {/* Auth / Post controls */}
+            {currentUser ? (
+              <>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setUploadOpen(true)}
+                  style={{ marginRight: "16px" }}
+                >
+                  Post
+                </Button>
+
+                <Dropdown menu={avatarMenu} placement="bottomRight">
+                  <Space style={{ cursor: "pointer" }}>
+                    <Avatar
+                      src={
+                        currentUser?.avatar
+                          ? `${currentUser.avatar}?t=${currentUser._id}`
+                          : null
+                      }
+                      icon={!currentUser?.avatar && <UserOutlined />}
+                    />
+                  </Space>
+                </Dropdown>
+              </>
+            ) : (
               <Button type="primary" onClick={() => navigate("/login")}>
                 Become a Creator
               </Button>
-            ) : (
-              <Dropdown menu={avatarMenu} placement="bottomRight">
-                <Space style={{ cursor: "pointer" }}>
-                  <Avatar
-                    src={
-                      currentUser?.avatar
-                        ? `${currentUser.avatar}?t=${currentUser._id}`
-                        : null
-                    }
-                    icon={!currentUser?.avatar && <UserOutlined />}
-                  />
-                </Space>
-              </Dropdown>
             )}
           </div>
         ) : (
@@ -162,6 +169,20 @@ export default function Navigation() {
               </Button>
             ) : (
               <>
+                {/* + Post button at top */}
+                <Button
+                  type="primary"
+                  block
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    setUploadOpen(true);
+                    setDrawerOpen(false);
+                  }}
+                  style={{ marginBottom: "8px" }}
+                >
+                  Post
+                </Button>
+
                 <Button
                   block
                   onClick={() => {
@@ -171,16 +192,6 @@ export default function Navigation() {
                   style={{ marginTop: "8px" }}
                 >
                   Profile
-                </Button>
-                <Button
-                  block
-                  onClick={() => {
-                    setUploadOpen(true);
-                    setDrawerOpen(false);
-                  }}
-                  style={{ marginTop: "8px" }}
-                >
-                  Upload
                 </Button>
                 <Button
                   block

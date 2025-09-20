@@ -50,11 +50,7 @@ export default function ProfileInfo({ user }) {
       return;
     }
     try {
-      const res = await toggleFollowUser(user._id).unwrap();
-      console.log(
-        "👉 Follow toggled:",
-        res.isFollowing ? "Now following" : "Unfollowed"
-      );
+      await toggleFollowUser(user._id).unwrap();
     } catch (err) {
       console.error("❌ Toggle follow error:", err);
     }
