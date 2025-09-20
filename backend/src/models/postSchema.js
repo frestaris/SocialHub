@@ -37,6 +37,7 @@ const postSchema = new mongoose.Schema(
         ref: "Comment",
       },
     ],
+    edited: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

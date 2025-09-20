@@ -130,18 +130,27 @@ export const updatePost = async (req, res) => {
       return res.status(401).json({ success: false, error: "Not authorized" });
     }
 
+    let changed = false;
+
     // Update text fields
-    if (content !== undefined) post.content = content;
-    if (category !== undefined) post.category = category;
+    if (content !== undefined && content !== post.content) {
+      post.content = content;
+      changed = true;
+    }
+    if (category !== undefined && category !== post.category) {
+      post.category = category;
+      changed = true;
+    }
 
     // Update image
-    if (image !== undefined) {
+    if (image !== undefined && image !== post.image) {
       post.image = image;
       post.videoId = null;
       post.type = "text";
+      changed = true;
     }
 
-    // Update video (if provided)
+    // Update video
     if (video) {
       let linkedVideo = await Video.findById(post.videoId);
       if (!linkedVideo) {
@@ -155,22 +164,53 @@ export const updatePost = async (req, res) => {
           duration: video.duration || 0,
         });
         post.videoId = linkedVideo._id;
+        changed = true;
       } else {
-        if (video.title !== undefined) linkedVideo.title = video.title;
-        if (video.description !== undefined)
+        if (video.title !== undefined && video.title !== linkedVideo.title) {
+          linkedVideo.title = video.title;
+          changed = true;
+        }
+        if (
+          video.description !== undefined &&
+          video.description !== linkedVideo.description
+        ) {
           linkedVideo.description = video.description;
-        if (video.category !== undefined) {
+          changed = true;
+        }
+        if (
+          video.category !== undefined &&
+          video.category !== linkedVideo.category
+        ) {
           linkedVideo.category = video.category;
           post.category = video.category;
+          changed = true;
         }
-        if (video.url !== undefined) linkedVideo.url = video.url;
-        if (video.thumbnail !== undefined)
+        if (video.url !== undefined && video.url !== linkedVideo.url) {
+          linkedVideo.url = video.url;
+          changed = true;
+        }
+        if (
+          video.thumbnail !== undefined &&
+          video.thumbnail !== linkedVideo.thumbnail
+        ) {
           linkedVideo.thumbnail = video.thumbnail;
-        if (video.duration !== undefined) linkedVideo.duration = video.duration;
+          changed = true;
+        }
+        if (
+          video.duration !== undefined &&
+          video.duration !== linkedVideo.duration
+        ) {
+          linkedVideo.duration = video.duration;
+          changed = true;
+        }
         await linkedVideo.save();
       }
       post.type = "video";
       post.image = null;
+    }
+
+    if (changed) {
+      post.edited = true;
     }
 
     const updatedPost = await post.save();

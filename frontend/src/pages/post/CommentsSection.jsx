@@ -7,6 +7,7 @@ import {
   Typography,
   notification,
   Dropdown,
+  Empty,
 } from "antd";
 import {
   UserOutlined,
@@ -168,6 +169,14 @@ export default function CommentsSection({ postId }) {
         itemLayout="horizontal"
         dataSource={comments}
         style={{ marginTop: "16px" }}
+        locale={{
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description="No comments yet"
+            />
+          ),
+        }}
         renderItem={(item) => (
           <List.Item
             actions={[

@@ -104,6 +104,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
               {item.category && <CategoryBadge category={item.category} />}
               <Text type="secondary" style={{ fontSize: "12px" }}>
                 {moment(item.createdAt).fromNow()}
+                {item.edited && <span style={{ marginLeft: 6 }}>(edited)</span>}
               </Text>
             </div>
 

@@ -100,7 +100,6 @@ export default function PostInfo({ post }) {
       {post.type === "video" && post.videoId?.url && (
         <VideoPlayer src={post.videoId.url} title={post.videoId?.title} />
       )}
-
       {post.image && (
         <div style={{ marginTop: "16px" }}>
           <img
@@ -117,7 +116,6 @@ export default function PostInfo({ post }) {
           />
         </div>
       )}
-
       {/* User header */}
       <div
         style={{
@@ -153,14 +151,40 @@ export default function PostInfo({ post }) {
           </Button>
         )}
       </div>
-
       {/* Title (for video posts) */}
       {post.type === "video" && (
         <Title level={3} style={{ marginBottom: "10px" }}>
           {post.videoId?.title}
         </Title>
       )}
-
+      {/* Content/Description */}
+      <div
+        style={{
+          marginTop: "16px",
+          background: "#e7e7e7",
+          padding: "12px",
+          borderRadius: "8px",
+        }}
+      >
+        <Paragraph
+          ref={descRef}
+          ellipsis={!expanded ? { rows: 2, expandable: false } : false}
+          style={{ marginBottom: "8px" }}
+        >
+          {post.type === "video"
+            ? post.videoId?.description || post.content
+            : post.content}
+        </Paragraph>
+        {isOverflowing && (
+          <Button
+            type="link"
+            style={{ padding: 0 }}
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? "Show Less" : "Show More"}
+          </Button>
+        )}
+      </div>{" "}
       {/* Actions (category, views, likes, comments) */}
       <Space style={{ marginTop: 12, marginBottom: 12 }}>
         <CategoryBadge category={post.category} />
@@ -208,35 +232,6 @@ export default function PostInfo({ post }) {
           <CommentOutlined /> {post.comments?.length || 0}
         </Tag>
       </Space>
-
-      {/* Content/Description */}
-      <div
-        style={{
-          marginTop: "16px",
-          background: "#e7e7e7",
-          padding: "12px",
-          borderRadius: "8px",
-        }}
-      >
-        <Paragraph
-          ref={descRef}
-          ellipsis={!expanded ? { rows: 2, expandable: false } : false}
-          style={{ marginBottom: "8px" }}
-        >
-          {post.type === "video"
-            ? post.videoId?.description || post.content
-            : post.content}
-        </Paragraph>
-        {isOverflowing && (
-          <Button
-            type="link"
-            style={{ padding: 0 }}
-            onClick={() => setExpanded(!expanded)}
-          >
-            {expanded ? "Show Less" : "Show More"}
-          </Button>
-        )}
-      </div>
     </div>
   );
 }

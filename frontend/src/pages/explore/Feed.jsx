@@ -190,6 +190,9 @@ export default function Feed() {
                   }}
                 >
                   {moment(post.createdAt).fromNow()}
+                  {post.edited && (
+                    <span style={{ marginLeft: 6 }}>(edited)</span>
+                  )}
                 </Text>
               </div>
             </div>
