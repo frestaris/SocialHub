@@ -4,9 +4,6 @@ import { MenuUnfoldOutlined } from "@ant-design/icons";
 
 import Sidebar from "./Sidebar";
 import SearchBar from "./SearchBar";
-import TopCreators from "./TopCreators";
-import HotNow from "./HotNow";
-import SuggestedForYou from "./SuggestedForYou";
 import Feed from "./Feed";
 
 const { Sider, Content } = Layout;
@@ -78,9 +75,6 @@ export default function Explore() {
 
         <Content style={{ background: "#fafafa", padding: "16px" }}>
           <Feed />
-          <TopCreators />
-          <HotNow />
-          <SuggestedForYou />
         </Content>
       </Layout>
     </Layout>

@@ -155,33 +155,27 @@ export const toggleFollow = async (req, res) => {
     }
 
     const targetUser = await User.findById(id);
-    const currentUser = await User.findById(currentUserId);
-
-    if (!targetUser || !currentUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
+    if (!targetUser) return res.status(404).json({ error: "User not found" });
 
     const isFollowing = targetUser.followers.some(
       (f) => f.toString() === currentUserId.toString()
     );
 
     if (isFollowing) {
-      // ✅ Unfollow
-      targetUser.followers = targetUser.followers.filter(
-        (f) => f.toString() !== currentUserId.toString()
-      );
-      currentUser.following = currentUser.following.filter(
-        (f) => f.toString() !== targetUser._id.toString()
-      );
+      // ✅ Unfollow (atomic pull)
+      await Promise.all([
+        User.findByIdAndUpdate(id, { $pull: { followers: currentUserId } }),
+        User.findByIdAndUpdate(currentUserId, { $pull: { following: id } }),
+      ]);
     } else {
-      // ✅ Follow
-      targetUser.followers.push(currentUserId);
-      currentUser.following.push(targetUser._id);
+      // ✅ Follow (atomic addToSet to avoid duplicates)
+      await Promise.all([
+        User.findByIdAndUpdate(id, { $addToSet: { followers: currentUserId } }),
+        User.findByIdAndUpdate(currentUserId, { $addToSet: { following: id } }),
+      ]);
     }
 
-    await Promise.all([targetUser.save(), currentUser.save()]);
-
-    // Re-fetch both users with populate
+    // ✅ Re-fetch both users with populate
     const updatedTarget = await User.findById(id)
       .populate("followers", "username avatar")
       .populate("following", "username avatar");

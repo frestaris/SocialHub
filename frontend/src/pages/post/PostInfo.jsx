@@ -7,12 +7,12 @@ import {
   CommentOutlined,
 } from "@ant-design/icons";
 import moment from "moment";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useToggleFollowUserMutation } from "../../redux/user/userApi";
 import { useToggleLikePostMutation } from "../../redux/post/postApi";
 import VideoPlayer from "./VideoPlayer";
 import CategoryBadge from "../../components/CategoryBadge";
+import FollowButton from "../../components/FollowButton";
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -20,7 +20,6 @@ export default function PostInfo({ post }) {
   const [expanded, setExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const descRef = useRef(null);
-  const navigate = useNavigate();
 
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner =
@@ -28,8 +27,6 @@ export default function PostInfo({ post }) {
   const [toggleLikePost] = useToggleLikePostMutation();
 
   const hasLiked = post.likes?.some((id) => id.toString() === currentUser?._id);
-  const [toggleFollowUser, { isLoading: isFollowLoading }] =
-    useToggleFollowUserMutation();
 
   const isFollowingUser = useMemo(() => {
     if (!currentUser || !post?.userId) return false;
@@ -53,35 +50,6 @@ export default function PostInfo({ post }) {
         err,
         description: "Failed to update like",
       });
-    }
-  };
-
-  const handleFollowToggle = async () => {
-    if (!currentUser) {
-      notification.warning({
-        message: "Login Required",
-        description: "You need to log in to follow users.",
-        btn: (
-          <Button
-            type="primary"
-            size="small"
-            onClick={() => {
-              notification.destroy();
-              navigate("/login", { state: { from: `/post/${post._id}` } });
-            }}
-          >
-            Go to Login
-          </Button>
-        ),
-        duration: 3,
-      });
-      return;
-    }
-
-    try {
-      await toggleFollowUser(post.userId._id).unwrap();
-    } catch (err) {
-      console.error("❌ Toggle follow error:", err);
     }
   };
 
@@ -141,14 +109,12 @@ export default function PostInfo({ post }) {
         </div>
 
         {!isOwner && (
-          <Button
-            type={isFollowingUser ? "default" : "primary"}
+          <FollowButton
+            userId={post.userId._id}
+            isFollowing={isFollowingUser}
+            isOwner={isOwner}
             size="small"
-            loading={isFollowLoading}
-            onClick={handleFollowToggle}
-          >
-            {isFollowingUser ? "Unfollow" : "Follow"}
-          </Button>
+          />
         )}
       </div>
       {/* Title (for video posts) */}

@@ -1,60 +1,25 @@
-import { Card, Avatar, Typography, Button, Space, notification } from "antd";
+import { Card, Avatar, Typography, Button, Space } from "antd";
 import { SettingOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useState, useMemo } from "react";
 import SettingsModal from "../settings/SettingsModal";
 import Upload from "../../upload/Upload";
-import { useToggleFollowUserMutation } from "../../../redux/user/userApi";
-import { useNavigate } from "react-router-dom";
+import FollowButton from "../../../components/FollowButton";
 
 const { Title, Paragraph } = Typography;
 
 export default function ProfileInfo({ user }) {
   const currentUser = useSelector((state) => state.auth.user);
-  const navigate = useNavigate();
 
-  // ✅ safer owner check by _id
   const isOwner = currentUser && user && currentUser._id === user._id;
 
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  const [toggleFollowUser, { isLoading: isFollowLoading }] =
-    useToggleFollowUserMutation();
-
-  // ✅ Check if current user already follows this profile
   const isFollowingUser = useMemo(() => {
     if (!currentUser || !user) return false;
     return user.followers?.some((f) => f._id === currentUser._id);
   }, [user, currentUser]);
-
-  const handleFollowToggle = async () => {
-    if (!currentUser) {
-      notification.warning({
-        message: "Login Required",
-        description: "You need to log in to follow users.",
-        actions: (
-          <Button
-            type="primary"
-            size="small"
-            onClick={() => {
-              notification.destroy();
-              navigate("/login", { state: { from: `/profile/${user._id}` } });
-            }}
-          >
-            Go to Login
-          </Button>
-        ),
-        duration: 3,
-      });
-      return;
-    }
-    try {
-      await toggleFollowUser(user._id).unwrap();
-    } catch (err) {
-      console.error("❌ Toggle follow error:", err);
-    }
-  };
 
   return (
     <>
@@ -65,7 +30,6 @@ export default function ProfileInfo({ user }) {
           position: "relative",
         }}
       >
-        {/* Settings Icon */}
         {isOwner && (
           <Button
             type="text"
@@ -94,14 +58,12 @@ export default function ProfileInfo({ user }) {
 
           <Space direction="vertical" style={{ width: "100%" }}>
             {!isOwner && (
-              <Button
-                type={isFollowingUser ? "default" : "primary"}
+              <FollowButton
+                userId={user._id}
+                isFollowing={isFollowingUser}
+                isOwner={isOwner}
                 block
-                loading={isFollowLoading}
-                onClick={handleFollowToggle}
-              >
-                {isFollowingUser ? "Unfollow" : "Follow"}
-              </Button>
+              />
             )}
             {isOwner && (
               <Button
@@ -116,14 +78,12 @@ export default function ProfileInfo({ user }) {
         </div>
       </Card>
 
-      {/* Settings Modal */}
       <SettingsModal
         open={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         user={user}
       />
 
-      {/* Upload Modal */}
       <Upload
         open={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}

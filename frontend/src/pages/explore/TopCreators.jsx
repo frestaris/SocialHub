@@ -1,64 +1,29 @@
-import { Typography } from "antd";
+import { Typography, Avatar, Button, Grid } from "antd";
+import { UserOutlined } from "@ant-design/icons";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import { Link } from "react-router-dom";
+import { useListUsersQuery } from "../../redux/user/userApi";
+import { useSelector } from "react-redux";
+import FollowButton from "../../components/FollowButton";
 
 const { Title } = Typography;
-
-const mockCreators = [
-  {
-    id: 1,
-    name: "StreamerOne",
-    category: "Gaming",
-    img: "https://picsum.photos/200/200?random=1",
-  },
-  {
-    id: 2,
-    name: "ProGamer",
-    category: "Esports",
-    img: "https://picsum.photos/200/200?random=2",
-  },
-  {
-    id: 3,
-    name: "ArtWizard",
-    category: "Art",
-    img: "https://picsum.photos/200/200?random=3",
-  },
-  {
-    id: 4,
-    name: "FitGuru",
-    category: "Fitness",
-    img: "https://picsum.photos/200/200?random=4",
-  },
-  {
-    id: 5,
-    name: "MusicLover",
-    category: "Music",
-    img: "https://picsum.photos/200/200?random=5",
-  },
-  {
-    id: 6,
-    name: "CodeMaster",
-    category: "Tech",
-    img: "https://picsum.photos/200/200?random=6",
-  },
-  {
-    id: 7,
-    name: "DanceQueen",
-    category: "Dance",
-    img: "https://picsum.photos/200/200?random=7",
-  },
-  {
-    id: 8,
-    name: "ChefExtra",
-    category: "Food",
-    img: "https://picsum.photos/200/200?random=8",
-  },
-];
+const { useBreakpoint } = Grid;
 
 export default function TopCreators() {
+  const { data, isLoading, isError } = useListUsersQuery();
+  const users = data?.users || [];
+  const currentUser = useSelector((state) => state.auth.user);
+  const screens = useBreakpoint();
+
+  if (isLoading) return <p>Loading creators...</p>;
+  if (isError) return <p>Failed to load creators.</p>;
+
+  const avatarSize = screens.md ? 100 : 70;
+  const fontSize = screens.md ? "16px" : "14px";
+
   return (
-    <div style={{ marginBottom: "40px" }}>
+    <div style={{ margin: "20px 0" }}>
       <Title level={3}>Top Creators</Title>
 
       <Swiper
@@ -72,67 +37,80 @@ export default function TopCreators() {
           0: { slidesPerView: 1.4 },
         }}
       >
-        {mockCreators.map((creator) => (
-          <SwiperSlide key={creator.id}>
-            <Link
-              to={`/profile/${creator.id}`}
-              style={{ textDecoration: "none" }}
-            >
+        {users.map((user) => {
+          const isOwner = currentUser && currentUser._id === user._id;
+          const isFollowingUser =
+            currentUser &&
+            currentUser.following?.some((f) => f._id === user._id);
+
+          return (
+            <SwiperSlide key={user._id} style={{ height: "100%" }}>
               <div
                 style={{
                   background: "#fff",
                   borderRadius: "16px",
                   padding: "20px",
                   textAlign: "center",
-                  backgroundClip: "padding-box, border-box",
                   boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  marginTop: "10px",
                 }}
               >
-                <img
-                  src={creator.img}
-                  alt={creator.name}
-                  style={{
-                    width: "100px",
-                    height: "100px",
-                    borderRadius: "50%",
-                    objectFit: "cover",
-                    marginBottom: "12px",
-                    border: "3px solid #eee",
-                  }}
-                />
-                <h3 style={{ margin: "0 0 4px", color: "#333" }}>
-                  {creator.name}
-                </h3>
-                <p style={{ color: "#777", margin: "0 0 12px" }}>
-                  {creator.category}
-                </p>
-                <button
-                  style={{
-                    padding: "6px 16px",
-                    borderRadius: "20px",
-                    border: "none",
-                    background: "linear-gradient(90deg, #00c6ff, #0072ff)",
-                    color: "#fff",
-                    cursor: "pointer",
-                    fontWeight: "bold",
-                    transition: "all 0.3s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.05)";
-                    e.currentTarget.style.boxShadow =
-                      "0 0 12px rgba(0, 198, 255, 0.7)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
+                <Link
+                  to={`/profile/${user._id}`}
+                  style={{ textDecoration: "none", flexGrow: 1 }}
+                  onClick={(e) => e.stopPropagation()}
                 >
-                  Follow
-                </button>
-              </div>{" "}
-            </Link>
-          </SwiperSlide>
-        ))}
+                  <Avatar
+                    size={avatarSize}
+                    src={
+                      user.avatar && user.avatar.trim() !== ""
+                        ? user.avatar
+                        : null
+                    }
+                    icon={
+                      !user.avatar || user.avatar.trim() === "" ? (
+                        <UserOutlined />
+                      ) : null
+                    }
+                    style={{ marginBottom: "12px" }}
+                  />
+
+                  <h3
+                    style={{
+                      margin: "0 4px 12px",
+                      color: "#333",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      maxWidth: "160px",
+                      marginInline: "auto",
+                      fontSize,
+                    }}
+                    title={user.username}
+                  >
+                    {user.username}
+                  </h3>
+                </Link>
+
+                {!isOwner ? (
+                  <FollowButton
+                    userId={user._id}
+                    isFollowing={isFollowingUser}
+                    isOwner={isOwner}
+                    block
+                  />
+                ) : (
+                  <Button block disabled style={{ borderRadius: "20px" }}>
+                    You
+                  </Button>
+                )}
+              </div>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
     </div>
   );
