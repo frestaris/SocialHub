@@ -1,4 +1,3 @@
-// categories.js
 import {
   HomeOutlined,
   FireOutlined,

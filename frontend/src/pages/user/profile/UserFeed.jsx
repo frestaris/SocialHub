@@ -28,6 +28,7 @@ import EditPostForm from "./EditPostForm";
 import EditVideoForm from "./EditVideoForm";
 import CategoryBadge from "../../../components/CategoryBadge";
 import { Link } from "react-router-dom";
+import PostActions from "../../../components/PostActions";
 
 const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -101,9 +102,8 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              {item.category && <CategoryBadge category={item.category} />}
               <Text type="secondary" style={{ fontSize: "12px" }}>
-                {moment(item.createdAt).fromNow()}
+                • {moment(item.createdAt).fromNow()}
                 {item.edited && <span style={{ marginLeft: 6 }}>(edited)</span>}
               </Text>
             </div>
@@ -236,17 +236,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
           </>
 
           {/* Stats row */}
-          <Space style={{ marginTop: 12 }}>
-            <Tag>
-              <EyeOutlined /> {item.views || 0}
-            </Tag>
-            <Tag>
-              <LikeOutlined /> {item.likes?.length || 0}
-            </Tag>
-            <Tag>
-              <CommentOutlined /> {item.comments?.length || 0}
-            </Tag>
-          </Space>
+          <PostActions post={item} isSmall={isMobile} />
         </Card>
       ))}
 

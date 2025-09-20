@@ -257,16 +257,17 @@ export const deletePost = async (req, res) => {
 export const getUserFeed = async (req, res) => {
   try {
     const { sort } = req.query;
-    let sortOption = { createdAt: -1 };
+
+    let sortOption = { createdAt: -1 }; // default = newest
     if (sort === "oldest") sortOption = { createdAt: 1 };
     if (sort === "popular") sortOption = { views: -1 };
+    if (sort === "liked") sortOption = { likes: -1 }; // optional extra
 
     const posts = await Post.find({ userId: req.params.userId })
       .populate("userId", "username avatar")
       .populate("videoId", "title description category url thumbnail duration")
       .sort(sortOption);
 
-    // Add explicit type field
     const normalized = posts.map((p) => ({
       ...p.toObject(),
       type: p.type || (p.videoId ? "video" : "text"),
@@ -321,7 +322,12 @@ export const toggleLikePost = async (req, res) => {
 
     await post.save();
 
-    res.json({ success: true, likes: post.likes });
+    // 🔑 Return the whole updated post with populated fields
+    const updated = await Post.findById(post._id)
+      .populate("userId", "username avatar")
+      .populate("videoId", "title thumbnail url duration description");
+
+    res.json({ success: true, post: updated });
   } catch (err) {
     console.error("Toggle like error:", err);
     res.status(500).json({ success: false, error: "Server error" });

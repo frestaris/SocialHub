@@ -184,63 +184,50 @@ export const postApi = createApi({
         url: `/${id}/like`,
         method: "PATCH",
       }),
-      async onQueryStarted(id, { dispatch, getState, queryFulfilled }) {
-        // Grab current user from auth state
-        const currentUserId = getState().auth.user?._id;
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
 
-        // ---- Optimistic update ----
-        const patchResults = [];
-
-        // Update single post
-        patchResults.push(
-          dispatch(
-            postApi.util.updateQueryData("getPostById", id, (draft) => {
-              if (!draft.post.likes) draft.post.likes = [];
-
-              const hasLiked = draft.post.likes.some(
-                (uid) => uid.toString() === currentUserId
-              );
-
-              if (hasLiked) {
-                draft.post.likes = draft.post.likes.filter(
-                  (uid) => uid.toString() !== currentUserId
-                );
-              } else {
-                draft.post.likes.push(currentUserId);
-              }
-            })
-          )
-        );
-
-        // Update all posts list
-        patchResults.push(
+          // Update cache for getPosts
           dispatch(
             postApi.util.updateQueryData("getPosts", undefined, (draft) => {
               const idx = draft.posts?.findIndex((p) => p._id === id);
-              if (idx !== -1) {
-                if (!draft.posts[idx].likes) draft.posts[idx].likes = [];
-
-                const hasLiked = draft.posts[idx].likes.some(
-                  (uid) => uid.toString() === currentUserId
-                );
-
-                if (hasLiked) {
-                  draft.posts[idx].likes = draft.posts[idx].likes.filter(
-                    (uid) => uid.toString() !== currentUserId
-                  );
-                } else {
-                  draft.posts[idx].likes.push(currentUserId);
-                }
-              }
+              if (idx !== -1) draft.posts[idx] = data.post;
             })
-          )
-        );
+          );
 
-        try {
-          await queryFulfilled; // server confirms
+          // Update cache for getUserFeed
+          dispatch(
+            postApi.util.updateQueryData(
+              "getUserFeed",
+              { userId: data.post.userId._id, sort: "newest" },
+              (draft) => {
+                const idx = draft.feed?.findIndex((f) => f._id === id);
+                if (idx !== -1) draft.feed[idx] = data.post;
+              }
+            )
+          );
+
+          // Update cache for getPostsByUser
+          dispatch(
+            postApi.util.updateQueryData(
+              "getPostsByUser",
+              { userId: data.post.userId._id, sort: "newest" },
+              (draft) => {
+                const idx = draft.posts?.findIndex((p) => p._id === id);
+                if (idx !== -1) draft.posts[idx] = data.post;
+              }
+            )
+          );
+
+          // Update cache for getPostById
+          dispatch(
+            postApi.util.updateQueryData("getPostById", id, (draft) => {
+              draft.post = data.post;
+            })
+          );
         } catch (err) {
-          console.error("❌ Toggle like failed, rolling back:", err);
-          patchResults.forEach((p) => p.undo()); // rollback if error
+          console.error("❌ Toggle like cache update failed:", err);
         }
       },
     }),

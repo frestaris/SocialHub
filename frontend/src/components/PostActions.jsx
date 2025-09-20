@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Space, Tag, Typography, notification } from "antd";
+import { Space, Tag, notification } from "antd";
 import {
   LikeOutlined,
   LikeFilled,
@@ -11,9 +11,11 @@ import CategoryBadge from "./CategoryBadge";
 import CommentsSection from "../pages/post/CommentsSection";
 import { useToggleLikePostMutation } from "../redux/post/postApi";
 
-const { Text } = Typography;
-
-export default function PostActions({ post, isSmall }) {
+export default function PostActions({
+  post,
+  isSmall,
+  showCommentsSection = true,
+}) {
   const currentUser = useSelector((state) => state.auth.user);
   const [toggleLikePost] = useToggleLikePostMutation();
   const [showComments, setShowComments] = useState(false);
@@ -46,7 +48,6 @@ export default function PostActions({ post, isSmall }) {
     alignItems: "center",
     gap: "6px",
     margin: 0,
-    cursor: "pointer",
     transition: "all 0.2s ease",
   };
 
@@ -59,7 +60,6 @@ export default function PostActions({ post, isSmall }) {
         paddingTop: 12,
       }}
     >
-      {/* Action row */}
       <Space
         style={{
           width: "100%",
@@ -89,6 +89,7 @@ export default function PostActions({ post, isSmall }) {
               fontSize: isSmall ? 11 : 13,
               background: "#f0f0f0",
               color: hasLiked ? "#1677ff" : "#555",
+              cursor: "pointer",
             }}
             onClick={handleLikeToggle}
           >
@@ -103,16 +104,21 @@ export default function PostActions({ post, isSmall }) {
               fontSize: isSmall ? 11 : 13,
               background: showComments ? "#e6f4ff" : "#f0f0f0",
               color: showComments ? "#1677ff" : "#555",
+              cursor: showCommentsSection ? "pointer" : "default",
             }}
-            onClick={() => setShowComments(!showComments)}
+            onClick={
+              showCommentsSection
+                ? () => setShowComments(!showComments)
+                : undefined
+            }
           >
             <CommentOutlined /> {post.comments?.length || 0}
           </Tag>
         </div>
       </Space>
 
-      {/* Expandable comment section */}
-      {showComments && (
+      {/* Expandable comment section (only if enabled) */}
+      {showCommentsSection && showComments && (
         <div style={{ marginTop: "16px" }}>
           <CommentsSection postId={post._id} />
         </div>

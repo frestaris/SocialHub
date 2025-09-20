@@ -1,18 +1,12 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Typography, Avatar, Button, Space, notification, Tag } from "antd";
-import {
-  LikeOutlined,
-  UserOutlined,
-  EyeOutlined,
-  CommentOutlined,
-} from "@ant-design/icons";
+import { Typography, Avatar, Button } from "antd";
+import { UserOutlined } from "@ant-design/icons";
 import moment from "moment";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useToggleLikePostMutation } from "../../redux/post/postApi";
 import VideoPlayer from "./VideoPlayer";
-import CategoryBadge from "../../components/CategoryBadge";
 import FollowButton from "../../components/FollowButton";
+import PostActions from "../../components/PostActions";
 
 const { Text, Paragraph, Title } = Typography;
 
@@ -24,34 +18,11 @@ export default function PostInfo({ post }) {
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner =
     currentUser && post.userId && currentUser._id === post.userId._id;
-  const [toggleLikePost] = useToggleLikePostMutation();
-
-  const hasLiked = post.likes?.some((id) => id.toString() === currentUser?._id);
 
   const isFollowingUser = useMemo(() => {
     if (!currentUser || !post?.userId) return false;
     return currentUser.following?.some((f) => f._id === post.userId._id);
   }, [currentUser, post]);
-
-  const handleLikeToggle = async () => {
-    if (!currentUser) {
-      notification.warning({
-        message: "Login Required",
-        description: "Please log in to like posts.",
-      });
-      return;
-    }
-
-    try {
-      await toggleLikePost(post._id).unwrap();
-    } catch (err) {
-      notification.error({
-        message: "Error",
-        err,
-        description: "Failed to update like",
-      });
-    }
-  };
 
   useEffect(() => {
     if (descRef.current) {
@@ -84,6 +55,7 @@ export default function PostInfo({ post }) {
           />
         </div>
       )}
+
       {/* User header */}
       <div
         style={{
@@ -117,12 +89,14 @@ export default function PostInfo({ post }) {
           />
         )}
       </div>
+
       {/* Title (for video posts) */}
       {post.type === "video" && (
         <Title level={3} style={{ marginBottom: "10px" }}>
           {post.videoId?.title}
         </Title>
       )}
+
       {/* Content/Description */}
       <div
         style={{
@@ -150,54 +124,9 @@ export default function PostInfo({ post }) {
             {expanded ? "Show Less" : "Show More"}
           </Button>
         )}
-      </div>{" "}
-      {/* Actions (category, views, likes, comments) */}
-      <Space style={{ marginTop: 12, marginBottom: 12 }}>
-        <CategoryBadge category={post.category} />
-        <Tag
-          style={{
-            background: "#f0f0f0",
-            borderRadius: "16px",
-            padding: "2px 10px",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            margin: 0,
-          }}
-        >
-          <EyeOutlined /> {post.views || 0}
-        </Tag>
-        <Tag
-          style={{
-            background: "#f0f0f0",
-            borderRadius: "16px",
-            padding: "2px 10px",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            margin: 0,
-            cursor: "pointer",
-          }}
-          onClick={handleLikeToggle}
-        >
-          <LikeOutlined style={{ color: hasLiked ? "#1677ff" : "#555" }} />{" "}
-          {post.likes?.length || 0}
-        </Tag>
+      </div>
 
-        <Tag
-          style={{
-            background: "#f0f0f0",
-            borderRadius: "16px",
-            padding: "2px 10px",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            margin: 0,
-          }}
-        >
-          <CommentOutlined /> {post.comments?.length || 0}
-        </Tag>
-      </Space>
+      <PostActions post={post} isSmall={false} showCommentsSection={false} />
     </div>
   );
 }
