@@ -18,10 +18,10 @@ export const authApi = createApi({
   }),
   endpoints: (builder) => ({
     firebaseLogin: builder.mutation({
-      query: (token) => ({
+      query: ({ token, username, role }) => ({
         url: "/firebase-login",
         method: "POST",
-        body: { token },
+        body: { token, username, role },
       }),
       async onQueryStarted(arg, { dispatch, queryFulfilled }) {
         try {

@@ -22,4 +22,13 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// 🔑 Capitalize only the first letter of the username
+userSchema.pre("save", function (next) {
+  if (this.username) {
+    this.username =
+      this.username.charAt(0).toUpperCase() + this.username.slice(1);
+  }
+  next();
+});
+
 export default mongoose.model("User", userSchema);

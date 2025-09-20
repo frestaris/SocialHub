@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import {
   signInWithPopup,
   signInWithEmailAndPassword,
@@ -8,7 +8,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { auth, googleProvider, githubProvider } from "../../firebase";
 import { useFirebaseLoginMutation } from "../../redux/auth/authApi";
-import { setCredentials, logout } from "../../redux/auth/authSlice";
+import { setCredentials } from "../../redux/auth/authSlice";
 import {
   Button,
   Form,
@@ -27,7 +27,6 @@ export default function Login() {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
 
   // RTK Query
   const [firebaseLogin, { isLoading: socialLoading, error: socialError }] =
@@ -91,7 +90,10 @@ export default function Login() {
       }
 
       const token = await fbUser.user.getIdToken();
-      const data = await firebaseLogin(token).unwrap();
+      const data = await firebaseLogin({
+        token,
+        username: values.username,
+      }).unwrap();
 
       if (data.success) {
         dispatch(setCredentials({ user: data.user, token }));

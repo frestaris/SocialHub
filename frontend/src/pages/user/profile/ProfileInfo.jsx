@@ -1,5 +1,5 @@
 import { Card, Avatar, Typography, Button, Space } from "antd";
-import { SettingOutlined } from "@ant-design/icons";
+import { SettingOutlined, UserOutlined } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useState, useMemo } from "react";
 import SettingsModal from "../settings/SettingsModal";
@@ -43,10 +43,14 @@ export default function ProfileInfo({ user }) {
             }}
           />
         )}
-
         <div style={{ textAlign: "center" }}>
           <Avatar
-            src={user?.avatar || null}
+            src={user.avatar && user.avatar.trim() !== "" ? user.avatar : null}
+            icon={
+              !user.avatar || user.avatar.trim() === "" ? (
+                <UserOutlined />
+              ) : null
+            }
             size={96}
             style={{ marginBottom: 16 }}
           >
@@ -67,11 +71,11 @@ export default function ProfileInfo({ user }) {
             )}
             {isOwner && (
               <Button
-                type="default"
+                type="primary"
                 block
                 onClick={() => setIsUploadModalOpen(true)}
               >
-                Upload
+                Post
               </Button>
             )}
           </Space>

@@ -4,7 +4,7 @@ import User from "../models/userSchema.js";
 // Verify Firebase token, sync user in Mongo
 export const firebaseLogin = async (req, res) => {
   try {
-    const { token, role } = req.body;
+    const { token, role, username } = req.body;
     const decoded = await firebaseAdmin.auth().verifyIdToken(token);
 
     const email = decoded.email;
@@ -25,7 +25,7 @@ export const firebaseLogin = async (req, res) => {
     } else {
       user = await User.create({
         uid: firebaseUid,
-        username: decoded.name || email.split("@")[0],
+        username: username || decoded.name || email.split("@")[0],
         email,
         avatar: decoded.picture || "",
         role: role || "fan",
