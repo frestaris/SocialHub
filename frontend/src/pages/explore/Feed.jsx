@@ -23,11 +23,9 @@ import {
   MoreOutlined,
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
-import { useToggleLikePostMutation } from "../../redux/post/postApi";
 import moment from "moment";
 import { useGetPostsQuery } from "../../redux/post/postApi";
 import { Link } from "react-router-dom";
-import CategoryBadge from "../../components/CategoryBadge";
 import {
   useUpdatePostMutation,
   useDeletePostMutation,
@@ -39,6 +37,7 @@ import Masonry from "react-masonry-css";
 import TopCreators from "./TopCreators";
 import HotNow from "./HotNow";
 import SuggestedForYou from "./SuggestedForYou";
+import PostActions from "../../components/PostActions";
 
 const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
 const { Text, Paragraph } = Typography;
@@ -50,7 +49,6 @@ export default function Feed() {
   const isSmall = !screens.sm;
   const currentUser = useSelector((state) => state.auth.user);
 
-  const [toggleLikePost] = useToggleLikePostMutation();
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
 
@@ -73,37 +71,6 @@ export default function Feed() {
       console.error("❌ Error deleting post:", err);
       message.error("Failed to delete post");
     }
-  };
-
-  const handleLikeToggle = async (post) => {
-    if (!currentUser) {
-      notification.warning({
-        message: "Login Required",
-        description: "Please log in to like posts.",
-      });
-      return;
-    }
-
-    try {
-      await toggleLikePost(post._id).unwrap();
-    } catch (err) {
-      notification.error({
-        message: "Error",
-        description: "Failed to update like",
-      });
-      console.error("❌ Like toggle failed:", err);
-    }
-  };
-
-  const tagStyle = {
-    background: "#f0f0f0",
-    borderRadius: "16px",
-    padding: "2px 10px",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    margin: 0,
-    cursor: "pointer",
   };
 
   if (isLoading) {
@@ -144,7 +111,7 @@ export default function Feed() {
   }
 
   //  Group posts into chunks
-  const chunkSize = 5;
+  const chunkSize = 9;
   const chunks = Array.from(
     { length: Math.ceil(posts.length / chunkSize) },
     (_, i) => posts.slice(i * chunkSize, i * chunkSize + chunkSize)
@@ -363,30 +330,7 @@ export default function Feed() {
                 )}
 
                 {/* Footer badges */}
-                <Space style={{ marginTop: 12, flexWrap: "wrap" }}>
-                  <CategoryBadge category={post.category} />
-                  <Tag style={{ ...tagStyle, fontSize: isSmall ? 11 : 13 }}>
-                    <EyeOutlined /> {post.views || 0}
-                  </Tag>
-                  <Tag
-                    style={{ ...tagStyle, fontSize: isSmall ? 11 : 13 }}
-                    onClick={() => handleLikeToggle(post)}
-                  >
-                    <LikeOutlined
-                      style={{
-                        color: post.likes?.some(
-                          (id) => id.toString() === currentUser?._id
-                        )
-                          ? "#1677ff"
-                          : "#555",
-                      }}
-                    />{" "}
-                    {post.likes?.length || 0}
-                  </Tag>
-                  <Tag style={{ ...tagStyle, fontSize: isSmall ? 11 : 13 }}>
-                    <CommentOutlined /> {post.comments?.length || 0}
-                  </Tag>
-                </Space>
+                <PostActions post={post} isSmall={isSmall} />
               </Card>
             ))}
           </Masonry>

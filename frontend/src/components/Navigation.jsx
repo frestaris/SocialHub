@@ -38,7 +38,7 @@ export default function Navigation() {
 
   const handleLogout = () => {
     dispatch(logout());
-    navigate("/login");
+    navigate("/explore");
   };
 
   const avatarMenu = {
