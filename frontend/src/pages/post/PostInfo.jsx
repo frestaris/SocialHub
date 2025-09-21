@@ -76,7 +76,10 @@ export default function PostInfo({ post }) {
           <div>
             <Text strong>{post.userId?.username}</Text>
             <br />
-            <Text type="secondary">{moment(post.createdAt).fromNow()}</Text>
+            <Text type="secondary">
+              {moment(post.createdAt).fromNow()}
+              {post.edited && <span style={{ marginLeft: 6 }}>(edited)</span>}
+            </Text>
           </div>
         </div>
 

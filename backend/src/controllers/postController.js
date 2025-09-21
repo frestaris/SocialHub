@@ -165,6 +165,11 @@ export const updatePost = async (req, res) => {
       changed = true;
     }
 
+    // ✅ mark as edited if anything changed
+    if (changed) {
+      post.edited = true;
+    }
+
     const updatedPost = await post.save();
 
     const populated = await Post.findById(updatedPost._id).populate(

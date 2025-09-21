@@ -339,7 +339,6 @@ export default function Feed() {
       {/* ---- Edit Modal ---- */}
       <Modal
         open={!!editingPost}
-        title="Edit Post"
         onCancel={() => setEditingPost(null)}
         footer={null}
         width={isDesktop ? "70%" : "100%"}
@@ -350,23 +349,13 @@ export default function Feed() {
         }}
         destroyOnHidden
       >
-        {editingPost?.type === "video" ? (
-          <EditVideoForm
-            post={editingPost}
-            open={!!editingPost}
-            onUpdate={updatePost}
-            onClose={() => setEditingPost(null)}
-            loading={isUpdatingPost}
-          />
-        ) : (
-          <EditPostForm
-            post={editingPost}
-            open={!!editingPost}
-            onUpdate={updatePost}
-            onClose={() => setEditingPost(null)}
-            loading={isUpdatingPost}
-          />
-        )}
+        <EditPostForm
+          post={editingPost}
+          open={!!editingPost}
+          onUpdate={updatePost}
+          onClose={() => setEditingPost(null)}
+          loading={isUpdatingPost}
+        />
       </Modal>
 
       {/* ---- Delete Modal ---- */}

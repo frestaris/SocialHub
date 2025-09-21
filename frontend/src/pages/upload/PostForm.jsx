@@ -5,14 +5,9 @@ import {
   Select,
   Upload as AntUpload,
   message,
-  Card,
   Switch,
 } from "antd";
-import {
-  FileTextOutlined,
-  UploadOutlined,
-  LinkOutlined,
-} from "@ant-design/icons";
+import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { uploadToFirebase } from "../../utils/uploadToFirebase";
 import { getVideoDuration } from "../../utils/getVideoDuration";
@@ -33,6 +28,7 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
   // Watch fields
   const mediaFile = Form.useWatch("mediaFile", form);
   const mediaUrl = Form.useWatch("mediaUrl", form);
+  const thumbnailFile = Form.useWatch("thumbnail", form);
 
   // YouTube metadata state
   const [ytMeta, setYtMeta] = useState(null);
@@ -53,6 +49,33 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
       mediaUrl.endsWith(".mov") ||
       isYouTubeUrl);
   const isImageUrl = mediaUrl && !isVideoUrl;
+  const [previewSrc, setPreviewSrc] = useState(null);
+
+  useEffect(() => {
+    let url;
+
+    if (mediaFile?.[0]?.originFileObj?.type?.startsWith("image/")) {
+      // New uploaded image
+      url = URL.createObjectURL(mediaFile[0].originFileObj);
+    } else if (thumbnailFile?.[0]?.originFileObj) {
+      // 👈 New uploaded thumbnail file
+      url = URL.createObjectURL(thumbnailFile[0].originFileObj);
+    } else if (isImageUrl) {
+      // Direct image URL
+      url = mediaUrl;
+    } else if (isYouTubeUrl && ytMeta?.thumbnail) {
+      // YouTube thumbnail
+      url = ytMeta.thumbnail;
+    }
+
+    setPreviewSrc(url);
+
+    return () => {
+      if (url?.startsWith("blob:")) {
+        URL.revokeObjectURL(url);
+      }
+    };
+  }, [mediaFile, mediaUrl, thumbnailFile, ytMeta, isImageUrl, isYouTubeUrl]);
 
   // Fetch YouTube metadata (title only)
   useEffect(() => {
@@ -292,32 +315,33 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
         </>
       )}
 
-      {/* Image preview */}
-      {(isImageUrl ||
-        (mediaFile?.[0]?.originFileObj &&
-          mediaFile[0].originFileObj.type.startsWith("image/"))) && (
-        <Card
-          size="small"
-          style={{ marginBottom: 12, borderRadius: 8, overflow: "hidden" }}
-          title="Image preview"
+      {/* Media Preview (supports image + thumbnail + YouTube) */}
+      {previewSrc && (
+        <div
+          style={{
+            position: "relative",
+            marginBottom: 8,
+            aspectRatio: "16/9",
+            overflow: "hidden",
+            borderRadius: "8px",
+          }}
         >
           <img
-            src={
-              isImageUrl
-                ? mediaUrl
-                : URL.createObjectURL(mediaFile[0].originFileObj)
-            }
+            src={previewSrc}
             alt="Preview"
-            style={{ maxWidth: "100%", borderRadius: 8 }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
           />
-        </Card>
+        </div>
       )}
 
       <Button
         type="primary"
         htmlType="submit"
         block
-        icon={<FileTextOutlined />}
         loading={isUploading || loading}
       >
         {isUploading
