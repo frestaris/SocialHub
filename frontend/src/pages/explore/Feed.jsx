@@ -26,7 +26,6 @@ import {
 } from "../../redux/post/postApi";
 import { useState } from "react";
 import EditPostForm from "../user/profile/EditPostForm";
-import EditVideoForm from "../user/profile/EditVideoForm";
 import Masonry from "react-masonry-css";
 import TopCreators from "./TopCreators";
 import HotNow from "./HotNow";

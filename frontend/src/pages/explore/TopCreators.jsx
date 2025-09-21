@@ -107,6 +107,11 @@ export default function TopCreators() {
                     You
                   </Button>
                 )}
+                <p
+                  style={{ marginTop: "8px", fontSize: "12px", color: "#555" }}
+                >
+                  {user.followers?.length || 0} followers
+                </p>
               </div>
             </SwiperSlide>
           );

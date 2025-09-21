@@ -80,8 +80,8 @@ export const userApi = createApi({
       async onQueryStarted(userId, { dispatch, getState, queryFulfilled }) {
         const currentUserId = getState().auth.user?._id;
 
-        // ---- Optimistic update target user ----
-        const patchResult = dispatch(
+        // ---- Optimistic update target user (getUserById) ----
+        const patchGetUserById = dispatch(
           userApi.util.updateQueryData("getUserById", userId, (draft) => {
             if (!draft.user) return;
             const isFollowing = draft.user.followers.some(
@@ -93,6 +93,26 @@ export const userApi = createApi({
               );
             } else {
               draft.user.followers.push({ _id: currentUserId });
+            }
+          })
+        );
+
+        // ---- Optimistic update listUsers (used by TopCreators) ----
+        const patchListUsers = dispatch(
+          userApi.util.updateQueryData("listUsers", undefined, (draft) => {
+            if (!draft?.users) return;
+            const target = draft.users.find((u) => u._id === userId);
+            if (!target) return;
+
+            const isFollowing = target.followers.some(
+              (f) => f._id?.toString() === currentUserId
+            );
+            if (isFollowing) {
+              target.followers = target.followers.filter(
+                (f) => f._id?.toString() !== currentUserId
+              );
+            } else {
+              target.followers.push({ _id: currentUserId });
             }
           })
         );
@@ -112,9 +132,19 @@ export const userApi = createApi({
                 draft.user = data.targetUser;
               })
             );
+
+            dispatch(
+              userApi.util.updateQueryData("listUsers", undefined, (draft) => {
+                const idx = draft.users?.findIndex((u) => u._id === userId);
+                if (idx !== -1) {
+                  draft.users[idx] = data.targetUser;
+                }
+              })
+            );
           }
         } catch (err) {
-          patchResult.undo(); // rollback optimistic change
+          patchGetUserById.undo();
+          patchListUsers.undo();
           console.error("❌ Toggle follow failed, rolled back:", err);
         }
       },

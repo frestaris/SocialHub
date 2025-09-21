@@ -134,9 +134,18 @@ export const listUsers = async (req, res) => {
     const users = await User.find()
       .select("username email avatar bio role followers following")
       .populate("followers", "username avatar")
-      .populate("following", "username avatar");
+      .populate("following", "username avatar")
+      .lean();
 
-    res.json({ success: true, users });
+    const sorted = users
+      .map((u) => ({
+        ...u,
+        followersCount: u.followers?.length || 0,
+      }))
+      .sort((a, b) => b.followersCount - a.followersCount)
+      .slice(0, 10); // ✅ limit to top 10
+
+    res.json({ success: true, users: sorted });
   } catch (err) {
     console.error("List users error:", err);
     res.status(500).json({ error: "Server error" });

@@ -16,7 +16,6 @@ import {
 } from "../../../redux/post/postApi";
 import { useState } from "react";
 import EditPostForm from "./EditPostForm";
-import EditVideoForm from "./EditVideoForm";
 import { Link } from "react-router-dom";
 import PostActions from "../../../components/PostActions";
 
@@ -226,23 +225,13 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
         }}
         destroyOnHidden
       >
-        {editingPost?.type === "video" ? (
-          <EditVideoForm
-            post={editingPost}
-            open={!!editingPost}
-            onUpdate={updatePost}
-            onClose={() => setEditingPost(null)}
-            loading={isUpdatingPost}
-          />
-        ) : (
-          <EditPostForm
-            post={editingPost}
-            open={!!editingPost}
-            onUpdate={updatePost}
-            onClose={() => setEditingPost(null)}
-            loading={isUpdatingPost}
-          />
-        )}
+        <EditPostForm
+          post={editingPost}
+          open={!!editingPost}
+          onUpdate={updatePost}
+          onClose={() => setEditingPost(null)}
+          loading={isUpdatingPost}
+        />
       </Modal>
 
       {/* ---- Delete Modal ---- */}
