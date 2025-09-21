@@ -11,6 +11,8 @@ const { Sider, Content } = Layout;
 export default function Explore() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
   return (
     <Layout style={{ minHeight: "calc(100vh - 64px)" }}>
@@ -37,7 +39,10 @@ export default function Explore() {
             overflow: "hidden",
           }}
         >
-          <Sidebar />
+          <Sidebar
+            selectedCategories={selectedCategories}
+            onCategoryChange={setSelectedCategories}
+          />
         </div>
       </Sider>
 
@@ -48,7 +53,10 @@ export default function Explore() {
         onClose={() => setMobileOpen(false)}
         open={mobileOpen}
       >
-        <Sidebar />
+        <Sidebar
+          selectedCategories={selectedCategories}
+          onCategoryChange={setSelectedCategories}
+        />
       </Drawer>
 
       {/* Main Content */}
@@ -70,11 +78,14 @@ export default function Explore() {
               style={{ padding: "0 12px", height: "40px" }}
             />
           )}
-          <SearchBar />
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
         <Content style={{ background: "#fafafa", padding: "16px" }}>
-          <Feed />
+          <Feed
+            searchQuery={searchQuery}
+            selectedCategories={selectedCategories}
+          />
         </Content>
       </Layout>
     </Layout>

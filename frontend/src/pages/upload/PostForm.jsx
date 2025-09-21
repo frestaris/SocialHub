@@ -23,7 +23,7 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
   const [uploadProgress, setUploadProgress] = useState(0);
 
   // toggle state
-  const [useUrl, setUseUrl] = useState(false);
+  const [useUpload, setUseUpload] = useState(false);
 
   // Watch fields
   const mediaFile = Form.useWatch("mediaFile", form);
@@ -249,15 +249,25 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
       <Form.Item label="Media">
         <div style={{ marginBottom: 12 }}>
           <Switch
-            checked={useUrl}
-            onChange={setUseUrl}
-            checkedChildren="URL"
-            unCheckedChildren="Upload"
+            checked={useUpload}
+            onChange={setUseUpload}
+            checkedChildren="Upload"
+            unCheckedChildren="URL"
           />
         </div>
 
+        {/* URL mode (default) */}
+        {!useUpload && (
+          <Form.Item name="mediaUrl">
+            <Input
+              prefix={<LinkOutlined />}
+              placeholder="Paste image / video URL"
+            />
+          </Form.Item>
+        )}
+
         {/* Upload mode */}
-        {!useUrl && (
+        {useUpload && (
           <Form.Item
             name="mediaFile"
             valuePropName="fileList"
@@ -270,16 +280,6 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
             >
               <Button icon={<UploadOutlined />}>Upload Image/Video</Button>
             </AntUpload>
-          </Form.Item>
-        )}
-
-        {/* URL mode */}
-        {useUrl && (
-          <Form.Item name="mediaUrl">
-            <Input
-              prefix={<LinkOutlined />}
-              placeholder="Paste image / video URL"
-            />
           </Form.Item>
         )}
       </Form.Item>

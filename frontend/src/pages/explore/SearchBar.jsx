@@ -1,11 +1,13 @@
 import { Input } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
-export default function SearchBar() {
+export default function SearchBar({ value, onChange }) {
   return (
     <Input
-      placeholder="Search videos..."
+      placeholder="Search posts..."
       size="large"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
       suffix={<SearchOutlined style={{ color: "#888" }} />}
       style={{
         width: "100%",

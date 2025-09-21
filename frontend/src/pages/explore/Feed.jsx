@@ -36,7 +36,7 @@ const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
 const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
-export default function Feed() {
+export default function Feed({ searchQuery = "", selectedCategories = [] }) {
   const screens = useBreakpoint();
   const isDesktop = screens.md;
   const isSmall = !screens.sm;
@@ -93,6 +93,22 @@ export default function Feed() {
 
   const posts = data?.posts || [];
 
+  // Apply search + category filter
+  // Filter
+  let filteredPosts = posts.filter((post) => {
+    const matchesSearch =
+      (post.content || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (post.video?.title || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+    const matchesCategory =
+      selectedCategories.length === 0 ||
+      selectedCategories.includes(post.category);
+
+    return matchesSearch && matchesCategory;
+  });
+
   if (posts.length === 0) {
     return (
       <Result
@@ -106,8 +122,8 @@ export default function Feed() {
   //  Group posts into chunks
   const chunkSize = 9;
   const chunks = Array.from(
-    { length: Math.ceil(posts.length / chunkSize) },
-    (_, i) => posts.slice(i * chunkSize, i * chunkSize + chunkSize)
+    { length: Math.ceil(filteredPosts.length / chunkSize) },
+    (_, i) => filteredPosts.slice(i * chunkSize, i * chunkSize + chunkSize)
   );
 
   // Define injected components by chunk index

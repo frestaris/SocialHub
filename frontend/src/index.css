@@ -1,3 +1,4 @@
+/* Grid Feed */
 .masonry-grid {
   display: flex;
   margin-left: -16px;
@@ -7,4 +8,10 @@
 .masonry-grid_column {
   padding-left: 16px;
   background-clip: padding-box;
+}
+
+/* Sidebar tabs background */
+.menu-item-active {
+  background-color: #e6f4ff !important;
+  border-radius: 6px;
 }
