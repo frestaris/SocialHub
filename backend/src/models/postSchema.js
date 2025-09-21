@@ -7,37 +7,24 @@ const postSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    type: {
-      type: String,
-      enum: ["video", "text"],
-      required: true,
-    },
 
-    videoId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Video",
-      default: null,
-    },
+    type: { type: String, enum: ["text", "image", "video"], required: true },
 
+    // shared
     content: { type: String },
     category: { type: String },
     image: { type: String, default: null },
     views: { type: Number, default: 0 },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
 
-    likes: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-      },
-    ],
-
-    comments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment",
-      },
-    ],
-    edited: { type: Boolean, default: false },
+    // video-specific
+    video: {
+      title: { type: String },
+      url: { type: String },
+      thumbnail: { type: String },
+      duration: { type: Number, default: 0 },
+    },
   },
   { timestamps: true }
 );

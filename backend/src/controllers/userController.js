@@ -1,5 +1,4 @@
 import User from "../models/userSchema.js";
-import Video from "../models/videoSchema.js";
 import Post from "../models/postSchema.js";
 import Comment from "../models/commentSchema.js";
 import { firebaseAdmin } from "../config/firebaseAdmin.js";
@@ -104,7 +103,6 @@ export const deleteUser = async (req, res) => {
 
     // Delete user-owned content from MongoDB
     await Promise.all([
-      Video.deleteMany({ creatorId: userId }),
       Post.deleteMany({ userId }),
       Comment.deleteMany({ userId }),
     ]);

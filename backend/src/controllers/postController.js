@@ -1,55 +1,54 @@
 import Post from "../models/postSchema.js";
-import Video from "../models/videoSchema.js";
 
 // CREATE POST
 export const createPost = async (req, res) => {
   try {
     const { type, content, category, image, video } = req.body;
 
-    let newPost;
-
     if (type === "video") {
-      if (!video || !video.url || !video.title) {
-        return res
-          .status(400)
-          .json({ success: false, error: "Video data is required" });
+      if (!video || !video.url || !video.title || !content) {
+        return res.status(400).json({
+          success: false,
+          error: "Video title, URL, and content are required",
+        });
       }
 
-      // Create the video document
-      const newVideo = await Video.create({
-        creatorId: req.user._id,
-        title: video.title,
-        description: video.description || "",
-        category: video.category || category || "",
-        url: video.url,
-        thumbnail: video.thumbnail || "",
-        duration: video.duration || 0,
-      });
-
-      // Create the post referencing the video
-      newPost = await Post.create({
+      const newPost = await Post.create({
         userId: req.user._id,
         type: "video",
-        videoId: newVideo._id,
-        category: newVideo.category,
+        category: video.category || category || "",
+        content, // always use content as description
+        video: {
+          title: video.title,
+          url: video.url,
+          thumbnail: video.thumbnail || "",
+          duration: video.duration || 0,
+        },
       });
-    } else {
-      // Create a text/image post
-      newPost = await Post.create({
-        userId: req.user._id,
-        type: "text",
-        content,
-        category,
-        image: image || null,
-      });
+
+      const populated = await Post.findById(newPost._id).populate(
+        "userId",
+        "username avatar"
+      );
+
+      return res.status(201).json({ success: true, post: populated });
     }
 
-    // Populate before returning
-    const populatedPost = await Post.findById(newPost._id)
-      .populate("userId", "username avatar")
-      .populate("videoId", "title thumbnail url duration description");
+    // ---- TEXT / IMAGE ----
+    const newPost = await Post.create({
+      userId: req.user._id,
+      type, // 👈 trust frontend-provided type
+      content,
+      category,
+      image: image || null,
+    });
 
-    res.status(201).json({ success: true, post: populatedPost });
+    const populated = await Post.findById(newPost._id).populate(
+      "userId",
+      "username avatar"
+    );
+
+    res.status(201).json({ success: true, post: populated });
   } catch (err) {
     console.error("Create post error:", err);
     res.status(500).json({ success: false, error: "Server error" });
@@ -64,7 +63,6 @@ export const getPosts = async (req, res) => {
 
     const posts = await Post.find(filter)
       .populate("userId", "username avatar")
-      .populate("videoId", "title thumbnail url duration description")
       .sort({ createdAt: -1 });
 
     res.json({ success: true, posts });
@@ -79,7 +77,6 @@ export const getPostById = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate("userId", "username avatar")
-      .populate("videoId")
       .populate({
         path: "comments",
         populate: { path: "userId", select: "username avatar" },
@@ -105,9 +102,7 @@ export const getPostsByUser = async (req, res) => {
 
     const posts = await Post.find({ userId: req.params.userId })
       .sort(sortOption)
-      .populate("userId", "username avatar")
-      .populate("videoId", "title thumbnail url duration");
-
+      .populate("userId", "username avatar");
     res.json({ success: true, posts });
   } catch (err) {
     console.error("Get user posts error:", err);
@@ -125,7 +120,7 @@ export const updatePost = async (req, res) => {
       return res.status(404).json({ success: false, error: "Post not found" });
     }
 
-    //  Only owner can edit
+    // Only owner can edit
     if (post.userId.toString() !== req.user._id.toString()) {
       return res.status(401).json({ success: false, error: "Not authorized" });
     }
@@ -145,79 +140,37 @@ export const updatePost = async (req, res) => {
     // Update image
     if (image !== undefined && image !== post.image) {
       post.image = image;
-      post.videoId = null;
-      post.type = "text";
+      post.type = image ? "image" : "text";
+      post.video = null;
       changed = true;
     }
 
     // Update video
     if (video) {
-      let linkedVideo = await Video.findById(post.videoId);
-      if (!linkedVideo) {
-        linkedVideo = await Video.create({
-          creatorId: req.user._id,
-          title: video.title,
-          description: video.description,
-          category: video.category || category || "",
-          url: video.url,
-          thumbnail: video.thumbnail || "",
-          duration: video.duration || 0,
-        });
-        post.videoId = linkedVideo._id;
-        changed = true;
-      } else {
-        if (video.title !== undefined && video.title !== linkedVideo.title) {
-          linkedVideo.title = video.title;
-          changed = true;
-        }
-        if (
-          video.description !== undefined &&
-          video.description !== linkedVideo.description
-        ) {
-          linkedVideo.description = video.description;
-          changed = true;
-        }
-        if (
-          video.category !== undefined &&
-          video.category !== linkedVideo.category
-        ) {
-          linkedVideo.category = video.category;
-          post.category = video.category;
-          changed = true;
-        }
-        if (video.url !== undefined && video.url !== linkedVideo.url) {
-          linkedVideo.url = video.url;
-          changed = true;
-        }
-        if (
-          video.thumbnail !== undefined &&
-          video.thumbnail !== linkedVideo.thumbnail
-        ) {
-          linkedVideo.thumbnail = video.thumbnail;
-          changed = true;
-        }
-        if (
-          video.duration !== undefined &&
-          video.duration !== linkedVideo.duration
-        ) {
-          linkedVideo.duration = video.duration;
-          changed = true;
-        }
-        await linkedVideo.save();
-      }
       post.type = "video";
       post.image = null;
-    }
+      post.video = {
+        title: video.title || post.video?.title,
+        url: video.url || post.video?.url,
+        thumbnail: video.thumbnail || post.video?.thumbnail,
+        duration: video.duration || post.video?.duration,
+      };
+      if (video.category) post.category = video.category;
 
-    if (changed) {
-      post.edited = true;
+      // ensure content (description) updates
+      if (content !== undefined) {
+        post.content = content;
+      }
+
+      changed = true;
     }
 
     const updatedPost = await post.save();
 
-    const populated = await Post.findById(updatedPost._id)
-      .populate("userId", "username avatar")
-      .populate("videoId", "title thumbnail url duration description");
+    const populated = await Post.findById(updatedPost._id).populate(
+      "userId",
+      "username avatar"
+    );
 
     res.json({ success: true, post: populated });
   } catch (err) {
@@ -239,11 +192,6 @@ export const deletePost = async (req, res) => {
       return res.status(401).json({ success: false, error: "Not authorized" });
     }
 
-    // If post is linked to a video, delete the video
-    if (post.type === "video" && post.videoId) {
-      await Video.findByIdAndDelete(post.videoId);
-    }
-
     await post.deleteOne();
 
     res.json({ success: true, message: "Post deleted successfully" });
@@ -261,19 +209,13 @@ export const getUserFeed = async (req, res) => {
     let sortOption = { createdAt: -1 }; // default = newest
     if (sort === "oldest") sortOption = { createdAt: 1 };
     if (sort === "popular") sortOption = { views: -1 };
-    if (sort === "liked") sortOption = { likes: -1 }; // optional extra
+    if (sort === "liked") sortOption = { likes: -1 };
 
     const posts = await Post.find({ userId: req.params.userId })
       .populate("userId", "username avatar")
-      .populate("videoId", "title description category url thumbnail duration")
       .sort(sortOption);
 
-    const normalized = posts.map((p) => ({
-      ...p.toObject(),
-      type: p.type || (p.videoId ? "video" : "text"),
-    }));
-
-    res.json({ success: true, feed: normalized });
+    res.json({ success: true, feed: posts });
   } catch (err) {
     console.error("Get user feed error:", err);
     res.status(500).json({ success: false, error: "Server error" });
@@ -285,11 +227,9 @@ export const incrementPostViews = async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(
       req.params.id,
-      { $inc: { views: 1 } }, // 👈 increment by 1
+      { $inc: { views: 1 } },
       { new: true }
-    )
-      .populate("userId", "username avatar")
-      .populate("videoId", "title thumbnail url duration description");
+    ).populate("userId", "username avatar");
 
     if (!post) {
       return res.status(404).json({ success: false, error: "Post not found" });
@@ -322,10 +262,10 @@ export const toggleLikePost = async (req, res) => {
 
     await post.save();
 
-    // 🔑 Return the whole updated post with populated fields
-    const updated = await Post.findById(post._id)
-      .populate("userId", "username avatar")
-      .populate("videoId", "title thumbnail url duration description");
+    const updated = await Post.findById(post._id).populate(
+      "userId",
+      "username avatar"
+    );
 
     res.json({ success: true, post: updated });
   } catch (err) {

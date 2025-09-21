@@ -26,6 +26,7 @@ export const commentApi = createApi({
         { type: "Comment", id: postId },
       ],
     }),
+
     // Create a new comment
     createComment: builder.mutation({
       query: (commentData) => ({
@@ -37,8 +38,8 @@ export const commentApi = createApi({
         try {
           const { data } = await queryFulfilled;
 
-          // Update getCommentsByPost cache
           if (postId) {
+            // Update getCommentsByPost cache
             dispatch(
               commentApi.util.updateQueryData(
                 "getCommentsByPost",
@@ -49,22 +50,22 @@ export const commentApi = createApi({
               )
             );
 
-            // Update getPostById cache (so PostInfo comment count updates)
+            // Update getPostById cache
             dispatch(
               postApi.util.updateQueryData("getPostById", postId, (draft) => {
                 if (!draft.post.comments) draft.post.comments = [];
-                draft.post.comments.push(data.comment._id); // 👈 ONLY push the ID
+                draft.post.comments.push(data.comment._id);
               })
             );
 
-            // Update getPosts cache (so Feed comment count updates)
+            // Update getPosts cache
             dispatch(
               postApi.util.updateQueryData("getPosts", undefined, (draft) => {
                 const idx = draft.posts?.findIndex((p) => p._id === postId);
                 if (idx !== -1) {
                   if (!draft.posts[idx].comments)
                     draft.posts[idx].comments = [];
-                  draft.posts[idx].comments.push(data.comment._id); // 👈 ONLY push the ID
+                  draft.posts[idx].comments.push(data.comment._id);
                 }
               })
             );
@@ -75,7 +76,7 @@ export const commentApi = createApi({
       },
     }),
 
-    //  Update comment
+    // Update comment
     updateComment: builder.mutation({
       query: ({ id, ...patch }) => ({
         url: `/${id}`,
@@ -86,7 +87,6 @@ export const commentApi = createApi({
         try {
           const { data } = await queryFulfilled;
 
-          //  Update getCommentsByPost cache instantly
           if (postId) {
             dispatch(
               commentApi.util.updateQueryData(
@@ -103,13 +103,11 @@ export const commentApi = createApi({
           console.error("Comment cache update failed:", err);
         }
       },
-      invalidatesTags: (result, error, { postId, videoId }) => {
-        if (postId) return [{ type: "Comment", id: postId }];
-        if (videoId) return [{ type: "Comment", id: videoId }];
-        return ["Comment"];
-      },
+      invalidatesTags: (result, error, { postId }) =>
+        postId ? [{ type: "Comment", id: postId }] : ["Comment"],
     }),
-    //  Delete comment
+
+    // Delete comment
     deleteComment: builder.mutation({
       query: ({ id }) => ({
         url: `/${id}`,
@@ -119,8 +117,8 @@ export const commentApi = createApi({
         try {
           await queryFulfilled;
 
-          // Remove from cached comments list
           if (postId) {
+            // Remove from cached comments list
             dispatch(
               commentApi.util.updateQueryData(
                 "getCommentsByPost",
@@ -131,7 +129,7 @@ export const commentApi = createApi({
               )
             );
 
-            // Also update Post cache (so comment length updates in PostInfo)
+            // Update Post cache
             dispatch(
               postApi.util.updateQueryData("getPostById", postId, (draft) => {
                 draft.post.comments = draft.post.comments.filter(

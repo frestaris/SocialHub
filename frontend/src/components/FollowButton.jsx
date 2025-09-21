@@ -24,7 +24,7 @@ export default function FollowButton({
       notification.warning({
         message: "Login Required",
         description: "You need to log in to follow users.",
-        btn: (
+        actions: (
           <Button
             type="primary"
             size="small"

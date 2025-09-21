@@ -1,3 +1,7 @@
+// -----------------------------------------
+// -----     REMOVE THIS COMPONENT     -----
+//------------------------------------------
+
 import {
   Form,
   Input,
@@ -20,7 +24,6 @@ import { fetchYouTubeMetadata } from "../../../utils/fetchYouTubeMetadata";
 import { categories } from "../../../utils/categories";
 
 const { TextArea } = Input;
-const { Option } = Select;
 
 export default function EditVideoForm({
   post,
@@ -35,19 +38,15 @@ export default function EditVideoForm({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [uploadMode, setUploadMode] = useState(
-    post.videoId?.url?.startsWith("http") ? "url" : "file"
+    post.video?.url?.startsWith("http") ? "url" : "file"
   );
-
   const [isChanged, setIsChanged] = useState(false);
 
   const initialValues = {
-    title: post.videoId?.title,
-    description: post.videoId?.description,
-    category: post.videoId?.category,
-    externalUrl:
-      post.videoId?.url && post.videoId.url.startsWith("http")
-        ? post.videoId.url
-        : null,
+    title: post.video?.title,
+    description: post.content, // description lives in content
+    category: post.category,
+    externalUrl: post.video?.url?.startsWith("http") ? post.video.url : null,
   };
 
   useEffect(() => {
@@ -72,20 +71,19 @@ export default function EditVideoForm({
 
   const handleFinish = async (values) => {
     try {
-      let fileURL = post.videoId?.url || "";
-      let duration = post.videoId?.duration || 0;
-      let thumbnail = post.videoId?.thumbnail || "";
+      let fileURL = post.video?.url || "";
+      let duration = post.video?.duration || 0;
+      let thumbnail = post.video?.thumbnail || "";
       let title = values.title;
       let description = values.description;
 
-      // --- Handle URL mode ---
+      // --- URL mode ---
       if (uploadMode === "url" && values.externalUrl) {
         fileURL = values.externalUrl.trim();
         if (!fileURL.startsWith("http")) {
           fileURL = `https://${fileURL}`;
         }
 
-        // 🔑 Fetch metadata for YouTube URLs
         if (fileURL.includes("youtube.com") || fileURL.includes("youtu.be")) {
           const meta = await fetchYouTubeMetadata(fileURL);
           if (meta) {
@@ -97,7 +95,7 @@ export default function EditVideoForm({
         }
       }
 
-      // --- Handle File mode ---
+      // --- File mode ---
       if (uploadMode === "file" && values.file?.[0]?.originFileObj) {
         const file = values.file[0].originFileObj;
         fileURL = await uploadToFirebase(file, userId, (progress) =>
@@ -106,36 +104,41 @@ export default function EditVideoForm({
         duration = await getVideoDuration(file);
       }
 
-      // --- Handle Thumbnail Upload ---
-      if (values.thumbnail && values.thumbnail[0]?.originFileObj) {
+      // --- Thumbnail (only if not YouTube) ---
+      const isYouTube =
+        fileURL.includes("youtube.com") || fileURL.includes("youtu.be");
+      if (!isYouTube && values.thumbnail?.[0]?.originFileObj) {
         const thumbFile = values.thumbnail[0].originFileObj;
-        thumbnail = await uploadToFirebase(thumbFile, userId, null);
+        thumbnail = await uploadToFirebase(
+          thumbFile,
+          userId,
+          null,
+          "thumbnails"
+        );
       }
 
-      // ✅ Ensure video + thumbnail are still set
       if (!fileURL) {
         message.error("Video URL is required.");
-        return;
-      }
-      if (!thumbnail) {
-        message.error("Thumbnail is required.");
         return;
       }
 
       const videoData = {
         title,
-        description,
-        category: values.category,
         url: fileURL,
         thumbnail,
         duration,
       };
 
       setIsSaving(true);
-      await onUpdate({ id: post._id, video: videoData }).unwrap();
+      await onUpdate({
+        id: post._id,
+        video: videoData,
+        content: description,
+        category: values.category,
+      }).unwrap();
+
       message.success("Video updated!");
       setIsSaving(false);
-
       if (onClose) onClose();
     } catch (err) {
       console.error("Update video failed:", err);

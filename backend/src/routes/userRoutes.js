@@ -20,3 +20,4 @@ router.delete("/me", protect, deleteUser);
 router.patch("/:id/follow", protect, toggleFollow);
 
 export default router;
+// before that, being that now video has been unified, can we remove the description and have only the content? around the full app now please?

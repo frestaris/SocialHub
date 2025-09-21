@@ -1,23 +1,14 @@
 import {
   Card,
   Typography,
-  Space,
   Dropdown,
   Button,
-  Tag,
   message,
   Modal,
   Grid,
   Spin,
 } from "antd";
-import {
-  EyeOutlined,
-  LikeOutlined,
-  CommentOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  MoreOutlined,
-} from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, MoreOutlined } from "@ant-design/icons";
 import moment from "moment";
 import {
   useUpdatePostMutation,
@@ -26,7 +17,6 @@ import {
 import { useState } from "react";
 import EditPostForm from "./EditPostForm";
 import EditVideoForm from "./EditVideoForm";
-import CategoryBadge from "../../../components/CategoryBadge";
 import { Link } from "react-router-dom";
 import PostActions from "../../../components/PostActions";
 
@@ -43,12 +33,8 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
 
-  // ---- Edit handlers ----
-  const handleEdit = (post) => {
-    setEditingPost(post);
-  };
+  const handleEdit = (post) => setEditingPost(post);
 
-  // ---- Delete handlers ----
   const handleDeleteConfirm = async () => {
     try {
       if (!deletingPost) return;
@@ -87,11 +73,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {feed.map((item) => (
-        <Card
-          key={item._id}
-          style={{ borderRadius: 12 }}
-          stylesbody={{ padding: "16px" }}
-        >
+        <Card key={item._id} style={{ borderRadius: 12 }}>
           {/* Header: date + dropdown */}
           <div
             style={{
@@ -101,12 +83,10 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
               marginBottom: 12,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Text type="secondary" style={{ fontSize: "12px" }}>
-                • {moment(item.createdAt).fromNow()}
-                {item.edited && <span style={{ marginLeft: 6 }}>(edited)</span>}
-              </Text>
-            </div>
+            <Text type="secondary" style={{ fontSize: "12px" }}>
+              • {moment(item.createdAt).fromNow()}
+              {item.edited && <span style={{ marginLeft: 6 }}>(edited)</span>}
+            </Text>
 
             {currentUserId === (item.userId?._id || item.creatorId?._id) && (
               <Dropdown
@@ -147,7 +127,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
                 strong
                 style={{ fontSize: 16, display: "block", marginBottom: 12 }}
               >
-                {item.videoId?.title}
+                {item.video?.title}
               </Text>
             )}
 
@@ -161,7 +141,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
               }}
             >
               {/* Video Thumbnail */}
-              {item.type === "video" && item.videoId?.thumbnail && (
+              {item.type === "video" && item.video?.thumbnail && (
                 <div
                   style={{
                     flex: isMobile ? "0 0 100%" : "0 0 50%",
@@ -170,7 +150,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
                 >
                   <Link to={`/post/${item._id}`}>
                     <img
-                      src={item.videoId.thumbnail}
+                      src={item.video.thumbnail}
                       alt="Video thumbnail"
                       style={{
                         width: "100%",
@@ -179,7 +159,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
                         objectFit: isMobile ? "contain" : "cover",
                       }}
                     />
-                    {item.videoId?.duration > 0 && (
+                    {item.video?.duration > 0 && (
                       <span
                         style={{
                           position: "absolute",
@@ -192,18 +172,16 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
                           borderRadius: "4px",
                         }}
                       >
-                        {Math.floor(item.videoId.duration / 60)}:
-                        {(item.videoId.duration % 60)
-                          .toString()
-                          .padStart(2, "0")}
+                        {Math.floor(item.video.duration / 60)}:
+                        {(item.video.duration % 60).toString().padStart(2, "0")}
                       </span>
                     )}
                   </Link>
                 </div>
               )}
 
-              {/* Text Post Image */}
-              {item.type === "text" && item.image && (
+              {/* Image Post */}
+              {item.type === "image" && item.image && (
                 <div style={{ flex: isMobile ? "0 0 100%" : "0 0 50%" }}>
                   <Link to={`/post/${item._id}`}>
                     <img
@@ -221,21 +199,15 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
               )}
 
               {/* Content / Description */}
-              {(item.type === "video"
-                ? item.videoId?.description
-                : item.content) && (
+              {item.content && (
                 <Paragraph style={{ flex: 1, margin: 0 }}>
                   <Link to={`/post/${item._id}`} style={{ color: "inherit" }}>
-                    {item.type === "video"
-                      ? item.videoId?.description
-                      : item.content}
+                    {item.content}
                   </Link>
                 </Paragraph>
               )}
             </div>
           </>
-
-          {/* Stats row */}
           <PostActions post={item} isSmall={isMobile} />
         </Card>
       ))}
@@ -285,7 +257,9 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
       >
         Are you sure you want to delete{" "}
         <b>
-          {deletingPost?.type === "video" ? deletingPost?.title : "this post"}
+          {deletingPost?.type === "video"
+            ? deletingPost?.video?.title
+            : "this post"}
         </b>
         ?
       </Modal>

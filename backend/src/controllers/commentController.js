@@ -30,7 +30,6 @@ export const createComment = async (req, res) => {
     if (postId) {
       updatedPost = await Post.findById(postId)
         .populate("userId", "username avatar")
-        .populate("videoId", "title thumbnail url description duration")
         .populate({
           path: "comments",
           populate: { path: "userId", select: "username avatar" },
@@ -51,8 +50,8 @@ export const createComment = async (req, res) => {
 // GET COMMENTS (by post or video)
 export const getComments = async (req, res) => {
   try {
-    const { postId, videoId } = req.params;
-    const filter = postId ? { postId } : { videoId };
+    const { postId } = req.params;
+    const filter = postId ? { postId } : {};
 
     const comments = await Comment.find(filter)
       .populate("userId", "username avatar")

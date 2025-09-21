@@ -36,8 +36,8 @@ export default function PostInfo({ post }) {
   return (
     <div style={{ marginBottom: "20px" }}>
       {/* Media */}
-      {post.type === "video" && post.videoId?.url && (
-        <VideoPlayer src={post.videoId.url} title={post.videoId?.title} />
+      {post.type === "video" && post.video?.url && (
+        <VideoPlayer src={post.video.url} title={post.video?.title} />
       )}
       {post.image && (
         <div style={{ marginTop: "16px" }}>
@@ -93,7 +93,7 @@ export default function PostInfo({ post }) {
       {/* Title (for video posts) */}
       {post.type === "video" && (
         <Title level={3} style={{ marginBottom: "10px" }}>
-          {post.videoId?.title}
+          {post.video?.title}
         </Title>
       )}
 
@@ -111,9 +111,7 @@ export default function PostInfo({ post }) {
           ellipsis={!expanded ? { rows: 2, expandable: false } : false}
           style={{ marginBottom: "8px" }}
         >
-          {post.type === "video"
-            ? post.videoId?.description || post.content
-            : post.content}
+          {post.content}
         </Paragraph>
         {isOverflowing && (
           <Button

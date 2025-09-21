@@ -1,5 +1,6 @@
 import { Card, Avatar, Space, Tooltip, Badge, Typography } from "antd";
 import { Link } from "react-router-dom";
+import { UserOutlined } from "@ant-design/icons"; // 👈 import the icon
 
 const { Text } = Typography;
 
@@ -18,7 +19,7 @@ export default function SuggestedCreators({ followers }) {
           </Text>
           <Badge
             count={followers.length}
-            overflowCount={99} // max before showing "99+"
+            overflowCount={99}
             style={{ backgroundColor: "#1677ff" }}
           />
         </Space>
@@ -29,9 +30,10 @@ export default function SuggestedCreators({ followers }) {
           followers.map((f) => (
             <Tooltip title={f.username} key={f._id}>
               <Link to={`/profile/${f._id}`}>
-                <Avatar src={f.avatar || null}>
-                  {!f.avatar && f.username?.[0]}
-                </Avatar>
+                <Avatar
+                  src={f.avatar || null}
+                  icon={!f.avatar && <UserOutlined />}
+                />
               </Link>
             </Tooltip>
           ))

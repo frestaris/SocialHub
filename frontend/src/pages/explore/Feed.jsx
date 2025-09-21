@@ -220,7 +220,7 @@ export default function Feed() {
                 </div>
 
                 {/* Media (video thumbnail or image) */}
-                {post.type === "video" && post.videoId && (
+                {post.type === "video" && post.video && (
                   <Link to={`/post/${post._id}`}>
                     <div
                       style={{
@@ -232,17 +232,15 @@ export default function Feed() {
                       }}
                     >
                       <img
-                        src={
-                          post.videoId.thumbnail || "/fallback-thumbnail.jpg"
-                        }
-                        alt={post.videoId.title}
+                        src={post.video.thumbnail || "/fallback-thumbnail.jpg"}
+                        alt={post.video.title}
                         style={{
                           width: "100%",
                           height: "100%",
                           objectFit: "cover",
                         }}
                       />
-                      {post.videoId.duration > 0 && (
+                      {post.video.duration > 0 && (
                         <span
                           style={{
                             position: "absolute",
@@ -255,8 +253,8 @@ export default function Feed() {
                             borderRadius: "4px",
                           }}
                         >
-                          {Math.floor(post.videoId.duration / 60)}:
-                          {(post.videoId.duration % 60)
+                          {Math.floor(post.video.duration / 60)}:
+                          {(post.video.duration % 60)
                             .toString()
                             .padStart(2, "0")}
                         </span>
@@ -289,7 +287,7 @@ export default function Feed() {
                   </Link>
                 )}
 
-                {/* Title & description/content */}
+                {/* Title & content */}
                 {post.type === "video" ? (
                   <>
                     <Paragraph
@@ -300,7 +298,7 @@ export default function Feed() {
                         to={`/post/${post._id}`}
                         style={{ color: "#000", fontWeight: 600 }}
                       >
-                        {post.videoId?.title}
+                        {post.video?.title}
                       </Link>
                     </Paragraph>
                     <Paragraph
@@ -308,7 +306,7 @@ export default function Feed() {
                       ellipsis={{ rows: 2 }}
                       style={{ margin: 0, fontSize: isSmall ? 13 : 15 }}
                     >
-                      {post.videoId?.description}
+                      {post.content}
                     </Paragraph>
                   </>
                 ) : (

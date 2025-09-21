@@ -10,12 +10,7 @@ const commentSchema = new mongoose.Schema(
     postId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
-      default: null,
-    },
-    videoId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Video",
-      default: null,
+      required: true,
     },
     content: {
       type: String,
