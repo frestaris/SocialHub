@@ -1,4 +1,4 @@
-import { Menu, Checkbox } from "antd";
+import { Menu } from "antd";
 import { categories } from "../../utils/categories";
 
 export default function Sidebar({ selectedCategories = [], onCategoryChange }) {
@@ -33,9 +33,7 @@ export default function Sidebar({ selectedCategories = [], onCategoryChange }) {
               }}
             >
               <span>{c.label}</span>
-              {isActive && (
-                <Checkbox checked style={{ pointerEvents: "none" }} />
-              )}
+              {isActive}
             </div>
           ),
         };

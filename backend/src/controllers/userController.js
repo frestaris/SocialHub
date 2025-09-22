@@ -38,10 +38,10 @@ export const getCurrentUser = async (req, res) => {
     }
 
     // Return only safe fields
-    const { username, avatar, role, providers } = user;
+    const { username, avatar, role, providers, cover } = user;
     res.json({
       success: true,
-      user: { username, email: user.email, avatar, role, providers },
+      user: { username, email: user.email, avatar, cover, role, providers },
     });
   } catch (err) {
     console.error("Get user error:", err);
@@ -53,7 +53,9 @@ export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
     const user = await User.findById(id)
-      .select("username email avatar bio role providers followers following")
+      .select(
+        "username email avatar cover bio role providers followers following"
+      )
       .populate("followers", "username avatar")
       .populate("following", "username avatar");
 
@@ -71,16 +73,18 @@ export const getUserById = async (req, res) => {
 // Update user profile
 export const updateUser = async (req, res) => {
   try {
-    const { username, bio, avatar } = req.body;
+    const { username, bio, avatar, cover } = req.body;
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { username, bio, avatar },
+      { username, bio, avatar, cover },
       { new: true }
     )
       .populate("followers", "username avatar")
       .populate("following", "username avatar")
-      .select("username email avatar bio role providers followers following");
+      .select(
+        "username email avatar cover bio role providers followers following"
+      );
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -132,7 +136,7 @@ export const deleteUser = async (req, res) => {
 export const listUsers = async (req, res) => {
   try {
     const users = await User.find()
-      .select("username email avatar bio role followers following")
+      .select("username email avatar cover bio role followers following")
       .populate("followers", "username avatar")
       .populate("following", "username avatar")
       .lean();

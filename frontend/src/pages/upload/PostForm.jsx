@@ -295,7 +295,7 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
             <Input placeholder="Enter video title" />
           </Form.Item>
 
-          {!isYouTubeUrl && !useUrl && (
+          {!isYouTubeUrl && useUpload && (
             <Form.Item
               label="Upload Thumbnail"
               name="thumbnail"

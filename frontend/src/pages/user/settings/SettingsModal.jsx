@@ -38,6 +38,8 @@ export default function SettingsModal({ open, onClose, user }) {
   const [hasPassword, setHasPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [avatarProgress, setAvatarProgress] = useState(0);
+  const [coverProgress, setCoverProgress] = useState(0);
 
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
@@ -49,6 +51,7 @@ export default function SettingsModal({ open, onClose, user }) {
     username: user?.username || "",
     bio: user?.bio || "",
     avatar: user?.avatar || "",
+    cover: user?.cover || "",
     email: user?.email || "",
     password: "",
     newPassword: "",
@@ -143,8 +146,28 @@ export default function SettingsModal({ open, onClose, user }) {
         avatarUrl = await uploadToFirebase(
           file,
           auth.currentUser.uid,
-          null,
+          (progress) => setAvatarProgress(progress),
           "avatars"
+        );
+      }
+
+      // 🔹 Handle cover (URL or file upload to Firebase)
+      let coverUrl = values.cover; // from URL field if present
+      if (values.coverFile?.[0]?.originFileObj) {
+        const file = values.coverFile[0].originFileObj;
+
+        if (file.size / 1024 / 1024 > 4) {
+          message.error("Cover must be smaller than 4MB!");
+          setSaving(false);
+          return;
+        }
+
+        // Upload cover to Firebase under covers/
+        coverUrl = await uploadToFirebase(
+          file,
+          auth.currentUser.uid,
+          (progress) => setCoverProgress(progress),
+          "covers"
         );
       }
 
@@ -153,6 +176,7 @@ export default function SettingsModal({ open, onClose, user }) {
         username: values.username,
         bio: values.bio,
         avatar: avatarUrl,
+        cover: coverUrl,
       }).unwrap();
 
       message.success("Profile updated successfully");
@@ -227,6 +251,7 @@ export default function SettingsModal({ open, onClose, user }) {
           onValuesChange={handleValuesChange}
         >
           <ProfileInfoForm />
+          <Divider></Divider>
           {!hasPassword ? (
             <>
               <Form.Item
@@ -304,8 +329,20 @@ export default function SettingsModal({ open, onClose, user }) {
               htmlType="submit"
               disabled={!isChanged || saving}
             >
-              {saving ? <Spin size="small" style={{ marginRight: 8 }} /> : null}
-              {saving ? "Saving..." : "Save"}
+              {saving ? (
+                <>
+                  <Spin size="small" style={{ marginRight: 8 }} />
+                  {avatarProgress > 0 && avatarProgress < 100
+                    ? `Saving... ${Math.round(avatarProgress)}%`
+                    : coverProgress > 0 && coverProgress < 100
+                    ? `Saving... ${Math.round(coverProgress)}%`
+                    : avatarProgress === 100 || coverProgress === 100
+                    ? "Finalizing..."
+                    : "Saving..."}
+                </>
+              ) : (
+                "Save"
+              )}
             </Button>
           </div>
         </Form>

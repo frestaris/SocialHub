@@ -21,6 +21,7 @@ export default function TopCreators() {
 
   const avatarSize = screens.md ? 100 : 70;
   const fontSize = screens.md ? "16px" : "14px";
+  const coverHeight = 80;
 
   return (
     <div style={{ margin: "20px 0" }}>
@@ -49,69 +50,97 @@ export default function TopCreators() {
                 style={{
                   background: "#fff",
                   borderRadius: "16px",
-                  padding: "20px",
+                  overflow: "hidden",
                   textAlign: "center",
                   boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  marginTop: "10px",
                 }}
               >
-                <Link
-                  to={`/profile/${user._id}`}
-                  style={{ textDecoration: "none", flexGrow: 1 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Avatar
-                    size={avatarSize}
-                    src={
-                      user.avatar && user.avatar.trim() !== ""
-                        ? user.avatar
-                        : null
-                    }
-                    icon={
-                      !user.avatar || user.avatar.trim() === "" ? (
-                        <UserOutlined />
-                      ) : null
-                    }
-                    style={{ marginBottom: "12px" }}
-                  />
+                {/* Cover */}
+                <div
+                  style={{
+                    width: "100%",
+                    height: coverHeight,
+                    background:
+                      user.cover && user.cover.trim() !== ""
+                        ? `url(${user.cover}) center/cover no-repeat`
+                        : "linear-gradient(135deg, #1677ff, #52c41a)",
+                  }}
+                />
 
-                  <h3
-                    style={{
-                      margin: "0 4px 12px",
-                      color: "#333",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                      maxWidth: "160px",
-                      marginInline: "auto",
-                      fontSize,
-                    }}
-                    title={user.username}
+                {/* Content */}
+                <div
+                  style={{
+                    padding: "20px",
+                    marginTop: -(avatarSize - coverHeight / 2),
+                    flexGrow: 1,
+                  }}
+                >
+                  <Link
+                    to={`/profile/${user._id}`}
+                    style={{ textDecoration: "none", display: "block" }}
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    {user.username}
-                  </h3>
-                </Link>
+                    <Avatar
+                      size={avatarSize}
+                      src={
+                        user.avatar && user.avatar.trim() !== ""
+                          ? user.avatar
+                          : null
+                      }
+                      icon={
+                        !user.avatar || user.avatar.trim() === "" ? (
+                          <UserOutlined />
+                        ) : null
+                      }
+                      style={{
+                        marginBottom: "12px",
+                        border: "3px solid #fff",
+                        background: "#cecece",
+                      }}
+                    />
 
-                {!isOwner ? (
-                  <FollowButton
-                    userId={user._id}
-                    isFollowing={isFollowingUser}
-                    isOwner={isOwner}
-                    block
-                  />
-                ) : (
-                  <Button block disabled style={{ borderRadius: "20px" }}>
-                    You
-                  </Button>
-                )}
-                <p
-                  style={{ marginTop: "8px", fontSize: "12px", color: "#555" }}
-                >
-                  {user.followers?.length || 0} followers
-                </p>
+                    <h3
+                      style={{
+                        margin: "0 4px 12px",
+                        color: "#333",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        maxWidth: "160px",
+                        marginInline: "auto",
+                        fontSize,
+                      }}
+                      title={user.username}
+                    >
+                      {user.username}
+                    </h3>
+                  </Link>
+
+                  {!isOwner ? (
+                    <FollowButton
+                      userId={user._id}
+                      isFollowing={isFollowingUser}
+                      isOwner={isOwner}
+                      block
+                    />
+                  ) : (
+                    <Button block disabled style={{ borderRadius: "20px" }}>
+                      You
+                    </Button>
+                  )}
+                  <p
+                    style={{
+                      marginTop: "8px",
+                      fontSize: "12px",
+                      color: "#555",
+                    }}
+                  >
+                    {user.followers?.length || 0} followers
+                  </p>
+                </div>
               </div>
             </SwiperSlide>
           );
