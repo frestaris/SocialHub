@@ -3,7 +3,6 @@ import {
   Typography,
   Dropdown,
   Button,
-  message,
   Modal,
   Grid,
   Spin,
@@ -19,6 +18,7 @@ import { useState } from "react";
 import EditPostForm from "./EditPostForm";
 import { Link } from "react-router-dom";
 import PostActions from "../../../components/PostActions";
+import { handleError, handleSuccess } from "../../../utils/handleMessage";
 
 const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -43,11 +43,12 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
         userId: deletingPost.userId?._id || currentUserId,
         sort: sortBy,
       }).unwrap();
-      message.success("Post deleted!");
+
+      handleSuccess("Post deleted successfully!");
       setDeletingPost(null);
     } catch (err) {
       console.error("❌ Error deleting post:", err);
-      message.error("Failed to delete post");
+      handleError(err, "Failed to delete post");
     }
   };
 

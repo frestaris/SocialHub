@@ -1,15 +1,5 @@
-import {
-  Modal,
-  Divider,
-  Form,
-  Button,
-  Spin,
-  message,
-  Input,
-  Alert,
-  Space,
-} from "antd";
-import { useState, useEffect } from "react";
+import { Modal, Divider, Form, Button, Spin, Input, Space } from "antd";
+import { useState, useEffect, useMemo } from "react";
 import ProfileInfoForm from "./ProfileInfoForm";
 import { auth, googleProvider, githubProvider } from "../../../firebase";
 import {
@@ -27,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/auth/authSlice";
 import { uploadToFirebase } from "../../../utils/uploadToFirebase";
+import { handleError, handleSuccess } from "../../../utils/handleMessage";
 
 export default function SettingsModal({ open, onClose, user }) {
   const [form] = Form.useForm();
@@ -36,8 +27,6 @@ export default function SettingsModal({ open, onClose, user }) {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [isChanged, setIsChanged] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
   const [avatarProgress, setAvatarProgress] = useState(0);
   const [coverProgress, setCoverProgress] = useState(0);
 
@@ -47,15 +36,17 @@ export default function SettingsModal({ open, onClose, user }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const initialValues = {
-    username: user?.username || "",
-    bio: user?.bio || "",
-    avatar: user?.avatar || "",
-    cover: user?.cover || "",
-    email: user?.email || "",
-    password: "",
-    newPassword: "",
-  };
+  const initialValues = useMemo(
+    () => ({
+      username: user?.username || "",
+      bio: user?.bio || "",
+      avatar: user?.avatar || "",
+      cover: user?.cover || "",
+      password: "",
+      newPassword: "",
+    }),
+    [user]
+  );
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -70,38 +61,40 @@ export default function SettingsModal({ open, onClose, user }) {
     if (open) {
       form.setFieldsValue(initialValues);
       setIsChanged(false);
-      setErrorMessage(null);
-      setSuccessMessage(null);
     }
-  }, [open, user]);
+  }, [open, initialValues, form]);
 
   const handleValuesChange = () => {
     const currentValues = form.getFieldsValue();
-    const changed = Object.keys(initialValues).some((key) => {
-      if (
-        (key === "password" || key === "newPassword") &&
-        !currentValues[key]
-      ) {
-        return false;
+    const unchanged = Object.keys(initialValues).every((key) => {
+      if (key === "password" || key === "newPassword") {
+        return !currentValues[key];
       }
-      return (initialValues[key] ?? "") !== (currentValues[key] ?? "");
+      const initialVal = (initialValues[key] ?? "").toString().trim();
+      const currentVal = (currentValues[key] ?? "").toString().trim();
+      return initialVal === currentVal;
     });
-    setIsChanged(changed);
+
+    setIsChanged(!unchanged);
   };
 
   const handleLinkProvider = async (provider) => {
     try {
       if (!auth.currentUser) {
-        message.error("You must be logged in first.");
+        handleError({ message: "You must be logged in first." }, "Link Failed");
         return;
       }
+
       await linkWithPopup(auth.currentUser, provider);
-      message.success(`Successfully linked ${provider.providerId}`);
+      handleSuccess(`Successfully linked ${provider.providerId}`);
     } catch (err) {
       if (err.code === "auth/credential-already-in-use") {
-        message.error("This provider is already linked to another account.");
+        handleError(
+          { message: "This provider is already linked to another account." },
+          "Link Failed"
+        );
       } else {
-        message.error("Failed to link account.");
+        handleError(err, "Failed to link account");
       }
     }
   };
@@ -109,40 +102,40 @@ export default function SettingsModal({ open, onClose, user }) {
   const handleSave = async (values) => {
     setSaving(true);
     try {
-      // 🔹 Handle password logic
+      // 🔹 Password logic
       if (!hasPassword && values.password) {
         const credential = EmailAuthProvider.credential(
-          values.email,
+          auth.currentUser.email,
           values.password
         );
         await linkWithCredential(auth.currentUser, credential);
         setHasPassword(true);
-        message.success("Password has been added successfully!");
+        handleSuccess("Password has been added successfully!");
       } else if (hasPassword && values.newPassword) {
         try {
           await updatePassword(auth.currentUser, values.newPassword);
-          message.success("Password updated successfully!");
+          handleSuccess("Password updated successfully!");
         } catch (err) {
           if (err.code === "auth/requires-recent-login") {
-            message.error("Please re-login before changing your password.");
-          } else {
-            throw err;
-          }
+            handleError(
+              { message: "Please re-login before changing your password." },
+              "Password Update Failed"
+            );
+          } else throw err;
         }
       }
 
       // 🔹 Handle avatar (URL or file upload to Firebase)
-      let avatarUrl = values.avatar; // from URL field if present
+      let avatarUrl = values.avatar;
       if (values.avatarFile?.[0]?.originFileObj) {
         const file = values.avatarFile[0].originFileObj;
 
         if (file.size / 1024 / 1024 > 4) {
-          message.error("Avatar must be smaller than 4MB!");
+          handleError({ message: "Avatar must be smaller than 4MB!" });
           setSaving(false);
           return;
         }
 
-        // Upload avatar to Firebase under avatars/
         avatarUrl = await uploadToFirebase(
           file,
           auth.currentUser.uid,
@@ -152,17 +145,16 @@ export default function SettingsModal({ open, onClose, user }) {
       }
 
       // 🔹 Handle cover (URL or file upload to Firebase)
-      let coverUrl = values.cover; // from URL field if present
+      let coverUrl = values.cover;
       if (values.coverFile?.[0]?.originFileObj) {
         const file = values.coverFile[0].originFileObj;
 
         if (file.size / 1024 / 1024 > 4) {
-          message.error("Cover must be smaller than 4MB!");
+          handleError({ message: "Cover must be smaller than 4MB!" });
           setSaving(false);
           return;
         }
 
-        // Upload cover to Firebase under covers/
         coverUrl = await uploadToFirebase(
           file,
           auth.currentUser.uid,
@@ -179,13 +171,13 @@ export default function SettingsModal({ open, onClose, user }) {
         cover: coverUrl,
       }).unwrap();
 
-      message.success("Profile updated successfully");
+      handleSuccess("Profile updated successfully");
       setSaving(false);
       setIsChanged(false);
       onClose();
     } catch (err) {
       console.error("Save error:", err);
-      message.error("Failed to save settings");
+      handleError(err, "Failed to save settings");
       setSaving(false);
     }
   };
@@ -194,7 +186,7 @@ export default function SettingsModal({ open, onClose, user }) {
     setDeleting(true);
     try {
       await deleteUser().unwrap();
-      message.success("Account deleted successfully");
+      handleSuccess("Account deleted successfully");
       setDeleting(false);
       setConfirmOpen(false);
       onClose();
@@ -202,7 +194,7 @@ export default function SettingsModal({ open, onClose, user }) {
       navigate("/explore");
     } catch (err) {
       console.error("Delete error:", err);
-      message.error("Failed to delete account");
+      handleError(err, "Failed to delete account");
       setDeleting(false);
     }
   };
@@ -222,27 +214,6 @@ export default function SettingsModal({ open, onClose, user }) {
         }}
         destroyOnHidden
       >
-        {errorMessage && (
-          <Alert
-            type="error"
-            message={errorMessage}
-            showIcon
-            closable
-            onClose={() => setErrorMessage(null)}
-            style={{ marginBottom: 16 }}
-          />
-        )}
-        {successMessage && (
-          <Alert
-            type="success"
-            message={successMessage}
-            showIcon
-            closable
-            onClose={() => setSuccessMessage(null)}
-            style={{ marginBottom: 16 }}
-          />
-        )}
-
         <Form
           form={form}
           layout="vertical"

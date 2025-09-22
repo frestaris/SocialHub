@@ -71,7 +71,7 @@ export default function Post() {
       <PostInfo post={post} />
 
       <Divider />
-      <CommentsSection postId={post._id || []} />
+      <CommentsSection postId={post._id} />
     </div>
   );
 }

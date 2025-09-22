@@ -1,12 +1,4 @@
-import {
-  Form,
-  Input,
-  Button,
-  Select,
-  Upload as AntUpload,
-  message,
-  Switch,
-} from "antd";
+import { Form, Input, Button, Select, Upload as AntUpload, Switch } from "antd";
 import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { uploadToFirebase } from "../../utils/uploadToFirebase";
@@ -14,10 +6,11 @@ import { getVideoDuration } from "../../utils/getVideoDuration";
 import { fetchYouTubeMetadata } from "../../utils/fetchYouTubeMetadata";
 import { auth } from "../../firebase";
 import { categories } from "../../utils/categories";
+import { handleError } from "../../utils/handleMessage";
 
 const { TextArea } = Input;
 
-export default function PostForm({ onClose, onCreatePost, loading }) {
+export default function PostForm({ onCreatePost, loading }) {
   const [form] = Form.useForm();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -121,7 +114,10 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
   const handleFinish = async (values) => {
     try {
       if (mediaFile?.length > 0 && mediaUrl) {
-        message.error("Please use either upload OR URL, not both.");
+        handleError(
+          { message: "Please use either upload OR URL, not both." },
+          "Validation Error"
+        );
         return;
       }
 
@@ -210,10 +206,9 @@ export default function PostForm({ onClose, onCreatePost, loading }) {
       await onCreatePost(payload);
       form.resetFields();
       setYtMeta(null);
-      if (onClose) onClose();
     } catch (err) {
       console.error("Create post error:", err);
-      message.error("Failed to publish post");
+      handleError(err, "Failed to publish post");
       setIsUploading(false);
       setUploadProgress(0);
     }

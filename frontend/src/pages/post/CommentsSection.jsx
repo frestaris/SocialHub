@@ -6,7 +6,6 @@ import {
   Input,
   Button,
   Typography,
-  notification,
   Dropdown,
   Empty,
   Modal,
@@ -29,6 +28,11 @@ import {
   useDeleteCommentMutation,
 } from "../../redux/comment/commentApi";
 import { Link } from "react-router-dom";
+import {
+  handleError,
+  handleSuccess,
+  handleWarning,
+} from "../../utils/handleMessage";
 
 const { Text } = Typography;
 
@@ -51,38 +55,26 @@ export default function CommentsSection({ postId }) {
 
   const textareaRef = useRef(null);
   const comments = data?.comments || [];
+  const isUnchanged =
+    editingComment && content.trim() === editingComment.content.trim();
 
   // ---- Submit new comment ----
   const handleSubmit = async () => {
     if (!currentUser) {
-      notification.warning({
-        message: "Login Required",
-        description: "Please log in to comment.",
-      });
+      handleWarning("Login Required", "Please log in to comment.");
       return;
     }
     if (!content.trim()) {
       setError(true);
-      notification.error({
-        message: "Empty Comment",
-        description: "Comment cannot be empty.",
-      });
+      handleError({ message: "Comment cannot be empty." }, "Empty Comment");
       return;
     }
     try {
       await createComment({ postId, content }).unwrap();
-      notification.success({
-        message: "Comment Added",
-        description: "Your comment has been posted successfully.",
-      });
+      handleSuccess("Your comment has been posted successfully.");
       setContent("");
     } catch (err) {
-      notification.error({
-        message: "Comment Failed",
-        description:
-          err?.data?.error ||
-          "Something went wrong while posting your comment.",
-      });
+      handleError(err, "Failed to add comment");
     }
   };
 
@@ -96,6 +88,7 @@ export default function CommentsSection({ postId }) {
     }, 100);
   };
 
+  // ---- Handle Update ----
   const handleUpdate = async () => {
     if (!editingComment) return;
 
@@ -110,15 +103,12 @@ export default function CommentsSection({ postId }) {
           try {
             setDeletingId(editingComment._id);
             await deleteComment({ id: editingComment._id, postId }).unwrap();
-            notification.success({ message: "Comment Deleted" });
+            handleSuccess("Comment Deleted");
             setEditingComment(null);
             setContent("");
             setError(false);
           } catch (err) {
-            notification.error({
-              message: "Delete Failed",
-              description: err?.data?.error,
-            });
+            handleError(err, "Delete Failed");
           } finally {
             setDeletingId(null);
           }
@@ -127,39 +117,25 @@ export default function CommentsSection({ postId }) {
       return;
     }
 
-    if (content.trim() === editingComment.content.trim()) {
-      setError(true);
-      notification.error({
-        message: "No Changes",
-        description: "Nothing to update.",
-      });
-      return;
-    }
-
     try {
       await updateComment({ id: editingComment._id, postId, content }).unwrap();
-      notification.success({ message: "Comment Updated" });
+      handleSuccess("Comment Updated");
       setEditingComment(null);
       setContent("");
       setError(false);
     } catch (err) {
-      notification.error({
-        message: "Update Failed",
-        description: err?.data?.error,
-      });
+      handleError(err, "Update Failed");
     }
   };
 
+  // ---- Handle Delete ----
   const handleDelete = async (commentId) => {
     try {
       setDeletingId(commentId);
       await deleteComment({ id: commentId, postId }).unwrap();
-      notification.success({ message: "Comment Deleted" });
+      handleSuccess("Comment Deleted");
     } catch (err) {
-      notification.error({
-        message: "Delete Failed",
-        description: err?.data?.error,
-      });
+      handleError(err, "Delete Failed");
     } finally {
       setDeletingId(null);
     }
@@ -185,7 +161,7 @@ export default function CommentsSection({ postId }) {
         type="primary"
         onClick={editingComment ? handleUpdate : handleSubmit}
         loading={isPosting || isUpdating}
-        disabled={!currentUser}
+        disabled={!currentUser || isUnchanged}
       >
         {editingComment ? "Update Comment" : "Comment"}
       </Button>

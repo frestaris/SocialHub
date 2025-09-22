@@ -1,22 +1,20 @@
 import { useState } from "react";
-import { Form, Input, Button, Typography, Alert, Spin } from "antd";
+import { Form, Input, Button, Typography, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../firebase";
 import { baseURL } from "../../utils/baseURL";
+import { handleError, handleSuccess } from "../../utils/handleMessage";
+import { getFirebaseErrorMessage } from "../../utils/firebaseErrorMessages";
 
 const { Title } = Typography;
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
-  const [successMessage, setSuccessMessage] = useState(null);
 
   const handleFinish = async (values) => {
     setIsLoading(true);
-    setErrorMessage(null);
-    setSuccessMessage(null);
 
     try {
       const actionCodeSettings = {
@@ -25,9 +23,10 @@ export default function ForgotPassword() {
       };
 
       await sendPasswordResetEmail(auth, values.email, actionCodeSettings);
-      setSuccessMessage("Reset link sent! Check your email.");
+      handleSuccess("Reset link sent! Check your email.");
     } catch (err) {
-      setErrorMessage(err.message || "Failed to send reset link");
+      const friendlyMessage = getFirebaseErrorMessage(err.code);
+      handleError({ message: friendlyMessage }, "Password Reset Failed");
     } finally {
       setIsLoading(false);
     }
@@ -58,11 +57,6 @@ export default function ForgotPassword() {
         <Title level={3} style={{ textAlign: "center" }}>
           Forgot Password
         </Title>
-
-        {errorMessage && <Alert type="error" message={errorMessage} showIcon />}
-        {successMessage && (
-          <Alert type="success" message={successMessage} showIcon />
-        )}
 
         <Form layout="vertical" onFinish={handleFinish}>
           <Form.Item

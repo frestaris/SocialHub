@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Space, Tag, notification } from "antd";
+import { Space, Tag, Button } from "antd";
 import {
   LikeOutlined,
   LikeFilled,
@@ -10,6 +10,12 @@ import { useSelector } from "react-redux";
 import CategoryBadge from "./CategoryBadge";
 import CommentsSection from "../pages/post/CommentsSection";
 import { useToggleLikePostMutation } from "../redux/post/postApi";
+import {
+  clearNotifications,
+  handleError,
+  handleWarning,
+} from "../utils/handleMessage";
+import { useNavigate } from "react-router-dom";
 
 export default function PostActions({
   post,
@@ -19,25 +25,33 @@ export default function PostActions({
   const currentUser = useSelector((state) => state.auth.user);
   const [toggleLikePost] = useToggleLikePostMutation();
   const [showComments, setShowComments] = useState(false);
+  const navigate = useNavigate();
 
   const hasLiked = post.likes?.some((id) => id.toString() === currentUser?._id);
 
   const handleLikeToggle = async () => {
     if (!currentUser) {
-      notification.warning({
-        message: "Login Required",
-        description: "Please log in to like posts.",
-      });
+      handleWarning(
+        "Login Required",
+        "You need to log in to like posts.",
+        <Button
+          type="primary"
+          size="small"
+          onClick={() => {
+            clearNotifications();
+            navigate("/login", { state: { from: `/post/${post._id}` } });
+          }}
+        >
+          Go to Login
+        </Button>
+      );
       return;
     }
+
     try {
       await toggleLikePost(post._id).unwrap();
     } catch (err) {
-      notification.error({
-        message: "Error",
-        description: "Failed to update like",
-      });
-      console.error("❌ Like toggle failed:", err);
+      handleError(err, "Failed to update like");
     }
   };
 

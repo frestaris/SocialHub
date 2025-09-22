@@ -24,14 +24,20 @@ export default function ProfileInfoForm({ form }) {
   const avatarUrl = Form.useWatch("avatar", form);
   const coverUrl = Form.useWatch("cover", form);
 
-  // sync preview when modal opens or values change
+  // preload existing URLs when editing profile
   useEffect(() => {
     if (avatarUrl && !useAvatarFile) setAvatarPreview(avatarUrl);
-  }, [avatarUrl, useAvatarFile]);
-
-  useEffect(() => {
     if (coverUrl && !useCoverFile) setCoverPreview(coverUrl);
-  }, [coverUrl, useCoverFile]);
+  }, [avatarUrl, coverUrl, useAvatarFile, useCoverFile]);
+
+  // cleanup blob URLs
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith("blob:"))
+        URL.revokeObjectURL(avatarPreview);
+      if (coverPreview?.startsWith("blob:")) URL.revokeObjectURL(coverPreview);
+    };
+  }, [avatarPreview, coverPreview]);
 
   return (
     <>
@@ -104,7 +110,6 @@ export default function ProfileInfoForm({ form }) {
             </Form.Item>
           )}
 
-          {/* Avatar preview */}
           {avatarPreview && (
             <img
               src={avatarPreview}
@@ -146,7 +151,15 @@ export default function ProfileInfoForm({ form }) {
               label="Upload Cover"
               name="coverFile"
               valuePropName="fileList"
-              getValueFromEvent={(e) => e && e.fileList}
+              getValueFromEvent={(e) => {
+                if (e && e.fileList.length > 0) {
+                  const file = e.fileList[0].originFileObj;
+                  if (file) setCoverPreview(URL.createObjectURL(file));
+                } else {
+                  setCoverPreview(null);
+                }
+                return e && e.fileList;
+              }}
             >
               <AntUpload
                 accept="image/*"
@@ -160,22 +173,12 @@ export default function ProfileInfoForm({ form }) {
                 }}
                 listType="picture"
                 maxCount={1}
-                onChange={({ fileList }) => {
-                  if (fileList.length > 0 && fileList[0].originFileObj) {
-                    setCoverPreview(
-                      URL.createObjectURL(fileList[0].originFileObj)
-                    );
-                  } else {
-                    setCoverPreview(null);
-                  }
-                }}
               >
                 <Button icon={<UploadOutlined />}>Select Cover</Button>
               </AntUpload>
             </Form.Item>
           )}
 
-          {/* Cover preview */}
           {coverPreview && (
             <img
               src={coverPreview}

@@ -8,7 +8,6 @@ import {
   Dropdown,
   Button,
   Modal,
-  message,
 } from "antd";
 import {
   UserOutlined,
@@ -31,6 +30,7 @@ import TopCreators from "./TopCreators";
 import HotNow from "./HotNow";
 import SuggestedForYou from "./SuggestedForYou";
 import PostActions from "../../components/PostActions";
+import { handleError, handleSuccess } from "../../utils/handleMessage";
 
 const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
 const { Text, Paragraph } = Typography;
@@ -58,11 +58,12 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
         userId: deletingPost.userId?._id,
         sort: "newest",
       }).unwrap();
-      message.success("Post deleted!");
+
+      handleSuccess("Post deleted!");
       setDeletingPost(null);
     } catch (err) {
       console.error("❌ Error deleting post:", err);
-      message.error("Failed to delete post");
+      handleError(err, "Delete post");
     }
   };
 

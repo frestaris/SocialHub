@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
 import {
   signInWithPopup,
@@ -9,17 +9,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { auth, googleProvider, githubProvider } from "../../firebase";
 import { useFirebaseLoginMutation } from "../../redux/auth/authApi";
 import { setCredentials } from "../../redux/auth/authSlice";
-import {
-  Button,
-  Form,
-  Input,
-  Divider,
-  Typography,
-  Space,
-  Alert,
-  Spin,
-} from "antd";
+import { Button, Form, Input, Divider, Typography, Space, Spin } from "antd";
 import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
+import { handleError, handleSuccess } from "../../utils/handleMessage";
 
 const { Title } = Typography;
 
@@ -28,21 +20,13 @@ export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // RTK Query
-  const [firebaseLogin, { isLoading: socialLoading, error: socialError }] =
+  const [firebaseLogin, { isLoading: socialLoading }] =
     useFirebaseLoginMutation();
 
   const [isRegister, setIsRegister] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
 
   const from = location.state?.from || "/explore";
-  // Handle Firebase → backend error sync
-  useEffect(() => {
-    if (socialError) {
-      setErrorMessage(socialError.data?.error || "Social login failed");
-    }
-  }, [socialError]);
 
   // Social login
   const handleSocialLogin = async (provider) => {
@@ -50,23 +34,14 @@ export default function Login() {
       const result = await signInWithPopup(auth, provider);
       const token = await result.user.getIdToken();
 
-      const data = await firebaseLogin(token).unwrap();
+      const data = await firebaseLogin({ token }).unwrap();
       if (data.success) {
         dispatch(setCredentials({ user: data.user, token }));
-        setErrorMessage(null);
-
+        handleSuccess("Logged in successfully!");
         navigate(from, { replace: true });
       }
     } catch (err) {
-      if (err.code === "auth/account-exists-with-different-credential") {
-        const email = err.customData?.email;
-        setErrorMessage(
-          `This email (${email}) is already used with another provider. Please log in with that provider first, then link this one in your profile.`
-        );
-      } else {
-        console.error(err);
-        setErrorMessage("Social login failed");
-      }
+      handleError(err, "Login failed");
     }
   };
 
@@ -75,6 +50,7 @@ export default function Login() {
     try {
       setFormLoading(true);
       let fbUser;
+
       if (isRegister) {
         fbUser = await createUserWithEmailAndPassword(
           auth,
@@ -97,13 +73,13 @@ export default function Login() {
 
       if (data.success) {
         dispatch(setCredentials({ user: data.user, token }));
-        setErrorMessage(null);
-
+        handleSuccess(
+          isRegister ? "Account created!" : "Logged in successfully!"
+        );
         navigate(from, { replace: true });
       }
     } catch (err) {
-      console.error("❌ Firebase error:", err);
-      setErrorMessage(err.message || "Authentication failed");
+      handleError(err, "Login failed", isRegister);
     } finally {
       setFormLoading(false);
     }
@@ -135,22 +111,7 @@ export default function Login() {
           {isRegister ? "Create Account" : "Login"}
         </Title>
 
-        {errorMessage && (
-          <Alert
-            type="error"
-            message={errorMessage}
-            showIcon
-            closable
-            onClose={() => setErrorMessage(null)}
-            style={{ marginBottom: 16 }}
-          />
-        )}
-
-        <Form
-          layout="vertical"
-          onFinish={handleFormFinish}
-          onChange={() => setErrorMessage(null)}
-        >
+        <Form layout="vertical" onFinish={handleFormFinish}>
           {isRegister && (
             <Form.Item
               label="Username"
@@ -220,13 +181,7 @@ export default function Login() {
         </Space>
 
         <div style={{ textAlign: "center" }}>
-          <Button
-            type="link"
-            onClick={() => {
-              setIsRegister(!isRegister);
-              setErrorMessage(null);
-            }}
-          >
+          <Button type="link" onClick={() => setIsRegister(!isRegister)}>
             {isRegister
               ? "Already have an account? Login"
               : "New here? Register"}

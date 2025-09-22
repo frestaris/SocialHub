@@ -1,12 +1,4 @@
-import {
-  Form,
-  Input,
-  Button,
-  Select,
-  Upload as AntUpload,
-  message,
-  Switch,
-} from "antd";
+import { Form, Input, Button, Select, Upload as AntUpload, Switch } from "antd";
 import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
 import { uploadToFirebase } from "../../../utils/uploadToFirebase";
@@ -14,6 +6,7 @@ import { getVideoDuration } from "../../../utils/getVideoDuration";
 import { fetchYouTubeMetadata } from "../../../utils/fetchYouTubeMetadata";
 import { auth } from "../../../firebase";
 import { categories } from "../../../utils/categories";
+import { handleError, handleSuccess } from "../../../utils/handleMessage";
 
 const { TextArea } = Input;
 
@@ -252,14 +245,14 @@ export default function EditPostForm({
       payload.type = type;
 
       await onUpdate(payload).unwrap();
-      message.success("Post updated!");
+      handleSuccess("Post updated!");
       setIsUploading(false);
       setUploadProgress(0);
       setIsChanged(false); // reset
       if (onClose) onClose();
     } catch (err) {
       console.error("Update post error:", err);
-      message.error("Failed to update post");
+      handleError(err, "Failed to update post");
       setIsUploading(false);
       setUploadProgress(0);
     }

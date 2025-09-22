@@ -2,8 +2,12 @@ import { Button } from "antd";
 import { useToggleFollowUserMutation } from "../redux/user/userApi";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { notification } from "antd";
 import { useState } from "react";
+import {
+  handleError,
+  handleWarning,
+  clearNotifications,
+} from "../utils/handleMessage";
 
 export default function FollowButton({
   userId,
@@ -21,23 +25,20 @@ export default function FollowButton({
     e.stopPropagation();
 
     if (!currentUser) {
-      notification.warning({
-        message: "Login Required",
-        description: "You need to log in to follow users.",
-        actions: (
-          <Button
-            type="primary"
-            size="small"
-            onClick={() => {
-              notification.destroy();
-              navigate("/login", { state: { from: `/profile/${userId}` } });
-            }}
-          >
-            Go to Login
-          </Button>
-        ),
-        duration: 3,
-      });
+      handleWarning(
+        "Login Required",
+        "You need to log in to follow users.",
+        <Button
+          type="primary"
+          size="small"
+          onClick={() => {
+            clearNotifications();
+            navigate("/login", { state: { from: `/profile/${userId}` } });
+          }}
+        >
+          Go to Login
+        </Button>
+      );
       return;
     }
 
@@ -45,7 +46,7 @@ export default function FollowButton({
     try {
       await toggleFollowUser(userId).unwrap();
     } catch (err) {
-      console.error("❌ Toggle follow error:", err);
+      handleError(err, "Failed to update follow status");
     } finally {
       setLoading(false);
     }
