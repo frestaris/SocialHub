@@ -11,13 +11,14 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", listUsers);
-router.get("/:id", getUserById);
+// static
 router.get("/me", protect, getCurrentUser);
-router.put("/:me", protect, updateUser);
+router.put("/me", protect, updateUser);
 router.delete("/me", protect, deleteUser);
 
+// dynamic
+router.get("/", listUsers);
+router.get("/:id", getUserById);
 router.patch("/:id/follow", protect, toggleFollow);
 
 export default router;
-// before that, being that now video has been unified, can we remove the description and have only the content? around the full app now please?

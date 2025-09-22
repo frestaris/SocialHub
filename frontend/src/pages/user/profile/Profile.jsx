@@ -9,18 +9,13 @@ import UserFeed from "./userFeed";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 
-const mockLikedCreators = [
-  { id: "u1", name: "FitGuru", avatar: "https://picsum.photos/100?random=31" },
-  {
-    id: "u2",
-    name: "ArtWizard",
-    avatar: "https://picsum.photos/100?random=32",
-  },
-];
-
 export default function Profile() {
   const { id } = useParams();
-  const { data: userData, isLoading: userLoading } = useGetUserByIdQuery(id);
+  const {
+    data: userData,
+    isLoading: userLoading,
+    isFetching,
+  } = useGetUserByIdQuery(id);
   const user = userData?.user;
   const { user: currentUser } = useSelector((state) => state.auth);
   const [sortBy] = useState("newest");
@@ -32,7 +27,7 @@ export default function Profile() {
 
   const feed = feedData?.feed || [];
 
-  if (userLoading) {
+  if (userLoading || isFetching) {
     return (
       <div
         style={{
@@ -86,10 +81,7 @@ export default function Profile() {
               transition={{ duration: 0.6 }}
             >
               <ProfileInfo user={user} />
-              <SuggestedCreators
-                creators={mockLikedCreators}
-                followers={user.followers}
-              />
+              <SuggestedCreators followers={user.followers} />
             </motion.div>
           </div>
         </Col>

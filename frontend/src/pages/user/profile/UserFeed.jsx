@@ -7,6 +7,7 @@ import {
   Modal,
   Grid,
   Spin,
+  Result,
 } from "antd";
 import { EditOutlined, DeleteOutlined, MoreOutlined } from "@ant-design/icons";
 import moment from "moment";
@@ -66,7 +67,13 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
   }
 
   if (!feed || feed.length === 0) {
-    return <Text type="secondary">No posts or videos yet.</Text>;
+    return (
+      <Result
+        status="404"
+        title="No Posts Yet"
+        subTitle="This user hasn’t shared any posts or videos."
+      />
+    );
   }
 
   return (
