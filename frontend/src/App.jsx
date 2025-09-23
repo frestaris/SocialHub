@@ -24,6 +24,7 @@ export default function App() {
             {/* Home Page */}
             <Route path="/" element={<HomePage />} />
             <Route path="/explore" element={<Explore />} />
+            <Route path="/explore/:category" element={<Explore />} />
             <Route path="/post/:id" element={<Post />} />
 
             <Route path="/profile/:id" element={<Profile />} />

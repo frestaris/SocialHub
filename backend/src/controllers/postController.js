@@ -1,4 +1,5 @@
 import Post from "../models/postSchema.js";
+import User from "../models/userSchema.js";
 
 // CREATE POST
 export const createPost = async (req, res) => {
@@ -58,14 +59,41 @@ export const createPost = async (req, res) => {
 // GET POSTS
 export const getPosts = async (req, res) => {
   try {
-    const { category } = req.query;
-    const filter = category ? { category } : {};
+    const { category, search_query, limit = 20, skip = 0 } = req.query;
+    const filter = {};
+
+    if (category) {
+      filter.category = category;
+    }
+
+    if (search_query) {
+      const users = await User.find({
+        username: { $regex: search_query, $options: "i" },
+      }).select("_id");
+
+      const userIds = users.map((u) => u._id);
+
+      filter.$or = [
+        { content: { $regex: search_query, $options: "i" } },
+        { category: { $regex: search_query, $options: "i" } },
+        { "video.title": { $regex: search_query, $options: "i" } },
+        { userId: { $in: userIds } },
+      ];
+    }
+
+    const total = await Post.countDocuments(filter);
 
     const posts = await Post.find(filter)
       .populate("userId", "username avatar")
-      .sort({ createdAt: -1 });
+      .populate({
+        path: "comments",
+        populate: { path: "userId", select: "username avatar" },
+      })
+      .sort({ createdAt: -1 })
+      .skip(Number(skip))
+      .limit(Number(limit));
 
-    res.json({ success: true, posts });
+    res.json({ success: true, posts, total });
   } catch (err) {
     console.error("Get posts error:", err);
     res.status(500).json({ success: false, error: "Server error" });

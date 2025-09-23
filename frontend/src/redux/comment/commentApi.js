@@ -34,9 +34,11 @@ export const commentApi = createApi({
         method: "POST",
         body: commentData,
       }),
-      async onQueryStarted({ postId }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ postId }, { dispatch, queryFulfilled, getState }) {
         try {
           const { data } = await queryFulfilled;
+          const state = getState();
+          const queries = state.postApi.queries;
 
           if (postId) {
             // Update getCommentsByPost cache
@@ -58,17 +60,27 @@ export const commentApi = createApi({
               })
             );
 
-            // Update getPosts cache
-            dispatch(
-              postApi.util.updateQueryData("getPosts", undefined, (draft) => {
-                const idx = draft.posts?.findIndex((p) => p._id === postId);
-                if (idx !== -1) {
-                  if (!draft.posts[idx].comments)
-                    draft.posts[idx].comments = [];
-                  draft.posts[idx].comments.push(data.comment._id);
-                }
-              })
-            );
+            // ✅ Update all cached getPosts queries
+            Object.entries(queries).forEach(([cacheKey, entry]) => {
+              if (cacheKey.startsWith("getPosts") && entry.originalArgs) {
+                dispatch(
+                  postApi.util.updateQueryData(
+                    "getPosts",
+                    entry.originalArgs, // 👈 important: pass queryArgs, not undefined
+                    (draft) => {
+                      const idx = draft.posts?.findIndex(
+                        (p) => p._id === postId
+                      );
+                      if (idx !== -1) {
+                        if (!draft.posts[idx].comments)
+                          draft.posts[idx].comments = [];
+                        draft.posts[idx].comments.push(data.comment._id);
+                      }
+                    }
+                  )
+                );
+              }
+            });
           }
         } catch (err) {
           console.error("Create comment cache update failed:", err);

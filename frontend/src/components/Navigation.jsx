@@ -22,6 +22,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/auth/authSlice";
 import SettingsModal from "../pages/user/settings/SettingsModal";
 import Upload from "../pages/upload/Upload";
+import SearchBar from "./SearchBar";
+import useSearchHandler from "../utils/useSearchHandler"; // ✅ only this
 
 const { Header } = Layout;
 const { useBreakpoint } = Grid;
@@ -36,6 +38,9 @@ export default function Navigation() {
 
   const currentUser = useSelector((state) => state.auth.user);
 
+  // centralized search logic
+  const { inputValue, setInputValue, handleSearch } = useSearchHandler();
+
   const handleLogout = () => {
     dispatch(logout());
     navigate("/explore");
@@ -49,7 +54,6 @@ export default function Navigation() {
         label: "Profile",
         onClick: () => navigate(`/profile/${currentUser._id}`),
       },
-
       {
         key: "settings",
         icon: <SettingOutlined />,
@@ -75,8 +79,11 @@ export default function Navigation() {
           justifyContent: "space-between",
           alignItems: "center",
           background: "#fff",
-          padding: "0 24px",
+          padding: "0 16px",
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+          position: "sticky",
+          top: 0,
+          zIndex: 1000,
         }}
       >
         {/* Logo */}
@@ -87,10 +94,20 @@ export default function Navigation() {
           CreatorHub
         </div>
 
+        {/* SearchBar (only on desktop) */}
+        {screens.sm && (
+          <div style={{ flex: 1, maxWidth: 500, margin: "0 16px" }}>
+            <SearchBar
+              value={inputValue}
+              onChange={setInputValue}
+              onSearch={handleSearch}
+            />
+          </div>
+        )}
+
         {/* Right section */}
         {screens.sm ? (
           <div style={{ display: "flex", alignItems: "center" }}>
-            {/* Menu */}
             <Menu
               mode="horizontal"
               selectable={false}
@@ -100,7 +117,6 @@ export default function Navigation() {
               ]}
             />
 
-            {/* Auth / Post controls */}
             {currentUser ? (
               <>
                 <Button
@@ -138,84 +154,95 @@ export default function Navigation() {
             onClick={() => setDrawerOpen(true)}
           />
         )}
+      </Header>
 
-        {/* Drawer (mobile) */}
-        <Drawer
-          title="CreatorHub"
-          placement="right"
-          closable
-          onClose={() => setDrawerOpen(false)}
-          open={drawerOpen}
-        >
-          <Menu
-            mode="vertical"
-            selectable={false}
-            items={[
-              { key: "explore", label: <Link to="/explore">Explore</Link> },
-            ]}
+      {/* Drawer (mobile) */}
+      <Drawer
+        title="CreatorHub"
+        placement="right"
+        closable
+        onClose={() => setDrawerOpen(false)}
+        open={drawerOpen}
+      >
+        {/* 👇 SearchBar inside drawer on mobile */}
+        <div style={{ marginBottom: 16 }}>
+          <SearchBar
+            value={inputValue}
+            onChange={setInputValue}
+            onSearch={(val) => {
+              handleSearch(val);
+              setDrawerOpen(false);
+            }}
           />
+        </div>
 
-          <div style={{ marginTop: "16px" }}>
-            {!currentUser ? (
+        <Menu
+          mode="vertical"
+          selectable={false}
+          items={[
+            { key: "explore", label: <Link to="/explore">Explore</Link> },
+          ]}
+        />
+
+        <div style={{ marginTop: "16px" }}>
+          {!currentUser ? (
+            <Button
+              type="primary"
+              block
+              onClick={() => {
+                navigate("/login");
+                setDrawerOpen(false);
+              }}
+            >
+              Become a Creator
+            </Button>
+          ) : (
+            <>
               <Button
                 type="primary"
                 block
+                icon={<PlusOutlined />}
                 onClick={() => {
-                  navigate("/login");
+                  setUploadOpen(true);
                   setDrawerOpen(false);
                 }}
+                style={{ marginBottom: "8px" }}
               >
-                Become a Creator
+                Post
               </Button>
-            ) : (
-              <>
-                {/* + Post button at top */}
-                <Button
-                  type="primary"
-                  block
-                  icon={<PlusOutlined />}
-                  onClick={() => {
-                    setUploadOpen(true);
-                    setDrawerOpen(false);
-                  }}
-                  style={{ marginBottom: "8px" }}
-                >
-                  Post
-                </Button>
 
-                <Button
-                  block
-                  onClick={() => {
-                    navigate(`/profile/${currentUser._id}`);
-                    setDrawerOpen(false);
-                  }}
-                  style={{ marginTop: "8px" }}
-                >
-                  Profile
-                </Button>
-                <Button
-                  block
-                  onClick={() => {
-                    setSettingsOpen(true);
-                    setDrawerOpen(false);
-                  }}
-                  style={{ marginTop: "8px" }}
-                >
-                  Settings
-                </Button>
-                <Button
-                  danger
-                  block
-                  style={{ marginTop: "8px" }}
-                  onClick={handleLogout}
-                >
-                  Logout
-                </Button>
-              </>
-            )}
-          </div>
-        </Drawer>
-      </Header>
+              <Button
+                block
+                onClick={() => {
+                  navigate(`/profile/${currentUser._id}`);
+                  setDrawerOpen(false);
+                }}
+                style={{ marginTop: "8px" }}
+              >
+                Profile
+              </Button>
+              <Button
+                block
+                onClick={() => {
+                  setSettingsOpen(true);
+                  setDrawerOpen(false);
+                }}
+                style={{ marginTop: "8px" }}
+              >
+                Settings
+              </Button>
+              <Button
+                danger
+                block
+                style={{ marginTop: "8px" }}
+                onClick={handleLogout}
+              >
+                Logout
+              </Button>
+            </>
+          )}
+        </div>
+      </Drawer>
 
       {/* Modals (only when logged in) */}
       {currentUser && (

@@ -17,13 +17,13 @@ import {
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import moment from "moment";
-import { useGetPostsQuery } from "../../redux/post/postApi";
-import { Link } from "react-router-dom";
 import {
+  useGetPostsQuery,
   useUpdatePostMutation,
   useDeletePostMutation,
 } from "../../redux/post/postApi";
-import { useState } from "react";
+import { Link } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
 import EditPostForm from "../user/profile/EditPostForm";
 import Masonry from "react-masonry-css";
 import TopCreators from "./TopCreators";
@@ -37,6 +37,9 @@ const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
 export default function Feed({ searchQuery = "", selectedCategories = [] }) {
+  const [skip, setSkip] = useState(0);
+  const limit = 20;
+  const loaderRef = useRef();
   const screens = useBreakpoint();
   const isDesktop = screens.md;
   const isSmall = !screens.sm;
@@ -48,7 +51,37 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
   const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
   const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
 
-  const { data, isLoading, isError } = useGetPostsQuery();
+  // 🔹 fetch posts directly from RTK Query (no local posts state)
+  const { data, isLoading, isFetching, isError } = useGetPostsQuery({
+    searchQuery,
+    category: selectedCategories[0] || "",
+    skip,
+    limit,
+  });
+
+  const posts = data?.posts || [];
+  const total = data?.total || 0;
+
+  // Infinite scroll observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetching && posts.length < total) {
+          setSkip((prev) => {
+            const next = prev + limit;
+            return next;
+          });
+        }
+      },
+      { threshold: 1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [isFetching, posts.length, total, limit]);
 
   const handleDeleteConfirm = async () => {
     try {
@@ -67,7 +100,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
     }
   };
 
-  if (isLoading) {
+  if ((isLoading || isFetching) && skip === 0) {
     return (
       <div
         style={{
@@ -92,25 +125,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
     );
   }
 
-  const posts = data?.posts || [];
-
-  // Apply search + category filter
-  // Filter
-  let filteredPosts = posts.filter((post) => {
-    const matchesSearch =
-      (post.content || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (post.video?.title || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-
-    const matchesCategory =
-      selectedCategories.length === 0 ||
-      selectedCategories.includes(post.category);
-
-    return matchesSearch && matchesCategory;
-  });
-
-  if (posts.length === 0) {
+  if (posts.length === 0 && !isFetching) {
     return (
       <Result
         status="404"
@@ -120,14 +135,13 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
     );
   }
 
-  //  Group posts into chunks
+  // group posts into chunks for injected components
   const chunkSize = 9;
   const chunks = Array.from(
-    { length: Math.ceil(filteredPosts.length / chunkSize) },
-    (_, i) => filteredPosts.slice(i * chunkSize, i * chunkSize + chunkSize)
+    { length: Math.ceil(posts.length / chunkSize) },
+    (_, i) => posts.slice(i * chunkSize, i * chunkSize + chunkSize)
   );
 
-  // Define injected components by chunk index
   const injectedComponents = [
     <TopCreators key="top-creators" />,
     <HotNow key="hot-now" />,
@@ -155,7 +169,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
                 }}
                 stylesbody={{ padding: "12px" }}
               >
-                {/* Header: avatar + username + time */}
+                {/* Header */}
                 <div
                   style={{
                     display: "flex",
@@ -202,7 +216,6 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
                     </div>
                   </div>
 
-                  {/* Dropdown if current user is owner */}
                   {currentUser?._id === post.userId?._id && (
                     <Dropdown
                       menu={{
@@ -235,7 +248,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
                   )}
                 </div>
 
-                {/* Media (video thumbnail or image) */}
+                {/* Media */}
                 {post.type === "video" && post.video && (
                   <Link to={`/post/${post._id}`}>
                     <div
@@ -303,7 +316,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
                   </Link>
                 )}
 
-                {/* Title & content */}
+                {/* Content */}
                 {post.type === "video" ? (
                   <>
                     <Paragraph
@@ -337,13 +350,12 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
                   </Paragraph>
                 )}
 
-                {/* Footer badges */}
+                {/* Footer */}
                 <PostActions post={post} isSmall={isSmall} />
               </Card>
             ))}
           </Masonry>
 
-          {/* 👉 Insert TopCreators after each chunk */}
           {chunkIndex < injectedComponents.length && (
             <div style={{ margin: "32px 0" }}>
               {injectedComponents[chunkIndex]}
@@ -352,7 +364,15 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
         </div>
       ))}
 
-      {/* ---- Edit Modal ---- */}
+      {/* Infinite scroll loader */}
+      <div
+        ref={loaderRef}
+        style={{ height: 60, textAlign: "center", padding: "16px" }}
+      >
+        {isFetching && skip > 0 && <Spin />}
+      </div>
+
+      {/* Edit Modal */}
       <Modal
         open={!!editingPost}
         onCancel={() => setEditingPost(null)}
@@ -374,7 +394,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
         />
       </Modal>
 
-      {/* ---- Delete Modal ---- */}
+      {/* Delete Modal */}
       <Modal
         open={!!deletingPost}
         title="Confirm Delete"
@@ -387,7 +407,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
         Are you sure you want to delete{" "}
         <b>
           {deletingPost?.type === "video"
-            ? deletingPost?.videoId?.title
+            ? deletingPost?.video?.title
             : "this post"}
         </b>
         ?

@@ -1,12 +1,18 @@
 import { Menu } from "antd";
 import { categories } from "../../utils/categories";
+import { useNavigate } from "react-router-dom";
 
 export default function Sidebar({ selectedCategories = [], onCategoryChange }) {
-  const toggleCategory = (key) => {
+  const navigate = useNavigate();
+
+  const handleCategoryClick = (key) => {
     if (selectedCategories.includes(key)) {
+      // remove category filter
       onCategoryChange(selectedCategories.filter((c) => c !== key));
+      navigate("/explore");
     } else {
-      onCategoryChange([...selectedCategories, key]);
+      onCategoryChange([key]); // only one active category
+      navigate(`/explore/${key}`);
     }
   };
 
@@ -23,7 +29,7 @@ export default function Sidebar({ selectedCategories = [], onCategoryChange }) {
           icon: <c.icon />,
           label: (
             <div
-              onClick={() => toggleCategory(c.key)}
+              onClick={() => handleCategoryClick(c.key)}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -33,7 +39,6 @@ export default function Sidebar({ selectedCategories = [], onCategoryChange }) {
               }}
             >
               <span>{c.label}</span>
-              {isActive}
             </div>
           ),
         };

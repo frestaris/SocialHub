@@ -1,22 +1,39 @@
-import { useState } from "react";
-import { Layout, Drawer, Button } from "antd";
+import { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
+import { Layout, Drawer, Button, Grid } from "antd";
 import { MenuUnfoldOutlined } from "@ant-design/icons";
 
 import Sidebar from "./Sidebar";
-import SearchBar from "./SearchBar";
 import Feed from "./Feed";
+import SearchBar from "../../components/SearchBar";
+import useSearchHandler from "../../utils/useSearchHandler";
 
 const { Sider, Content } = Layout;
+const { useBreakpoint } = Grid;
 
 export default function Explore() {
+  const { category } = useParams();
+
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState([]);
+
+  const screens = useBreakpoint();
+  const isSmallScreen = !screens.sm;
+
+  const { inputValue, setInputValue, searchQuery, handleSearch } =
+    useSearchHandler();
+
+  useEffect(() => {
+    if (category) {
+      setSelectedCategories([category]);
+    } else {
+      setSelectedCategories([]);
+    }
+  }, [category]);
 
   return (
     <Layout style={{ minHeight: "calc(100vh - 64px)" }}>
-      {/* Sidebar */}
       <Sider
         width={200}
         breakpoint="sm"
@@ -33,7 +50,7 @@ export default function Explore() {
         <div
           style={{
             position: "sticky",
-            top: 20,
+            top: 80,
             borderRadius: "12px",
             boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
             overflow: "hidden",
@@ -59,27 +76,36 @@ export default function Explore() {
         />
       </Drawer>
 
-      {/* Main Content */}
       <Layout style={{ flex: 1 }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            padding: "8px 16px",
-            background: "#fafafa",
-            gap: "12px",
-          }}
-        >
-          {isMobile && (
-            <Button
-              type="text"
-              icon={<MenuUnfoldOutlined style={{ fontSize: "18px" }} />}
-              onClick={() => setMobileOpen(true)}
-              style={{ padding: "0 12px", height: "40px" }}
-            />
-          )}
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
+        {/* Header row only on small screens */}
+        {isSmallScreen && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              padding: "8px 16px",
+              background: "#fafafa",
+              gap: "12px",
+            }}
+          >
+            {isMobile && (
+              <Button
+                type="text"
+                icon={<MenuUnfoldOutlined style={{ fontSize: "18px" }} />}
+                onClick={() => setMobileOpen(true)}
+                style={{ padding: "0 12px", height: "40px" }}
+              />
+            )}
+
+            <div style={{ flex: 1 }}>
+              <SearchBar
+                value={inputValue}
+                onChange={setInputValue}
+                onSearch={handleSearch}
+              />
+            </div>
+          </div>
+        )}
 
         <Content style={{ background: "#fafafa", padding: "16px" }}>
           <Feed
