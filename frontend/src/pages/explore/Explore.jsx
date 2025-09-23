@@ -73,6 +73,7 @@ export default function Explore() {
         <Sidebar
           selectedCategories={selectedCategories}
           onCategoryChange={setSelectedCategories}
+          onClose={() => setMobileOpen(false)}
         />
       </Drawer>
 

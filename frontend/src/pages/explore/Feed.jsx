@@ -52,12 +52,17 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
   const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
 
   // 🔹 fetch posts directly from RTK Query (no local posts state)
-  const { data, isLoading, isFetching, isError } = useGetPostsQuery({
-    searchQuery,
-    category: selectedCategories[0] || "",
-    skip,
-    limit,
-  });
+  const { data, isLoading, isFetching, isError } = useGetPostsQuery(
+    {
+      searchQuery,
+      category: selectedCategories[0] || "",
+      skip,
+      limit,
+    },
+    {
+      refetchOnMountOrArgChange: true,
+    }
+  );
 
   const posts = data?.posts || [];
   const total = data?.total || 0;

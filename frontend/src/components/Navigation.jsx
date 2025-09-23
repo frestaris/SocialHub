@@ -179,9 +179,11 @@ export default function Navigation() {
         <Menu
           mode="vertical"
           selectable={false}
-          items={[
-            { key: "explore", label: <Link to="/explore">Explore</Link> },
-          ]}
+          onClick={() => {
+            navigate("/explore");
+            setDrawerOpen(false);
+          }}
+          items={[{ key: "explore", label: "Explore" }]}
         />
 
         <div style={{ marginTop: "16px" }}>

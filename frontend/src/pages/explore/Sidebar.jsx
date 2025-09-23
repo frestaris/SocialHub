@@ -2,47 +2,37 @@ import { Menu } from "antd";
 import { categories } from "../../utils/categories";
 import { useNavigate } from "react-router-dom";
 
-export default function Sidebar({ selectedCategories = [], onCategoryChange }) {
+export default function Sidebar({
+  selectedCategories = [],
+  onCategoryChange,
+  onClose,
+}) {
   const navigate = useNavigate();
 
-  const handleCategoryClick = (key) => {
+  const handleCategoryClick = ({ key }) => {
     if (selectedCategories.includes(key)) {
-      // remove category filter
-      onCategoryChange(selectedCategories.filter((c) => c !== key));
+      onCategoryChange([]);
       navigate("/explore");
     } else {
-      onCategoryChange([key]); // only one active category
+      onCategoryChange([key]);
       navigate(`/explore/${key}`);
     }
+
+    if (onClose) onClose();
   };
 
   return (
     <Menu
       mode="inline"
       selectable={false}
+      selectedKeys={selectedCategories}
       style={{ position: "sticky", height: "100%", borderRight: 0 }}
-      items={categories.map((c) => {
-        const isActive = selectedCategories.includes(c.key);
-        return {
-          key: c.key,
-          className: isActive ? "menu-item-active" : "",
-          icon: <c.icon />,
-          label: (
-            <div
-              onClick={() => handleCategoryClick(c.key)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%",
-                cursor: "pointer",
-              }}
-            >
-              <span>{c.label}</span>
-            </div>
-          ),
-        };
-      })}
+      onClick={handleCategoryClick}
+      items={categories.map((c) => ({
+        key: c.key,
+        icon: <c.icon />,
+        label: c.label,
+      }))}
     />
   );
 }
