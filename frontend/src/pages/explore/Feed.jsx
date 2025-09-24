@@ -27,10 +27,9 @@ import { useState, useEffect, useRef } from "react";
 import EditPostForm from "../user/profile/EditPostForm";
 import Masonry from "react-masonry-css";
 import TopCreators from "./TopCreators";
-import HotNow from "./HotNow";
-import SuggestedForYou from "./SuggestedForYou";
 import PostActions from "../../components/PostActions";
 import { handleError, handleSuccess } from "../../utils/handleMessage";
+import SuggestedCreators from "./SuggestedCreators";
 
 const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
 const { Text, Paragraph } = Typography;
@@ -141,7 +140,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
   }
 
   // group posts into chunks for injected components
-  const chunkSize = 9;
+  const chunkSize = 11;
   const chunks = Array.from(
     { length: Math.ceil(posts.length / chunkSize) },
     (_, i) => posts.slice(i * chunkSize, i * chunkSize + chunkSize)
@@ -149,8 +148,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
 
   const injectedComponents = [
     <TopCreators key="top-creators" />,
-    <HotNow key="hot-now" />,
-    <SuggestedForYou key="suggested-for-you" />,
+    <SuggestedCreators key="suggested-creators" />,
   ];
 
   return (

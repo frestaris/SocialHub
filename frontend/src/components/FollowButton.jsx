@@ -9,12 +9,7 @@ import {
   clearNotifications,
 } from "../utils/handleMessage";
 
-export default function FollowButton({
-  userId,
-  isFollowing,
-  size = "middle",
-  block = false,
-}) {
+export default function FollowButton({ userId, isFollowing, size = "middle" }) {
   const currentUser = useSelector((state) => state.auth.user);
   const navigate = useNavigate();
 
@@ -55,7 +50,6 @@ export default function FollowButton({
   return (
     <Button
       size={size}
-      block={block}
       loading={loading}
       onClick={handleFollowToggle}
       style={{

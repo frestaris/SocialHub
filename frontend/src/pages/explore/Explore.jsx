@@ -82,6 +82,10 @@ export default function Explore() {
         {isSmallScreen && (
           <div
             style={{
+              position: "fixed",
+              top: 64,
+              width: "100%",
+              zIndex: 100,
               display: "flex",
               alignItems: "center",
               padding: "8px 16px",
@@ -108,7 +112,13 @@ export default function Explore() {
           </div>
         )}
 
-        <Content style={{ background: "#fafafa", padding: "16px" }}>
+        <Content
+          style={{
+            background: "#fafafa",
+            padding: "16px",
+            paddingTop: isSmallScreen ? 72 : 16,
+          }}
+        >
           <Feed
             searchQuery={searchQuery}
             selectedCategories={selectedCategories}

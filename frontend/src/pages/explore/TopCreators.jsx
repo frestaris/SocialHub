@@ -1,11 +1,10 @@
 import { Typography, Avatar, Button, Grid } from "antd";
 import { UserOutlined } from "@ant-design/icons";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
 import { Link } from "react-router-dom";
 import { useListUsersQuery } from "../../redux/user/userApi";
 import { useSelector } from "react-redux";
 import FollowButton from "../../components/FollowButton";
+import ReusableCarousel from "../../components/ReusableCarousel";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
@@ -27,17 +26,7 @@ export default function TopCreators() {
     <div style={{ margin: "20px 0" }}>
       <Title level={3}>Top Creators</Title>
 
-      <Swiper
-        spaceBetween={20}
-        slidesOffsetBefore={12}
-        slidesOffsetAfter={12}
-        style={{ paddingBottom: "20px" }}
-        breakpoints={{
-          1024: { slidesPerView: 4.4 },
-          768: { slidesPerView: 2.4 },
-          0: { slidesPerView: 1.4 },
-        }}
-      >
+      <ReusableCarousel>
         {users.map((user) => {
           const isOwner = currentUser && currentUser._id === user._id;
           const isFollowingUser =
@@ -45,44 +34,42 @@ export default function TopCreators() {
             currentUser.following?.some((f) => f._id === user._id);
 
           return (
-            <SwiperSlide key={user._id} style={{ height: "100%" }}>
+            <div key={user._id} style={{ padding: "8px 16px 8px 4px" }}>
               <div
                 style={{
                   background: "#fff",
                   borderRadius: "16px",
                   overflow: "hidden",
                   textAlign: "center",
-                  boxShadow: "0 6px 16px rgba(0,0,0,0.12)",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.12)",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
+                  position: "relative",
                 }}
               >
-                {/* Cover */}
-                <div
+                {/* Wrap cover + avatar + username in Link */}
+                <Link
+                  to={`/profile/${user._id}`}
                   style={{
+                    textDecoration: "none",
+                    display: "block",
                     width: "100%",
-                    height: coverHeight,
-                    background:
-                      user.cover && user.cover.trim() !== ""
-                        ? `url(${user.cover}) center/cover no-repeat`
-                        : "linear-gradient(135deg, #1677ff, #52c41a)",
-                  }}
-                />
-
-                {/* Content */}
-                <div
-                  style={{
-                    padding: "20px",
-                    marginTop: -(avatarSize - coverHeight / 2),
-                    flexGrow: 1,
                   }}
                 >
-                  <Link
-                    to={`/profile/${user._id}`}
-                    style={{ textDecoration: "none", display: "block" }}
-                    onClick={(e) => e.stopPropagation()}
+                  {/* Cover */}
+                  <div
+                    style={{
+                      width: "100%",
+                      height: coverHeight,
+                      background:
+                        user.cover && user.cover.trim() !== ""
+                          ? `url(${user.cover}) center/cover no-repeat`
+                          : "linear-gradient(135deg, #1677ff, #52c41a)",
+                      position: "relative",
+                    }}
                   >
+                    {/* Avatar */}
                     <Avatar
                       size={avatarSize}
                       src={
@@ -96,56 +83,61 @@ export default function TopCreators() {
                         ) : null
                       }
                       style={{
-                        marginBottom: "12px",
+                        position: "absolute",
+                        bottom: -avatarSize / 2,
+                        left: "50%",
+                        transform: "translateX(-50%)",
                         border: "3px solid #fff",
                         background: "#cecece",
                       }}
                     />
+                  </div>
 
-                    <h3
-                      style={{
-                        margin: "0 4px 12px",
-                        color: "#333",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        maxWidth: "160px",
-                        marginInline: "auto",
-                        fontSize,
-                      }}
-                      title={user.username}
-                    >
-                      {user.username}
-                    </h3>
-                  </Link>
-
-                  {!isOwner ? (
-                    <FollowButton
-                      userId={user._id}
-                      isFollowing={isFollowingUser}
-                      isOwner={isOwner}
-                      block
-                    />
-                  ) : (
-                    <Button block disabled style={{ borderRadius: "20px" }}>
-                      You
-                    </Button>
-                  )}
-                  <p
+                  {/* Username */}
+                  <h3
                     style={{
-                      marginTop: "8px",
-                      fontSize: "12px",
-                      color: "#555",
+                      margin: "0 4px 12px",
+                      color: "#333",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                      maxWidth: "160px",
+                      marginInline: "auto",
+                      fontSize,
+                      marginTop: avatarSize / 2 + 12, // push below avatar
                     }}
+                    title={user.username}
                   >
-                    {user.followers?.length || 0} followers
-                  </p>
-                </div>
+                    {user.username}
+                  </h3>
+                </Link>
+
+                {/* Buttons + followers stay outside Link so they don’t trigger navigation */}
+                {!isOwner ? (
+                  <FollowButton
+                    userId={user._id}
+                    isFollowing={isFollowingUser}
+                  />
+                ) : (
+                  <Button disabled style={{ borderRadius: "20px" }}>
+                    You
+                  </Button>
+                )}
+
+                <p
+                  style={{
+                    marginTop: "8px",
+                    fontSize: "12px",
+                    color: "#555",
+                  }}
+                >
+                  {user.followers?.length || 0} followers
+                </p>
               </div>
-            </SwiperSlide>
+            </div>
           );
         })}
-      </Swiper>
+      </ReusableCarousel>
     </div>
   );
 }
