@@ -1,11 +1,20 @@
-import { Row, Col, Typography, Button } from "antd";
+import { Typography, Button } from "antd";
 import { DownOutlined } from "@ant-design/icons";
-import { motion } from "framer-motion";
 import image from "../../assets/image-1.jpg";
+import { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Paragraph } = Typography;
 
 export default function Hero() {
+  const textRef = useRef(null);
+  const paraRef = useRef(null);
+  const buttonRef = useRef(null);
+
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
+
   const handleScroll = () => {
     const nextSection = document.getElementById("how-it-works");
     if (nextSection) {
@@ -13,88 +22,78 @@ export default function Hero() {
     }
   };
 
+  const handleCTA = () => {
+    if (user) {
+      navigate("/explore");
+    } else {
+      navigate("/login");
+    }
+  };
+
+  useEffect(() => {
+    const elements = [textRef.current, paraRef.current, buttonRef.current];
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("fade-in-up");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+
+    elements.forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div
       style={{
-        minHeight: "calc(100vh - 64px)", // subtract navbar
-        background: "#fafafa",
+        minHeight: "calc(100vh - 64px)",
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.6)), url(${image})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
+        alignItems: "center",
+        justifyContent: "center",
+        position: "relative",
+        textAlign: "center",
+        color: "#fff",
+        padding: "0 20px",
       }}
     >
-      {/* Content */}
-      <Row
-        gutter={[32, 32]}
-        align="middle"
-        justify="center"
-        style={{
-          maxWidth: "1200px",
-          margin: "0 auto",
-          width: "100%",
-          flex: 1,
-        }}
-      >
-        {/* Left: Text */}
-        <Col xs={24} md={12}>
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <Title level={1} style={{ marginBottom: "20px" }}>
-              Discover & Support Your Favorite Creators
-            </Title>
-          </motion.div>
+      {/* Centered content */}
+      <div style={{ maxWidth: "800px" }}>
+        <div ref={textRef} className="fade-element">
+          <Title level={1} style={{ color: "#fff", marginBottom: "20px" }}>
+            Your Community. Your Creators.
+          </Title>
+        </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            viewport={{ once: true }}
-          >
-            <Paragraph style={{ fontSize: "18px", color: "#555" }}>
-              Subscribe to exclusive content, watch live streams, and connect
-              directly with creators you love.
-            </Paragraph>
-          </motion.div>
+        <div ref={paraRef} className="fade-element delay-1">
+          <Paragraph style={{ fontSize: "18px", color: "#eee" }}>
+            Support and discover amazing creators in one place.
+          </Paragraph>
+        </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            viewport={{ once: true }}
-          >
-            <Button type="primary" size="large">
-              Get Started
-            </Button>
-          </motion.div>
-        </Col>
+        <div ref={buttonRef} className="fade-element delay-2">
+          <Button type="primary" size="large" onClick={handleCTA}>
+            {user ? "Explore Now" : "Get Started"}
+          </Button>
+        </div>
+      </div>
 
-        {/* Right: Image */}
-        <Col xs={24} md={12} style={{ textAlign: "center" }}>
-          <motion.img
-            src={image}
-            alt="Creators"
-            initial={{ opacity: 0, x: 50 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            viewport={{ once: true }}
-            style={{
-              maxWidth: "100%",
-              borderRadius: "12px",
-              boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-            }}
-          />
-        </Col>
-      </Row>
-
-      {/* Chevron */}
+      {/* Chevron pinned to bottom */}
       <div
         style={{
-          textAlign: "center",
-          padding: "20px 0",
+          position: "absolute",
+          bottom: "20px",
+          left: "50%",
+          transform: "translateX(-50%)",
           cursor: "pointer",
         }}
         onClick={handleScroll}
@@ -102,25 +101,31 @@ export default function Hero() {
         <DownOutlined
           style={{
             fontSize: "32px",
-            color: "#555",
+            color: "#fff",
             animation: "bounce 1.5s infinite",
           }}
         />
       </div>
 
-      {/* Bounce Animation */}
+      {/* Animations */}
       <style>
         {`
+          .fade-element {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+          }
+          .fade-in-up {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          .delay-1 { transition-delay: 0.2s; }
+          .delay-2 { transition-delay: 0.4s; }
+
           @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
-              transform: translateY(0);
-            }
-            40% {
-              transform: translateY(6px);
-            }
-            60% {
-              transform: translateY(3px);
-            }
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(6px); }
+            60% { transform: translateY(3px); }
           }
         `}
       </style>

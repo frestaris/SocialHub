@@ -59,7 +59,13 @@ export const createPost = async (req, res) => {
 // GET POSTS
 export const getPosts = async (req, res) => {
   try {
-    const { category, search_query, limit = 20, skip = 0 } = req.query;
+    const {
+      category,
+      search_query,
+      limit = 20,
+      skip = 0,
+      sort = "newest",
+    } = req.query;
     const filter = {};
 
     if (category) {
@@ -83,15 +89,22 @@ export const getPosts = async (req, res) => {
 
     const total = await Post.countDocuments(filter);
 
+    // 🔹 dynamic sort
+    let sortOption = { createdAt: -1 };
+    if (sort === "views") sortOption = { views: -1 };
+    if (sort === "likes") sortOption = { likes: -1 };
+    if (sort === "trending") sortOption = { views: -1, likes: -1 };
+
     const posts = await Post.find(filter)
       .populate("userId", "username avatar")
       .populate({
         path: "comments",
         populate: { path: "userId", select: "username avatar" },
       })
-      .sort({ createdAt: -1 })
+      .sort(sortOption)
       .skip(Number(skip))
-      .limit(Number(limit));
+      .limit(Number(limit))
+      .lean();
 
     res.json({ success: true, posts, total });
   } catch (err) {
