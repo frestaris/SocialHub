@@ -15,7 +15,6 @@
     "@reduxjs/toolkit": "^2.9.0",
     "antd": "^5.27.3",
     "firebase": "^12.2.1",
-    "framer-motion": "^12.23.12",
     "moment": "^2.30.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

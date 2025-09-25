@@ -1,4 +1,3 @@
-import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef } from "react";
 import {
   List,
@@ -175,73 +174,65 @@ export default function CommentsSection({ postId }) {
 
       {/* List */}
       <List itemLayout="horizontal" style={{ marginTop: 16 }}>
-        <AnimatePresence>
-          {comments.slice(0, visibleCount).map((item) => (
-            <motion.div
-              key={item._id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+        {comments.slice(0, visibleCount).map((item) => (
+          <div key={item._id} className="fade-slide-in">
+            <List.Item
+              actions={[
+                currentUserId === item.userId?._id && (
+                  <Dropdown
+                    menu={{
+                      items: [
+                        {
+                          key: "edit",
+                          label: "Edit",
+                          icon: <EditOutlined />,
+                          onClick: () => handleEdit(item),
+                        },
+                        {
+                          key: "delete",
+                          label: "Delete",
+                          danger: true,
+                          icon: <DeleteOutlined />,
+                          onClick: () => handleDelete(item._id),
+                        },
+                      ],
+                    }}
+                    trigger={["click"]}
+                    placement="bottomRight"
+                  >
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<MoreOutlined style={{ fontSize: 16 }} />}
+                      shape="circle"
+                      loading={deletingId === item._id}
+                    />
+                  </Dropdown>
+                ),
+              ]}
             >
-              <List.Item
-                actions={[
-                  currentUserId === item.userId?._id && (
-                    <Dropdown
-                      menu={{
-                        items: [
-                          {
-                            key: "edit",
-                            label: "Edit",
-                            icon: <EditOutlined />,
-                            onClick: () => handleEdit(item),
-                          },
-                          {
-                            key: "delete",
-                            label: "Delete",
-                            danger: true,
-                            icon: <DeleteOutlined />,
-                            onClick: () => handleDelete(item._id),
-                          },
-                        ],
-                      }}
-                      trigger={["click"]}
-                      placement="bottomRight"
-                    >
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<MoreOutlined style={{ fontSize: 16 }} />}
-                        shape="circle"
-                        loading={deletingId === item._id}
-                      />
-                    </Dropdown>
-                  ),
-                ]}
-              >
-                <List.Item.Meta
-                  avatar={
-                    <Avatar src={item.userId?.avatar} icon={<UserOutlined />} />
-                  }
-                  title={
-                    <Link to={`/profile/${item.userId?._id}`}>
-                      <Text style={{ color: "#1677ff" }} strong>
-                        {item.userId?.username}
-                      </Text>{" "}
-                      <Text type="secondary" style={{ fontSize: 12 }}>
-                        {moment(item.createdAt).fromNow()}
-                        {item.edited && (
-                          <span style={{ marginLeft: 6 }}>(edited)</span>
-                        )}
-                      </Text>
-                    </Link>
-                  }
-                  description={item.content}
-                />
-              </List.Item>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+              <List.Item.Meta
+                avatar={
+                  <Avatar src={item.userId?.avatar} icon={<UserOutlined />} />
+                }
+                title={
+                  <Link to={`/profile/${item.userId?._id}`}>
+                    <Text style={{ color: "#1677ff" }} strong>
+                      {item.userId?.username}
+                    </Text>{" "}
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      {moment(item.createdAt).fromNow()}
+                      {item.edited && (
+                        <span style={{ marginLeft: 6 }}>(edited)</span>
+                      )}
+                    </Text>
+                  </Link>
+                }
+                description={item.content}
+              />
+            </List.Item>
+          </div>
+        ))}
       </List>
 
       {/* Show More / Less */}

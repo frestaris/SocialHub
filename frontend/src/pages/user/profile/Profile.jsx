@@ -1,11 +1,10 @@
 import { useParams } from "react-router-dom";
 import { Row, Col, Spin, Result } from "antd";
-import { motion } from "framer-motion";
 import { useGetUserByIdQuery } from "../../../redux/user/userApi";
 import { useGetUserFeedQuery } from "../../../redux/post/postApi";
 import ProfileInfo from "./ProfileInfo";
 import SuggestedCreators from "./SuggestedCreators";
-import UserFeed from "./userFeed";
+import UserFeed from "./UserFeed";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 
@@ -75,31 +74,23 @@ export default function Profile() {
         {/* Left column */}
         <Col xs={24} md={8}>
           <div style={{ position: "sticky", top: 90 }}>
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
+            <div className="fade-slide-in">
               <ProfileInfo user={user} />
               <SuggestedCreators followers={user.followers} />
-            </motion.div>
+            </div>
           </div>
         </Col>
 
-        {/* Right column: Unified Feed */}
+        {/* Right column */}
         <Col xs={24} md={16}>
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
+          <div className="fade-slide-in">
             <UserFeed
               feed={feed}
               isLoading={isLoadingFeed}
               currentUserId={currentUser?._id}
               sortBy={sortBy}
             />
-          </motion.div>
+          </div>
         </Col>
       </Row>
     </div>

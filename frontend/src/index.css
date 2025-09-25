@@ -15,3 +15,17 @@
   background-color: #e6f4ff !important;
   border-radius: 6px;
 }
+
+/* Fade in animation */
+.fade-slide-in {
+  opacity: 0;
+  transform: translateY(40px);
+  animation: fadeSlideIn 0.6s ease forwards;
+}
+
+@keyframes fadeSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

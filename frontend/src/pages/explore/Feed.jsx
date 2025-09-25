@@ -46,7 +46,6 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
 
   const posts = data?.posts || [];
   const total = data?.total || 0;
-
   // Infinite scroll observer
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -142,14 +141,17 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
             columnClassName="masonry-grid_column"
           >
             {chunkPosts.map((post) => (
-              <PostCard
-                key={post._id}
-                post={post}
-                isSmall={isSmall}
-                currentUser={currentUser}
-                onEdit={setEditingPost}
-                onDelete={setDeletingPost}
-              />
+              <div key={post._id}>
+                <div className="fade-slide-in">
+                  <PostCard
+                    post={post}
+                    isSmall={isSmall}
+                    currentUser={currentUser}
+                    onEdit={setEditingPost}
+                    onDelete={setDeletingPost}
+                  />
+                </div>
+              </div>
             ))}
           </Masonry>
 
