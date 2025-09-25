@@ -55,22 +55,11 @@ export default function PostActions({
     }
   };
 
-  const baseTagStyle = {
-    borderRadius: "16px",
-    padding: "4px 12px",
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-    margin: 0,
-    transition: "all 0.2s ease",
-  };
-
   return (
     <div
       style={{
         width: "100%",
         marginTop: 12,
-        borderTop: "1px solid #f0f0f0",
         paddingTop: 12,
       }}
     >
@@ -79,46 +68,54 @@ export default function PostActions({
           width: "100%",
           justifyContent: "space-between",
           flexWrap: "wrap",
+          borderTop: "1px solid #f0f0f0",
+          marginTop: 12,
+          paddingTop: 8,
         }}
       >
+        {/* Category on the left */}
         <CategoryBadge category={post.category} />
 
-        <div style={{ display: "flex", gap: 12 }}>
+        {/* Actions on the right */}
+        <div
+          style={{
+            display: "flex",
+            gap: 24,
+            fontSize: isSmall ? 13 : 15,
+            color: "#555",
+          }}
+        >
           {/* Views */}
-          <Tag
-            style={{
-              ...baseTagStyle,
-              fontSize: isSmall ? 11 : 13,
-              background: "#f0f0f0",
-              cursor: "default",
-            }}
-          >
-            <EyeOutlined /> {post.views || 0}
-          </Tag>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <EyeOutlined />
+            <span>{post.views || 0}</span>
+          </div>
 
           {/* Likes */}
-          <Tag
+          <div
             style={{
-              ...baseTagStyle,
-              fontSize: isSmall ? 11 : 13,
-              background: "#f0f0f0",
-              color: hasLiked ? "#1677ff" : "#555",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
               cursor: "pointer",
+              color: hasLiked ? "#1677ff" : "#555",
+              fontWeight: hasLiked ? 600 : 400,
             }}
             onClick={handleLikeToggle}
           >
-            {hasLiked ? <LikeFilled /> : <LikeOutlined />}{" "}
-            {post.likes?.length || 0}
-          </Tag>
+            {hasLiked ? <LikeFilled /> : <LikeOutlined />}
+            <span>{post.likes?.length || 0}</span>
+          </div>
 
           {/* Comments */}
-          <Tag
+          <div
             style={{
-              ...baseTagStyle,
-              fontSize: isSmall ? 11 : 13,
-              background: showComments ? "#e6f4ff" : "#f0f0f0",
-              color: showComments ? "#1677ff" : "#555",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
               cursor: showCommentsSection ? "pointer" : "default",
+              color: showComments ? "#1677ff" : "#555",
+              fontWeight: showComments ? 600 : 400,
             }}
             onClick={
               showCommentsSection
@@ -126,8 +123,9 @@ export default function PostActions({
                 : undefined
             }
           >
-            <CommentOutlined /> {post.comments?.length || 0}
-          </Tag>
+            <CommentOutlined />
+            <span>{post.comments?.length || 0}</span>
+          </div>
         </div>
       </Space>
 

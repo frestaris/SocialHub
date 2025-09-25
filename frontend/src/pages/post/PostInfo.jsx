@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Typography, Avatar, Button } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import moment from "moment";
@@ -12,8 +12,6 @@ const { Text, Paragraph, Title } = Typography;
 
 export default function PostInfo({ post }) {
   const [expanded, setExpanded] = useState(false);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-  const descRef = useRef(null);
 
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner =
@@ -23,15 +21,6 @@ export default function PostInfo({ post }) {
     if (!currentUser || !post?.userId) return false;
     return currentUser.following?.some((f) => f._id === post.userId._id);
   }, [currentUser, post]);
-
-  useEffect(() => {
-    if (descRef.current) {
-      const el = descRef.current;
-      const lineHeight = parseInt(getComputedStyle(el).lineHeight, 10);
-      const maxHeight = lineHeight * 2;
-      setIsOverflowing(el.scrollHeight > maxHeight);
-    }
-  }, [post?.content]);
 
   return (
     <div style={{ marginBottom: "20px" }}>
@@ -101,31 +90,38 @@ export default function PostInfo({ post }) {
       )}
 
       {/* Content/Description */}
-      <div
-        style={{
-          marginTop: "16px",
-          background: "#e7e7e7",
-          padding: "12px",
-          borderRadius: "8px",
-        }}
-      >
-        <Paragraph
-          ref={descRef}
-          ellipsis={!expanded ? { rows: 2, expandable: false } : false}
-          style={{ marginBottom: "8px" }}
+      {post.content && (
+        <div
+          style={{
+            marginTop: "16px",
+            background: "#e7e7e7",
+            padding: "12px",
+            borderRadius: "8px",
+          }}
         >
-          {post.content}
-        </Paragraph>
-        {isOverflowing && (
-          <Button
-            type="link"
-            style={{ padding: 0 }}
-            onClick={() => setExpanded(!expanded)}
+          <div
+            style={{
+              maxHeight: expanded ? "500px" : "60px",
+              overflow: "hidden",
+              transition: "max-height 0.5s ease",
+            }}
           >
-            {expanded ? "Show Less" : "Show More"}
-          </Button>
-        )}
-      </div>
+            <Paragraph style={{ margin: 0, whiteSpace: "pre-line" }}>
+              {post.content}
+            </Paragraph>
+          </div>
+
+          {post.content.length > 120 && (
+            <Button
+              type="link"
+              style={{ padding: 0, fontSize: 12 }}
+              onClick={() => setExpanded(!expanded)}
+            >
+              {expanded ? "Show Less" : "Show More"}
+            </Button>
+          )}
+        </div>
+      )}
 
       <PostActions post={post} isSmall={false} showCommentsSection={false} />
     </div>

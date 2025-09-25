@@ -1,38 +1,19 @@
-import {
-  Card,
-  Avatar,
-  Typography,
-  Grid,
-  Spin,
-  Result,
-  Dropdown,
-  Button,
-  Modal,
-} from "antd";
-import {
-  UserOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  MoreOutlined,
-} from "@ant-design/icons";
+import { Grid, Spin, Result, Modal } from "antd";
 import { useSelector } from "react-redux";
-import moment from "moment";
 import {
   useGetPostsQuery,
   useUpdatePostMutation,
   useDeletePostMutation,
 } from "../../redux/post/postApi";
-import { Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import EditPostForm from "../user/profile/EditPostForm";
 import Masonry from "react-masonry-css";
 import TopCreators from "./TopCreators";
-import PostActions from "../../components/PostActions";
 import { handleError, handleSuccess } from "../../utils/handleMessage";
-import SuggestedCreators from "./SuggestedCreators";
+import PostCard from "../../components/PostCard";
+import HotNow from "../homepage/HotNow";
 
 const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
-const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
 export default function Feed({ searchQuery = "", selectedCategories = [] }) {
@@ -140,15 +121,15 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
   }
 
   // group posts into chunks for injected components
-  const chunkSize = 11;
+  const chunkSize = 12;
   const chunks = Array.from(
     { length: Math.ceil(posts.length / chunkSize) },
     (_, i) => posts.slice(i * chunkSize, i * chunkSize + chunkSize)
   );
 
   const injectedComponents = [
+    <HotNow key="hot-now" />,
     <TopCreators key="top-creators" />,
-    <SuggestedCreators key="suggested-creators" />,
   ];
 
   return (
@@ -161,201 +142,14 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
             columnClassName="masonry-grid_column"
           >
             {chunkPosts.map((post) => (
-              <Card
+              <PostCard
                 key={post._id}
-                style={{
-                  breakInside: "avoid",
-                  marginBottom: 16,
-                  borderRadius: 12,
-                  overflow: "hidden",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-                }}
-                stylesbody={{ padding: "12px" }}
-              >
-                {/* Header */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 8,
-                  }}
-                >
-                  <div
-                    style={{ display: "flex", alignItems: "center", gap: 8 }}
-                  >
-                    <Avatar
-                      size="large"
-                      src={
-                        post.userId?.avatar
-                          ? `${post.userId.avatar}?t=${post.userId._id}`
-                          : null
-                      }
-                      icon={!post.userId?.avatar && <UserOutlined />}
-                    />
-                    <div>
-                      <Text
-                        strong
-                        style={{
-                          display: "block",
-                          fontSize: isSmall ? 12 : 14,
-                        }}
-                      >
-                        <Link to={`/profile/${post.userId._id}`}>
-                          {post.userId?.username}
-                        </Link>
-                      </Text>
-                      <Text
-                        type="secondary"
-                        style={{
-                          fontSize: isSmall ? 10 : 12,
-                        }}
-                      >
-                        {moment(post.createdAt).fromNow()}
-                        {post.edited && (
-                          <span style={{ marginLeft: 6 }}>(edited)</span>
-                        )}
-                      </Text>
-                    </div>
-                  </div>
-
-                  {currentUser?._id === post.userId?._id && (
-                    <Dropdown
-                      menu={{
-                        items: [
-                          {
-                            key: "edit",
-                            label: "Edit",
-                            icon: <EditOutlined />,
-                            onClick: () => setEditingPost(post),
-                          },
-                          {
-                            key: "delete",
-                            label: "Delete",
-                            danger: true,
-                            icon: <DeleteOutlined />,
-                            onClick: () => setDeletingPost(post),
-                          },
-                        ],
-                      }}
-                      trigger={["click"]}
-                      placement="bottomRight"
-                    >
-                      <Button
-                        type="text"
-                        size="large"
-                        icon={<MoreOutlined style={{ fontSize: 20 }} />}
-                        shape="circle"
-                      />
-                    </Dropdown>
-                  )}
-                </div>
-
-                {/* Media */}
-                {post.type === "video" && post.video && (
-                  <Link to={`/post/${post._id}`}>
-                    <div
-                      style={{
-                        position: "relative",
-                        marginBottom: 8,
-                        aspectRatio: "16/9",
-                        overflow: "hidden",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <img
-                        src={post.video.thumbnail || "/fallback-thumbnail.jpg"}
-                        alt={post.video.title}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                      {post.video.duration > 0 && (
-                        <span
-                          style={{
-                            position: "absolute",
-                            bottom: "8px",
-                            right: "8px",
-                            background: "rgba(0,0,0,0.75)",
-                            color: "#fff",
-                            fontSize: "12px",
-                            padding: "2px 6px",
-                            borderRadius: "4px",
-                          }}
-                        >
-                          {Math.floor(post.video.duration / 60)}:
-                          {(post.video.duration % 60)
-                            .toString()
-                            .padStart(2, "0")}
-                        </span>
-                      )}
-                    </div>
-                  </Link>
-                )}
-
-                {post.image && (
-                  <Link to={`/post/${post._id}`}>
-                    <div
-                      style={{
-                        position: "relative",
-                        marginBottom: 8,
-                        aspectRatio: "16/9",
-                        overflow: "hidden",
-                        borderRadius: "8px",
-                      }}
-                    >
-                      <img
-                        src={post.image}
-                        alt="Post attachment"
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    </div>
-                  </Link>
-                )}
-
-                {/* Content */}
-                {post.type === "video" ? (
-                  <>
-                    <Paragraph
-                      style={{ margin: "0 0 4px", fontSize: isSmall ? 13 : 15 }}
-                      ellipsis={{ rows: 2 }}
-                    >
-                      <Link
-                        to={`/post/${post._id}`}
-                        style={{ color: "#000", fontWeight: 600 }}
-                      >
-                        {post.video?.title}
-                      </Link>
-                    </Paragraph>
-                    <Paragraph
-                      type="secondary"
-                      ellipsis={{ rows: 2 }}
-                      style={{ margin: 0, fontSize: isSmall ? 13 : 15 }}
-                    >
-                      {post.content}
-                    </Paragraph>
-                  </>
-                ) : (
-                  <Paragraph
-                    type="secondary"
-                    ellipsis={{ rows: 3 }}
-                    style={{ margin: "4px 0 0" }}
-                  >
-                    <Link to={`/post/${post._id}`} style={{ color: "inherit" }}>
-                      {post.content}
-                    </Link>
-                  </Paragraph>
-                )}
-
-                {/* Footer */}
-                <PostActions post={post} isSmall={isSmall} />
-              </Card>
+                post={post}
+                isSmall={isSmall}
+                currentUser={currentUser}
+                onEdit={setEditingPost}
+                onDelete={setDeletingPost}
+              />
             ))}
           </Masonry>
 

@@ -37,15 +37,34 @@ const ArrowButton = ({ icon, onClick, position, disabled }) => {
   );
 };
 
-export default function ReusableCarousel({ children, settings }) {
+export default function ReusableCarousel({
+  children,
+  settings,
+  slidesToShow: customSlides,
+}) {
   const carouselRef = useRef(null);
   const screens = useBreakpoint();
 
+  // calculate slidesToShow based on breakpoint
+  let slidesToShow = customSlides || 4.3;
+  if (!screens.lg && screens.md) slidesToShow = 3.3;
+  if (!screens.md && screens.sm) slidesToShow = 2.3;
+  if (!screens.sm) slidesToShow = 1.3;
+
   // 👇 calculate slidesToShow based on breakpoint
-  let slidesToShow = 4.3;
-  if (!screens.lg && screens.md) slidesToShow = 3.3; // tablet
-  if (!screens.md && screens.sm) slidesToShow = 2.3; // small tablet
-  if (!screens.sm) slidesToShow = 1.3; // mobile
+  if (typeof customSlides === "object") {
+    if (screens.xl) slidesToShow = customSlides.default || 3.2;
+    else if (screens.lg) slidesToShow = customSlides.lg || 2.2;
+    else if (screens.md) slidesToShow = customSlides.md || 2.2;
+    else if (screens.sm) slidesToShow = customSlides.sm || 1.2;
+    else slidesToShow = customSlides.xs || 1.0;
+  } else {
+    // fallback
+    slidesToShow = customSlides || 4.3;
+    if (!screens.lg && screens.md) slidesToShow = customSlides || 3.3;
+    if (!screens.md && screens.sm) slidesToShow = customSlides || 2.3;
+    if (!screens.sm) slidesToShow = customSlides || 1.3;
+  }
 
   const total = children.length;
   const [showArrows, setShowArrows] = useState({

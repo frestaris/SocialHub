@@ -74,7 +74,7 @@ export default function Profile() {
       <Row gutter={[24, 24]}>
         {/* Left column */}
         <Col xs={24} md={8}>
-          <div style={{ position: "sticky", top: 20 }}>
+          <div style={{ position: "sticky", top: 90 }}>
             <motion.div
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}

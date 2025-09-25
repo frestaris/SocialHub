@@ -26,6 +26,7 @@ const { useBreakpoint } = Grid;
 export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
+  const [expandedPostId, setExpandedPostId] = useState(null);
 
   const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
   const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
@@ -207,11 +208,38 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
 
               {/* Content / Description */}
               {item.content && (
-                <Paragraph style={{ flex: 1, margin: 0 }}>
-                  <Link to={`/post/${item._id}`} style={{ color: "inherit" }}>
-                    {item.content}
-                  </Link>
-                </Paragraph>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      maxHeight: expandedPostId === item._id ? "500px" : "60px",
+                      overflow: "hidden",
+                      transition: "max-height 0.5s ease",
+                    }}
+                  >
+                    <Paragraph style={{ margin: 0, whiteSpace: "pre-line" }}>
+                      <Link
+                        to={`/post/${item._id}`}
+                        style={{ color: "inherit" }}
+                      >
+                        {item.content}
+                      </Link>
+                    </Paragraph>
+                  </div>
+
+                  {item.content.length > 120 && (
+                    <Button
+                      type="link"
+                      style={{ padding: 0, fontSize: 12 }}
+                      onClick={() =>
+                        setExpandedPostId(
+                          expandedPostId === item._id ? null : item._id
+                        )
+                      }
+                    >
+                      {expandedPostId === item._id ? "Show Less" : "Show More"}
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           </>
