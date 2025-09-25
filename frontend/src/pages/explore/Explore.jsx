@@ -7,6 +7,7 @@ import Sidebar from "./Sidebar";
 import Feed from "./Feed";
 import SearchBar from "../../components/SearchBar";
 import useSearchHandler from "../../utils/useSearchHandler";
+import Footer from "../../components/Footer";
 
 const { Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -44,9 +45,13 @@ export default function Explore() {
           borderRight: "none",
           paddingLeft: isMobile ? 0 : 16,
           paddingTop: isMobile ? 0 : 8,
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
         }}
         onBreakpoint={(broken) => setIsMobile(broken)}
       >
+        {/* Sidebar card */}
         <div
           style={{
             position: "sticky",
@@ -61,20 +66,49 @@ export default function Explore() {
             onCategoryChange={setSelectedCategories}
           />
         </div>
+
+        {/* Footer card */}
+        <div
+          style={{
+            position: "sticky",
+            top: 80 + 400 + 16,
+            marginTop: 16,
+            borderRadius: "12px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+            overflow: "hidden",
+          }}
+        >
+          <Footer />
+        </div>
       </Sider>
 
-      {/* Mobile drawer */}
       <Drawer
         title="Categories"
         placement="left"
         onClose={() => setMobileOpen(false)}
         open={mobileOpen}
+        styles={{
+          body: {
+            display: "flex",
+            flexDirection: "column",
+            height: "100vh",
+            padding: 0,
+          },
+        }}
       >
-        <Sidebar
-          selectedCategories={selectedCategories}
-          onCategoryChange={setSelectedCategories}
-          onClose={() => setMobileOpen(false)}
-        />
+        {/* Sidebar (scrollable area) */}
+        <div style={{ flex: 1, overflowY: "auto" }}>
+          <Sidebar
+            selectedCategories={selectedCategories}
+            onCategoryChange={setSelectedCategories}
+            onClose={() => setMobileOpen(false)}
+          />
+        </div>
+
+        {/* Footer (always at bottom) */}
+        <div style={{ borderTop: "1px solid #f0f0f0" }}>
+          <Footer />
+        </div>
       </Drawer>
 
       <Layout style={{ flex: 1 }}>

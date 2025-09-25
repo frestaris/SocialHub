@@ -1,19 +1,13 @@
-import { Typography, Button } from "antd";
+import { Typography } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import image from "../../assets/image-1.jpg";
 import { useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
 
 const { Title, Paragraph } = Typography;
 
 export default function Hero() {
   const textRef = useRef(null);
   const paraRef = useRef(null);
-  const buttonRef = useRef(null);
-
-  const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user);
 
   const handleScroll = () => {
     const nextSection = document.getElementById("how-it-works");
@@ -22,17 +16,8 @@ export default function Hero() {
     }
   };
 
-  const handleCTA = () => {
-    if (user) {
-      navigate("/explore");
-    } else {
-      navigate("/login");
-    }
-  };
-
   useEffect(() => {
-    const elements = [textRef.current, paraRef.current, buttonRef.current];
-
+    const elements = [textRef.current, paraRef.current];
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -79,12 +64,6 @@ export default function Hero() {
             Support and discover amazing creators in one place.
           </Paragraph>
         </div>
-
-        <div ref={buttonRef} className="fade-element delay-2">
-          <Button type="primary" size="large" onClick={handleCTA}>
-            {user ? "Explore Now" : "Get Started"}
-          </Button>
-        </div>
       </div>
 
       {/* Chevron pinned to bottom */}
@@ -120,7 +99,6 @@ export default function Hero() {
             transform: translateY(0);
           }
           .delay-1 { transition-delay: 0.2s; }
-          .delay-2 { transition-delay: 0.4s; }
 
           @keyframes bounce {
             0%, 20%, 50%, 80%, 100% { transform: translateY(0); }

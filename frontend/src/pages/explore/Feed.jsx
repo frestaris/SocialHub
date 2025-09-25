@@ -1,4 +1,4 @@
-import { Grid, Spin, Result, Modal } from "antd";
+import { Grid, Spin, Result, Modal, Button } from "antd";
 import { useSelector } from "react-redux";
 import {
   useGetPostsQuery,
@@ -12,6 +12,9 @@ import TopCreators from "./TopCreators";
 import { handleError, handleSuccess } from "../../utils/handleMessage";
 import PostCard from "../../components/PostCard";
 import HotNow from "../homepage/HotNow";
+import Upload from "../upload/Upload";
+import { useNavigate } from "react-router-dom";
+import { PlusOutlined } from "@ant-design/icons";
 
 const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
 const { useBreakpoint } = Grid;
@@ -24,7 +27,9 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
   const isDesktop = screens.md;
   const isSmall = !screens.sm;
   const currentUser = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
 
+  const [uploadOpen, setUploadOpen] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
 
@@ -111,11 +116,35 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
 
   if (posts.length === 0 && !isFetching) {
     return (
-      <Result
-        status="404"
-        title="No Posts Found"
-        subTitle="Be the first to create a post!"
-      />
+      <>
+        <Result
+          status="404"
+          title="No Posts Found"
+          subTitle="Be the first to create a post!"
+          extra={
+            currentUser ? (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setUploadOpen(true);
+                }}
+              >
+                Post
+              </Button>
+            ) : (
+              <Button type="primary" onClick={() => navigate("/login")}>
+                Login
+              </Button>
+            )
+          }
+        />
+
+        {/* Upload modal (only when logged in) */}
+        {currentUser && (
+          <Upload open={uploadOpen} onClose={() => setUploadOpen(false)} />
+        )}
+      </>
     );
   }
 

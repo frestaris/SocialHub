@@ -54,8 +54,17 @@ export default function CommentsSection({ postId }) {
 
   const textareaRef = useRef(null);
   const comments = data?.comments || [];
+  const [expandedComments, setExpandedComments] = useState({}); // 👈 track expanded per comment
+
   const isUnchanged =
     editingComment && content.trim() === editingComment.content.trim();
+
+  const toggleExpanded = (id) => {
+    setExpandedComments((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   // ---- Submit new comment ----
   const handleSubmit = async () => {
@@ -165,7 +174,7 @@ export default function CommentsSection({ postId }) {
         {editingComment ? "Update Comment" : "Comment"}
       </Button>
 
-      {/* Spinner only when loading comments initially */}
+      {/* Spinner */}
       {isLoadingComments && (
         <div style={{ textAlign: "center", marginTop: 16 }}>
           <Spin />
@@ -176,75 +185,127 @@ export default function CommentsSection({ postId }) {
       <List itemLayout="horizontal" style={{ marginTop: 16 }}>
         {comments.slice(0, visibleCount).map((item) => (
           <div key={item._id} className="fade-slide-in">
-            <List.Item
-              actions={[
-                currentUserId === item.userId?._id && (
-                  <Dropdown
-                    menu={{
-                      items: [
-                        {
-                          key: "edit",
-                          label: "Edit",
-                          icon: <EditOutlined />,
-                          onClick: () => handleEdit(item),
-                        },
-                        {
-                          key: "delete",
-                          label: "Delete",
-                          danger: true,
-                          icon: <DeleteOutlined />,
-                          onClick: () => handleDelete(item._id),
-                        },
-                      ],
-                    }}
-                    trigger={["click"]}
-                    placement="bottomRight"
-                  >
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<MoreOutlined style={{ fontSize: 16 }} />}
-                      shape="circle"
-                      loading={deletingId === item._id}
-                    />
-                  </Dropdown>
-                ),
-              ]}
-            >
+            <List.Item>
               <List.Item.Meta
                 avatar={
                   <Avatar src={item.userId?.avatar} icon={<UserOutlined />} />
                 }
                 title={
-                  <Link to={`/profile/${item.userId?._id}`}>
-                    <Text style={{ color: "#1677ff" }} strong>
-                      {item.userId?.username}
-                    </Text>{" "}
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      {moment(item.createdAt).fromNow()}
-                      {item.edited && (
-                        <span style={{ marginLeft: 6 }}>(edited)</span>
-                      )}
-                    </Text>
-                  </Link>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    {/* Left: name + timestamp */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        minWidth: 0, // 🔑 allows flex children to shrink
+                      }}
+                    >
+                      <Link
+                        to={`/profile/${item.userId?._id}`}
+                        style={{
+                          maxWidth: 120, // 👈 adjust to what fits your layout
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          display: "inline-block",
+                        }}
+                      >
+                        <Text style={{ color: "#1677ff" }} strong>
+                          {item.userId?.username}
+                        </Text>
+                      </Link>
+
+                      <Text
+                        type="secondary"
+                        style={{ fontSize: 12, whiteSpace: "nowrap" }}
+                      >
+                        {moment(item.createdAt).fromNow()}
+                        {item.edited && (
+                          <span style={{ marginLeft: 6 }}>(edited)</span>
+                        )}
+                      </Text>
+                    </div>
+
+                    {/* Right: MoreOutlined */}
+                    {currentUserId === item.userId?._id && (
+                      <Dropdown
+                        menu={{
+                          items: [
+                            {
+                              key: "edit",
+                              label: "Edit",
+                              icon: <EditOutlined />,
+                              onClick: () => handleEdit(item),
+                            },
+                            {
+                              key: "delete",
+                              label: "Delete",
+                              danger: true,
+                              icon: <DeleteOutlined />,
+                              onClick: () => handleDelete(item._id),
+                            },
+                          ],
+                        }}
+                        trigger={["click"]}
+                        placement="bottomRight"
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<MoreOutlined style={{ fontSize: 16 }} />}
+                          shape="circle"
+                          loading={deletingId === item._id}
+                        />
+                      </Dropdown>
+                    )}
+                  </div>
                 }
-                description={item.content}
+                description={
+                  <>
+                    <div
+                      style={{
+                        maxHeight: expandedComments[item._id]
+                          ? "500px"
+                          : "40px",
+                        overflow: "hidden",
+                        transition: "max-height 0.5s ease",
+                      }}
+                    >
+                      <Typography.Paragraph
+                        type="secondary"
+                        style={{ marginBottom: 0 }}
+                      >
+                        {item.content}
+                      </Typography.Paragraph>
+                    </div>
+
+                    {item.content.length > 120 && (
+                      <Button
+                        type="link"
+                        style={{ padding: 0, fontSize: 12 }}
+                        onClick={() => toggleExpanded(item._id)}
+                      >
+                        {expandedComments[item._id] ? "Show Less" : "Show More"}
+                      </Button>
+                    )}
+                  </>
+                }
               />
             </List.Item>
           </div>
         ))}
       </List>
 
-      {/* Show More / Less */}
+      {/* Show More / Less comments */}
       {comments.length > 3 && (
         <div style={{ textAlign: "center", marginTop: 12 }}>
-          {/* Spinner above the button */}
-          {isLoadingComments && (
-            <div style={{ marginBottom: 8 }}>
-              <Spin size="small" />
-            </div>
-          )}
-
           <Button
             type="link"
             icon={

@@ -72,8 +72,8 @@ export default function HotNow() {
             <div
               key={post._id}
               style={{
-                paddingLeft: 8, // half gutter
-                paddingRight: 8, // half gutter
+                paddingLeft: 8,
+                paddingRight: 8,
                 display: "flex",
                 justifyContent: "center",
                 height: "100%",

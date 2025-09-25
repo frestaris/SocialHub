@@ -1,11 +1,12 @@
-import { Row, Col, Typography, Grid } from "antd";
+import { Row, Col, Typography, Grid, Button } from "antd";
 import {
   UserAddOutlined,
   PlusCircleOutlined,
   MessageOutlined,
-  DownOutlined,
 } from "@ant-design/icons";
 import { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const { Title, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -35,8 +36,20 @@ const steps = [
 
 export default function HowItWorks() {
   const stepRefs = useRef([]);
+  const buttonRef = useRef(null);
   const screens = useBreakpoint();
   const isSmall = !screens.md;
+
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
+
+  const handleCTA = () => {
+    if (user) {
+      navigate("/explore");
+    } else {
+      navigate("/login");
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -52,16 +65,10 @@ export default function HowItWorks() {
     );
 
     stepRefs.current.forEach((el) => el && observer.observe(el));
+    if (buttonRef.current) observer.observe(buttonRef.current);
 
     return () => observer.disconnect();
   }, []);
-
-  const handleScroll = () => {
-    const nextSection = document.getElementById("hot-now");
-    if (nextSection) {
-      nextSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
 
   return (
     <div
@@ -71,8 +78,10 @@ export default function HowItWorks() {
         background: "#fff",
         display: "flex",
         alignItems: "center",
-        position: "relative", // for chevron
+        position: "relative",
         overflowX: "hidden",
+        flexDirection: "column",
+        justifyContent: "center",
       }}
     >
       <div
@@ -115,24 +124,15 @@ export default function HowItWorks() {
         </Row>
       </div>
 
-      {/* Chevron pinned to bottom */}
+      {/* CTA Button */}
       <div
-        style={{
-          position: "absolute",
-          bottom: "20px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          cursor: "pointer",
-        }}
-        onClick={handleScroll}
+        ref={buttonRef}
+        className="fade-element delay-3"
+        style={{ marginTop: "48px", textAlign: "center" }}
       >
-        <DownOutlined
-          style={{
-            fontSize: "32px",
-            color: "#555",
-            animation: "bounce 1.5s infinite",
-          }}
-        />
+        <Button type="primary" size="large" onClick={handleCTA}>
+          {user ? "Explore Now" : "Get Started"}
+        </Button>
       </div>
 
       {/* Animations */}
@@ -150,6 +150,7 @@ export default function HowItWorks() {
           .delay-0 { transition-delay: 0s; }
           .delay-1 { transition-delay: 0.2s; }
           .delay-2 { transition-delay: 0.4s; }
+          .delay-3 { transition-delay: 0.6s; }
 
           @keyframes bounce {
             0%, 20%, 50%, 80%, 100% { transform: translateY(0); }

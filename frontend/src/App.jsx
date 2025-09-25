@@ -8,6 +8,7 @@ import HomePage from "./pages/homepage/HomePage";
 import Explore from "./pages/explore/Explore";
 import Profile from "./pages/user/profile/Profile";
 import Post from "./pages/post/Post";
+import NotFound from "./components/NotFound";
 
 const { Content } = Layout;
 
@@ -28,6 +29,7 @@ export default function App() {
             <Route path="/post/:id" element={<Post />} />
 
             <Route path="/profile/:id" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
 
             {/* Auth Page */}
             <Route path="/login" element={<Login />} />
