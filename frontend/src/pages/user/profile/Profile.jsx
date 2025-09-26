@@ -7,6 +7,7 @@ import SuggestedCreators from "./SuggestedCreators";
 import UserFeed from "./UserFeed";
 import { useState } from "react";
 import { useSelector } from "react-redux";
+import Footer from "../../../components/Footer";
 
 export default function Profile() {
   const { id } = useParams();
@@ -77,6 +78,17 @@ export default function Profile() {
             <div className="fade-slide-in">
               <ProfileInfo user={user} />
               <SuggestedCreators followers={user.followers} />
+              {/* Footer card */}
+              <div
+                style={{
+                  marginTop: 16,
+                  borderRadius: "12px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                  overflow: "hidden",
+                }}
+              >
+                <Footer />
+              </div>{" "}
             </div>
           </div>
         </Col>

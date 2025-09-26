@@ -188,7 +188,14 @@ export default function CommentsSection({ postId }) {
             <List.Item>
               <List.Item.Meta
                 avatar={
-                  <Avatar src={item.userId?.avatar} icon={<UserOutlined />} />
+                  <Avatar
+                    src={
+                      item.userId?.avatar && item.userId.avatar.trim() !== ""
+                        ? item.userId.avatar
+                        : null
+                    }
+                    icon={<UserOutlined />}
+                  />
                 }
                 title={
                   <div

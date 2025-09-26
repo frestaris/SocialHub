@@ -63,7 +63,20 @@ export default function PostInfo({ post }) {
             />
           </Link>
           <div>
-            <Text strong>{post.userId?.username}</Text>
+            <Link
+              to={`/profile/${post.userId?._id}`}
+              style={{
+                maxWidth: 120,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                display: "inline-block",
+              }}
+            >
+              <Text style={{ color: "#1677ff" }} strong>
+                {post.userId?.username}
+              </Text>
+            </Link>{" "}
             <br />
             <Text type="secondary">
               {moment(post.createdAt).fromNow()}
