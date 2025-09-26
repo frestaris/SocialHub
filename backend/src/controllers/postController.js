@@ -95,6 +95,9 @@ export const getPosts = async (req, res) => {
     if (sort === "likes") sortOption = { likes: -1 };
     if (sort === "trending") sortOption = { views: -1, likes: -1 };
 
+    const limitNum = Number(limit) || 20;
+    const skipNum = Number(skip) || 0;
+
     const posts = await Post.find(filter)
       .populate("userId", "username avatar")
       .populate({
@@ -102,8 +105,8 @@ export const getPosts = async (req, res) => {
         populate: { path: "userId", select: "username avatar" },
       })
       .sort(sortOption)
-      .skip(Number(skip))
-      .limit(Number(limit))
+      .skip(skipNum)
+      .limit(limitNum)
       .lean();
 
     res.json({ success: true, posts, total });

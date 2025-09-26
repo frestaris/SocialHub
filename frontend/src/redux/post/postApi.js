@@ -48,12 +48,17 @@ export const postApi = createApi({
         if (arg.skip === 0) {
           return newCache;
         }
+
+        const existingIds = new Set(currentCache?.posts?.map((p) => p._id));
+        const newPosts = newCache.posts.filter((p) => !existingIds.has(p._id));
+
         return {
           ...newCache,
-          posts: [...(currentCache?.posts || []), ...newCache.posts],
+          posts: [...(currentCache?.posts || []), ...newPosts],
           total: newCache.total ?? currentCache?.total,
         };
       },
+
       forceRefetch({ currentArg, previousArg }) {
         return (
           currentArg?.searchQuery !== previousArg?.searchQuery ||
