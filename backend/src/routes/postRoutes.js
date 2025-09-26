@@ -17,8 +17,8 @@ const router = express.Router();
 // Public
 router.get("/", getPosts);
 router.get("/user/:userId", getPostsByUser);
-router.get("/:id", getPostById);
 router.get("/feed/:userId", getUserFeed);
+router.get("/:id", getPostById);
 router.patch("/:id/views", incrementPostViews);
 
 // Private

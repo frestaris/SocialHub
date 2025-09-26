@@ -11,11 +11,16 @@ export const createComment = async (req, res) => {
         .json({ success: false, error: "Content is required" });
     }
 
+    if (!postId) {
+      res.status(400);
+      throw new Error("postId is required");
+    }
+
     // 1. Create comment
     const comment = await Comment.create({
-      userId: req.user._id,
-      postId: postId || null,
       content,
+      userId: req.user._id,
+      postId,
     });
 
     // 2. Link it to Post or Video

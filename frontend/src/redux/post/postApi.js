@@ -30,18 +30,28 @@ export const postApi = createApi({
 
     // ---- GET ALL POSTS ----
     getPosts: builder.query({
-      query: ({ searchQuery = "", category = "", skip = 0, limit = 20 }) => {
+      query: ({
+        searchQuery = "",
+        category = "",
+        skip = 0,
+        limit = 20,
+        sort = "newest",
+      }) => {
         const params = new URLSearchParams();
         if (searchQuery) params.append("search_query", searchQuery);
         if (category) params.append("category", category);
         params.append("skip", skip);
         params.append("limit", limit);
+        if (sort) params.append("sort", sort);
         return `?${params.toString()}`;
       },
       serializeQueryArgs: ({ queryArgs }) => {
         return {
           searchQuery: queryArgs.searchQuery || "",
           category: queryArgs.category || "",
+          sort: queryArgs.sort || "newest",
+          skip: queryArgs.skip || 0,
+          limit: queryArgs.limit || 20,
         };
       },
       merge: (currentCache, newCache, { arg }) => {

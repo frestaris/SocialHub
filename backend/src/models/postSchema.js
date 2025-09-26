@@ -16,6 +16,7 @@ const postSchema = new mongoose.Schema(
     image: { type: String, default: null },
     views: { type: Number, default: 0 },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    likesCount: { type: Number, default: 0 },
     comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Comment" }],
 
     // video-specific

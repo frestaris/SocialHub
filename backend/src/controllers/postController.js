@@ -66,6 +66,7 @@ export const getPosts = async (req, res) => {
       skip = 0,
       sort = "newest",
     } = req.query;
+
     const filter = {};
 
     if (category) {
@@ -87,16 +88,44 @@ export const getPosts = async (req, res) => {
       ];
     }
 
-    const total = await Post.countDocuments(filter);
-
-    // 🔹 dynamic sort
-    let sortOption = { createdAt: -1 };
-    if (sort === "views") sortOption = { views: -1 };
-    if (sort === "likes") sortOption = { likes: -1 };
-    if (sort === "trending") sortOption = { views: -1, likes: -1 };
-
     const limitNum = Number(limit) || 20;
     const skipNum = Number(skip) || 0;
+
+    // 🔹 handle trending separately via aggregation
+    if (sort === "trending") {
+      const posts = await Post.aggregate([
+        { $match: filter },
+        {
+          $addFields: {
+            score: {
+              $add: ["$views", { $multiply: ["$likesCount", 2] }], // weight likes more
+            },
+          },
+        },
+        { $sort: { score: -1 } },
+        { $skip: skipNum },
+        { $limit: limitNum },
+      ]);
+
+      // populate userId manually after aggregation
+      const populated = await Post.populate(posts, {
+        path: "userId",
+        select: "username avatar",
+      });
+
+      return res.json({
+        success: true,
+        posts: populated,
+        total: populated.length,
+      });
+    }
+
+    // 🔹 normal find for other sorts
+    let sortOption = { createdAt: -1 };
+    if (sort === "views") sortOption = { views: -1 };
+    if (sort === "likes") sortOption = { likesCount: -1 };
+
+    const total = await Post.countDocuments(filter);
 
     const posts = await Post.find(filter)
       .populate("userId", "username avatar")
@@ -258,7 +287,7 @@ export const getUserFeed = async (req, res) => {
     let sortOption = { createdAt: -1 }; // default = newest
     if (sort === "oldest") sortOption = { createdAt: 1 };
     if (sort === "popular") sortOption = { views: -1 };
-    if (sort === "liked") sortOption = { likes: -1 };
+    if (sort === "liked") sortOption = { likesCount: -1 };
 
     const posts = await Post.find({ userId: req.params.userId })
       .populate("userId", "username avatar")
@@ -308,6 +337,9 @@ export const toggleLikePost = async (req, res) => {
       // ✅ Like
       post.likes.push(userId);
     }
+
+    // keep count in sync
+    post.likesCount = post.likes.length;
 
     await post.save();
 

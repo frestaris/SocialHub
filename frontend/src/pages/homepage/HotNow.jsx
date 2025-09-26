@@ -22,9 +22,9 @@ export default function HotNow() {
 
   const screens = useBreakpoint();
   const isSmall = !screens.md;
-  const posts = [...(data?.posts || [])]
-    .filter((p, i, arr) => arr.findIndex((x) => x._id === p._id) === i)
-    .sort((a, b) => (b.views || 0) - (a.views || 0));
+  const posts = (data?.posts || []).filter(
+    (p, i, arr) => arr.findIndex((x) => x._id === p._id) === i
+  );
 
   const currentUser = useSelector((state) => state.auth.user);
 
