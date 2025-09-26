@@ -3,6 +3,9 @@ import { baseURL } from "../../utils/baseURL";
 import { auth } from "../../firebase";
 import { setUser } from "../auth/authSlice";
 
+// User API slice (RTK Query)
+// Handles profile fetching, updates, following/unfollowing, and deletion
+
 export const userApi = createApi({
   reducerPath: "userApi",
   baseQuery: fetchBaseQuery({
@@ -10,7 +13,7 @@ export const userApi = createApi({
     prepareHeaders: async (headers) => {
       const user = auth.currentUser;
       if (user) {
-        const token = await user.getIdToken(true);
+        const token = await user.getIdToken(true); // force refresh token
         headers.set("Authorization", `Bearer ${token}`);
       }
       headers.set("Content-Type", "application/json");
@@ -18,16 +21,24 @@ export const userApi = createApi({
     },
     credentials: "include",
   }),
+
   endpoints: (builder) => ({
+    // ---- GET CURRENT LOGGED-IN USER ----
     getCurrentUser: builder.query({
       query: () => `/me`,
     }),
+
+    // ---- GET USER BY ID ----
     getUserById: builder.query({
       query: (id) => `/${id}`,
     }),
+
+    // ---- LIST USERS ----
     listUsers: builder.query({
       query: () => `/`,
     }),
+
+    // ---- UPDATE USER PROFILE ----
     updateUser: builder.mutation({
       query: (data) => ({
         url: "/me",
@@ -38,9 +49,10 @@ export const userApi = createApi({
         try {
           const { data: updated } = await queryFulfilled;
 
+          // Update Redux auth slice
           dispatch(setUser(updated.user));
 
-          // ✅ Update getCurrentUser cache
+          // Update getCurrentUser cache
           dispatch(
             userApi.util.updateQueryData(
               "getCurrentUser",
@@ -51,7 +63,7 @@ export const userApi = createApi({
             )
           );
 
-          // ✅ Update getUserById cache too
+          // Update getUserById cache
           dispatch(
             userApi.util.updateQueryData(
               "getUserById",
@@ -66,12 +78,16 @@ export const userApi = createApi({
         }
       },
     }),
+
+    // ---- DELETE USER ----
     deleteUser: builder.mutation({
       query: () => ({
         url: "/me",
         method: "DELETE",
       }),
     }),
+
+    // ---- FOLLOW / UNFOLLOW USER ----
     toggleFollowUser: builder.mutation({
       query: (userId) => ({
         url: `/${userId}/follow`,
@@ -97,7 +113,7 @@ export const userApi = createApi({
           })
         );
 
-        // ---- Optimistic update listUsers (used by TopCreators) ----
+        // ---- Optimistic update listUsers ----
         const patchListUsers = dispatch(
           userApi.util.updateQueryData("listUsers", undefined, (draft) => {
             if (!draft?.users) return;
@@ -120,12 +136,12 @@ export const userApi = createApi({
         try {
           const { data } = await queryFulfilled;
 
-          // ✅ update auth.user (so PostInfo sees the new following state)
+          // Update auth.user (so following state is reflected in Redux)
           if (data.currentUser) {
             dispatch(setUser(data.currentUser));
           }
 
-          // ✅ optionally patch target user with server’s truth
+          // Replace with server-truth targetUser if returned
           if (data.targetUser) {
             dispatch(
               userApi.util.updateQueryData("getUserById", userId, (draft) => {
@@ -143,6 +159,7 @@ export const userApi = createApi({
             );
           }
         } catch (err) {
+          // Roll back optimistic updates on error
           patchGetUserById.undo();
           patchListUsers.undo();
           console.error("❌ Toggle follow failed, rolled back:", err);

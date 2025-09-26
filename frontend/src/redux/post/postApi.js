@@ -2,6 +2,9 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { baseURL } from "../../utils/baseURL";
 import { auth } from "../../firebase";
 
+// Post API slice (RTK Query)
+// Handles CRUD operations for posts, user feeds, views, and likes
+
 export const postApi = createApi({
   reducerPath: "postApi",
   baseQuery: fetchBaseQuery({
@@ -17,18 +20,19 @@ export const postApi = createApi({
     },
   }),
   tagTypes: ["Post", "Feed"],
+
   endpoints: (builder) => ({
-    // ---- CREATE ----
+    // ---- CREATE POST ----
     createPost: builder.mutation({
       query: (newPost) => ({
         url: `/`,
         method: "POST",
         body: newPost,
       }),
-      invalidatesTags: ["Post", "Feed"],
+      invalidatesTags: ["Post", "Feed"], // force refresh
     }),
 
-    // ---- GET ALL POSTS ----
+    // ---- GET ALL POSTS (supports search, category, pagination, sort) ----
     getPosts: builder.query({
       query: ({
         searchQuery = "",
@@ -46,30 +50,33 @@ export const postApi = createApi({
         return `?${params.toString()}`;
       },
       serializeQueryArgs: ({ queryArgs }) => {
+        // Cache key based only on query filters, not pagination
         return {
           searchQuery: queryArgs.searchQuery || "",
           category: queryArgs.category || "",
           sort: queryArgs.sort || "newest",
-          skip: queryArgs.skip || 0,
-          limit: queryArgs.limit || 20,
         };
       },
       merge: (currentCache, newCache, { arg }) => {
         if (arg.skip === 0) {
-          return newCache;
+          return newCache; // reset on first page
         }
 
+        // Append new posts while avoiding duplicates
         const existingIds = new Set(currentCache?.posts?.map((p) => p._id));
-        const newPosts = newCache.posts.filter((p) => !existingIds.has(p._id));
+        const mergedPosts = [
+          ...(currentCache?.posts || []),
+          ...newCache.posts.filter((p) => !existingIds.has(p._id)),
+        ];
 
         return {
-          ...newCache,
-          posts: [...(currentCache?.posts || []), ...newPosts],
+          ...currentCache,
+          posts: mergedPosts,
           total: newCache.total ?? currentCache?.total,
         };
       },
-
       forceRefetch({ currentArg, previousArg }) {
+        // Refetch when filters OR skip change
         return (
           currentArg?.searchQuery !== previousArg?.searchQuery ||
           currentArg?.category !== previousArg?.category ||
@@ -86,6 +93,7 @@ export const postApi = createApi({
         { type: "Post", id: userId },
       ],
     }),
+
     // ---- GET POST BY ID ----
     getPostById: builder.query({
       query: (id) => `/${id}`,
@@ -179,7 +187,7 @@ export const postApi = createApi({
           const state = getState();
           const queries = state.postApi.queries;
 
-          // ✅ Remove from all cached getPosts queries
+          // Remove from all cached getPosts queries
           Object.entries(queries).forEach(([cacheKey, entry]) => {
             if (cacheKey.startsWith("getPosts") && entry.originalArgs) {
               dispatch(
@@ -194,7 +202,7 @@ export const postApi = createApi({
             }
           });
 
-          // ✅ Remove from getPostsByUser cache
+          // Remove from getPostsByUser
           dispatch(
             postApi.util.updateQueryData(
               "getPostsByUser",
@@ -205,7 +213,7 @@ export const postApi = createApi({
             )
           );
 
-          // ✅ Remove from getUserFeed cache
+          // Remove from getUserFeed
           dispatch(
             postApi.util.updateQueryData(
               "getUserFeed",
@@ -222,7 +230,7 @@ export const postApi = createApi({
       invalidatesTags: ["Post", "Feed"],
     }),
 
-    //  ---- INCREMENT VIEWS ----
+    // ---- INCREMENT POST VIEWS ----
     incrementPostViews: builder.mutation({
       query: (postId) => ({
         url: `/${postId}/views`,
@@ -232,7 +240,7 @@ export const postApi = createApi({
         try {
           const { data } = await queryFulfilled;
 
-          // ✅ Update getPostById cache
+          // Update getPostById
           dispatch(
             postApi.util.updateQueryData("getPostById", postId, (draft) => {
               if (draft?.post) {
@@ -241,7 +249,7 @@ export const postApi = createApi({
             })
           );
 
-          // ✅ Update ALL getPosts caches
+          // Update all getPosts caches
           const state = getState();
           const queries = state.postApi.queries;
 
@@ -267,6 +275,7 @@ export const postApi = createApi({
       },
     }),
 
+    // ---- TOGGLE LIKE POST ----
     toggleLikePost: builder.mutation({
       query: (id) => ({
         url: `/${id}/like`,
@@ -275,10 +284,10 @@ export const postApi = createApi({
       async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
         try {
           const { data } = await queryFulfilled;
-
           const state = getState();
           const queries = state.postApi.queries;
 
+          // Update all cached getPosts queries
           Object.entries(queries).forEach(([cacheKey, entry]) => {
             if (cacheKey.startsWith("getPosts") && entry.originalArgs) {
               dispatch(
@@ -296,8 +305,7 @@ export const postApi = createApi({
             }
           });
 
-          // Also log  updates
-
+          // Update getUserFeed
           dispatch(
             postApi.util.updateQueryData(
               "getUserFeed",
@@ -311,6 +319,7 @@ export const postApi = createApi({
             )
           );
 
+          // Update getPostsByUser
           dispatch(
             postApi.util.updateQueryData(
               "getPostsByUser",
@@ -324,6 +333,7 @@ export const postApi = createApi({
             )
           );
 
+          // Update getPostById
           dispatch(
             postApi.util.updateQueryData("getPostById", id, (draft) => {
               draft.post = data.post;

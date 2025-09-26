@@ -1,11 +1,18 @@
 import Post from "../models/postSchema.js";
 import User from "../models/userSchema.js";
 
-// CREATE POST
+/**
+ * CREATE POST
+ * --------------
+ * - Handles both video posts and text/image posts.
+ * - For videos → requires title, url, and content (description).
+ * - Returns the newly created post populated with user info.
+ */
 export const createPost = async (req, res) => {
   try {
     const { type, content, category, image, video } = req.body;
 
+    // Video post
     if (type === "video") {
       if (!video || !video.url || !video.title || !content) {
         return res.status(400).json({
@@ -18,7 +25,7 @@ export const createPost = async (req, res) => {
         userId: req.user._id,
         type: "video",
         category: video.category || category || "",
-        content, // always use content as description
+        content, // always used as description
         video: {
           title: video.title,
           url: video.url,
@@ -35,10 +42,10 @@ export const createPost = async (req, res) => {
       return res.status(201).json({ success: true, post: populated });
     }
 
-    // ---- TEXT / IMAGE ----
+    // Text or Image post
     const newPost = await Post.create({
       userId: req.user._id,
-      type, // 👈 trust frontend-provided type
+      type, // trust frontend-provided type
       content,
       category,
       image: image || null,
@@ -56,7 +63,14 @@ export const createPost = async (req, res) => {
   }
 };
 
-// GET POSTS
+/**
+ * GET POSTS (Feed, HotNow, Explore)
+ * -----------------------------------
+ * - Supports filters: category, search_query.
+ * - Supports sorts: newest, views, likes, trending.
+ * - Trending uses aggregation (score = views + likes*2).
+ * - Returns paginated results (skip + limit).
+ */
 export const getPosts = async (req, res) => {
   try {
     const {
@@ -69,10 +83,12 @@ export const getPosts = async (req, res) => {
 
     const filter = {};
 
+    // Filter by category
     if (category) {
       filter.category = category;
     }
 
+    // Search across content, category, video title, and username
     if (search_query) {
       const users = await User.find({
         username: { $regex: search_query, $options: "i" },
@@ -91,15 +107,13 @@ export const getPosts = async (req, res) => {
     const limitNum = Number(limit) || 20;
     const skipNum = Number(skip) || 0;
 
-    // 🔹 handle trending separately via aggregation
+    // Trending → aggregation pipeline
     if (sort === "trending") {
       const posts = await Post.aggregate([
         { $match: filter },
         {
           $addFields: {
-            score: {
-              $add: ["$views", { $multiply: ["$likesCount", 2] }], // weight likes more
-            },
+            score: { $add: ["$views", { $multiply: ["$likesCount", 2] }] },
           },
         },
         { $sort: { score: -1 } },
@@ -107,7 +121,7 @@ export const getPosts = async (req, res) => {
         { $limit: limitNum },
       ]);
 
-      // populate userId manually after aggregation
+      // Populate userId after aggregation
       const populated = await Post.populate(posts, {
         path: "userId",
         select: "username avatar",
@@ -116,11 +130,11 @@ export const getPosts = async (req, res) => {
       return res.json({
         success: true,
         posts: populated,
-        total: populated.length,
+        total: populated.length, // counts only returned docs
       });
     }
 
-    // 🔹 normal find for other sorts
+    // Normal find (newest, views, likes)
     let sortOption = { createdAt: -1 };
     if (sort === "views") sortOption = { views: -1 };
     if (sort === "likes") sortOption = { likesCount: -1 };
@@ -145,7 +159,11 @@ export const getPosts = async (req, res) => {
   }
 };
 
-// GET POST BY ID
+/**
+ * GET POST BY ID
+ * -----------------
+ * - Populates user and all comments (with user info).
+ */
 export const getPostById = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
@@ -164,7 +182,12 @@ export const getPostById = async (req, res) => {
   }
 };
 
-// GET USER POSTS
+/**
+ * GET POSTS BY USER
+ * --------------------
+ * - Fetches all posts from a given user.
+ * - Supports sorting (newest, oldest, popular).
+ */
 export const getPostsByUser = async (req, res) => {
   try {
     const { sort } = req.query;
@@ -176,6 +199,7 @@ export const getPostsByUser = async (req, res) => {
     const posts = await Post.find({ userId: req.params.userId })
       .sort(sortOption)
       .populate("userId", "username avatar");
+
     res.json({ success: true, posts });
   } catch (err) {
     console.error("Get user posts error:", err);
@@ -183,7 +207,13 @@ export const getPostsByUser = async (req, res) => {
   }
 };
 
-// UPDATE POST
+/**
+ * UPDATE POST
+ * ---------------
+ * - Only the owner can edit.
+ * - Updates content, category, image, or video.
+ * - Marks post as `edited = true` if any changes were made.
+ */
 export const updatePost = async (req, res) => {
   try {
     const { content, category, image, video } = req.body;
@@ -200,7 +230,7 @@ export const updatePost = async (req, res) => {
 
     let changed = false;
 
-    // Update text fields
+    // Text fields
     if (content !== undefined && content !== post.content) {
       post.content = content;
       changed = true;
@@ -210,7 +240,7 @@ export const updatePost = async (req, res) => {
       changed = true;
     }
 
-    // Update image
+    // Image
     if (image !== undefined && image !== post.image) {
       post.image = image;
       post.type = image ? "image" : "text";
@@ -218,7 +248,7 @@ export const updatePost = async (req, res) => {
       changed = true;
     }
 
-    // Update video
+    // Video
     if (video) {
       post.type = "video";
       post.image = null;
@@ -230,7 +260,6 @@ export const updatePost = async (req, res) => {
       };
       if (video.category) post.category = video.category;
 
-      // ensure content (description) updates
       if (content !== undefined) {
         post.content = content;
       }
@@ -238,7 +267,7 @@ export const updatePost = async (req, res) => {
       changed = true;
     }
 
-    // ✅ mark as edited if anything changed
+    // Mark as edited
     if (changed) {
       post.edited = true;
     }
@@ -257,7 +286,11 @@ export const updatePost = async (req, res) => {
   }
 };
 
-// DELETE POST
+/**
+ * DELETE POST
+ * --------------
+ * - Only the owner can delete.
+ */
 export const deletePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -279,12 +312,17 @@ export const deletePost = async (req, res) => {
   }
 };
 
-// GET USER FEED
+/**
+ * GET USER FEED
+ * ----------------
+ * - Returns posts from one user (for profile pages).
+ * - Supports sorting (newest, oldest, popular, liked).
+ */
 export const getUserFeed = async (req, res) => {
   try {
     const { sort } = req.query;
 
-    let sortOption = { createdAt: -1 }; // default = newest
+    let sortOption = { createdAt: -1 };
     if (sort === "oldest") sortOption = { createdAt: 1 };
     if (sort === "popular") sortOption = { views: -1 };
     if (sort === "liked") sortOption = { likesCount: -1 };
@@ -300,7 +338,11 @@ export const getUserFeed = async (req, res) => {
   }
 };
 
-// INCREMENT POST VIEWS
+/**
+ * INCREMENT POST VIEWS
+ * -----------------------
+ * - Adds +1 to post.views.
+ */
 export const incrementPostViews = async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(
@@ -320,7 +362,12 @@ export const incrementPostViews = async (req, res) => {
   }
 };
 
-// TOGGLE LIKE POST
+/**
+ * TOGGLE LIKE POST
+ * -------------------
+ * - Adds/removes the user’s ID from post.likes.
+ * - Updates likesCount for faster queries.
+ */
 export const toggleLikePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -330,15 +377,15 @@ export const toggleLikePost = async (req, res) => {
 
     const userId = req.user._id.toString();
 
+    // If user already liked → unlike
     if (post.likes.some((id) => id.toString() === userId)) {
-      // ✅ Unlike
       post.likes = post.likes.filter((id) => id.toString() !== userId);
     } else {
-      // ✅ Like
+      // Otherwise → like
       post.likes.push(userId);
     }
 
-    // keep count in sync
+    // Keep count in sync
     post.likesCount = post.likes.length;
 
     await post.save();

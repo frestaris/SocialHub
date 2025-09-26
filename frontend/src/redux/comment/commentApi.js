@@ -3,6 +3,9 @@ import { baseURL } from "../../utils/baseURL";
 import { auth } from "../../firebase";
 import { postApi } from "../post/postApi";
 
+// Comment API slice (RTK Query)
+// Handles fetching, creating, updating, and deleting comments
+
 export const commentApi = createApi({
   reducerPath: "commentApi",
   baseQuery: fetchBaseQuery({
@@ -19,7 +22,7 @@ export const commentApi = createApi({
   }),
   tagTypes: ["Comment"],
   endpoints: (builder) => ({
-    // Get comments for a post
+    // ---- GET COMMENTS ----
     getCommentsByPost: builder.query({
       query: (postId) => `/post/${postId}`,
       providesTags: (result, error, postId) => [
@@ -27,7 +30,7 @@ export const commentApi = createApi({
       ],
     }),
 
-    // Create a new comment
+    // ---- CREATE COMMENT ----
     createComment: builder.mutation({
       query: (commentData) => ({
         url: "/",
@@ -60,13 +63,13 @@ export const commentApi = createApi({
               })
             );
 
-            // ✅ Update all cached getPosts queries
+            // Update all cached getPosts queries
             Object.entries(queries).forEach(([cacheKey, entry]) => {
               if (cacheKey.startsWith("getPosts") && entry.originalArgs) {
                 dispatch(
                   postApi.util.updateQueryData(
                     "getPosts",
-                    entry.originalArgs, // 👈 important: pass queryArgs, not undefined
+                    entry.originalArgs,
                     (draft) => {
                       const idx = draft.posts?.findIndex(
                         (p) => p._id === postId
@@ -88,7 +91,7 @@ export const commentApi = createApi({
       },
     }),
 
-    // Update comment
+    // ---- UPDATE COMMENT ----
     updateComment: builder.mutation({
       query: ({ id, ...patch }) => ({
         url: `/${id}`,
@@ -100,6 +103,7 @@ export const commentApi = createApi({
           const { data } = await queryFulfilled;
 
           if (postId) {
+            // Update cached comment content
             dispatch(
               commentApi.util.updateQueryData(
                 "getCommentsByPost",
@@ -119,7 +123,7 @@ export const commentApi = createApi({
         postId ? [{ type: "Comment", id: postId }] : ["Comment"],
     }),
 
-    // Delete comment
+    // ---- DELETE COMMENT ----
     deleteComment: builder.mutation({
       query: ({ id }) => ({
         url: `/${id}`,

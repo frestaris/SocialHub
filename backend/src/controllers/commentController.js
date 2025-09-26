@@ -1,50 +1,54 @@
 import Comment from "../models/commentSchema.js";
 import Post from "../models/postSchema.js";
 
+/**
+ * Create a new comment
+ * -----------------------
+ * - Requires `postId` and `content`.
+ * - Saves comment → links it to the Post.
+ * - Repopulates Post with comments + user details for UI sync.
+ */
 export const createComment = async (req, res) => {
   try {
     const { postId, content } = req.body;
 
+    // Validate input
     if (!content) {
       return res
         .status(400)
         .json({ success: false, error: "Content is required" });
     }
-
     if (!postId) {
-      res.status(400);
-      throw new Error("postId is required");
+      return res
+        .status(400)
+        .json({ success: false, error: "postId is required" });
     }
 
-    // 1. Create comment
+    // 1️⃣ Create comment
     const comment = await Comment.create({
       content,
       userId: req.user._id,
       postId,
     });
 
-    // 2. Link it to Post or Video
-    if (postId) {
-      await Post.findByIdAndUpdate(postId, {
-        $push: { comments: comment._id },
+    // 2️⃣ Link comment ID to Post.comments
+    await Post.findByIdAndUpdate(postId, {
+      $push: { comments: comment._id },
+    });
+
+    // 3️⃣ Repopulate the Post with fresh data
+    const updatedPost = await Post.findById(postId)
+      .populate("userId", "username avatar")
+      .populate({
+        path: "comments",
+        populate: { path: "userId", select: "username avatar" },
       });
-    }
 
-    // 3. Repopulate the Post (with comments + user details)
-    let updatedPost = null;
-    if (postId) {
-      updatedPost = await Post.findById(postId)
-        .populate("userId", "username avatar")
-        .populate({
-          path: "comments",
-          populate: { path: "userId", select: "username avatar" },
-        });
-    }
-
+    // ✅ Return both new comment and updated post
     res.status(201).json({
       success: true,
       comment: await comment.populate("userId", "username avatar"),
-      post: updatedPost, // return the fresh post if you want UI sync
+      post: updatedPost,
     });
   } catch (err) {
     console.error("Create comment error:", err);
@@ -52,7 +56,13 @@ export const createComment = async (req, res) => {
   }
 };
 
-// GET COMMENTS (by post or video)
+/**
+ * Get comments
+ * ---------------
+ * - If `postId` param is provided → returns comments for that post.
+ * - Otherwise → returns all comments.
+ * - Sorted newest → oldest.
+ */
 export const getComments = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -69,12 +79,19 @@ export const getComments = async (req, res) => {
   }
 };
 
-// Update Comment
+/**
+ * Update comment
+ * -----------------
+ * - Only the comment owner can edit.
+ * - Marks comment as `edited = true` if content changes.
+ * - Repopulates comment with user data before returning.
+ */
 export const updateComment = async (req, res) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
 
+    // Find comment
     let comment = await Comment.findById(id);
     if (!comment) {
       return res
@@ -86,15 +103,16 @@ export const updateComment = async (req, res) => {
     if (comment.userId.toString() !== req.user._id.toString()) {
       return res.status(401).json({ success: false, error: "Not authorized" });
     }
+
+    // Update content if changed
     if (content && content !== comment.content) {
       comment.content = content;
       comment.edited = true;
     }
 
-    if (content) comment.content = content;
     const updatedComment = await comment.save();
 
-    // Repopulate with user
+    // Repopulate with user details
     const populated = await Comment.findById(updatedComment._id).populate(
       "userId",
       "username avatar"
@@ -107,7 +125,12 @@ export const updateComment = async (req, res) => {
   }
 };
 
-//  Delete Comment
+/**
+ * Delete comment
+ * -----------------
+ * - Only the comment owner can delete.
+ * - Also removes comment reference from the parent Post.
+ */
 export const deleteComment = async (req, res) => {
   try {
     const { id } = req.params;
@@ -124,7 +147,7 @@ export const deleteComment = async (req, res) => {
       return res.status(401).json({ success: false, error: "Not authorized" });
     }
 
-    // Remove from Post.comments
+    // Remove reference from Post.comments
     if (comment.postId) {
       await Post.findByIdAndUpdate(comment.postId, {
         $pull: { comments: comment._id },

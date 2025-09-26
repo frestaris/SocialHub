@@ -3,6 +3,14 @@ import Post from "../models/postSchema.js";
 import Comment from "../models/commentSchema.js";
 import { firebaseAdmin } from "../config/firebaseAdmin.js";
 
+/**
+ * Get Current User
+ * -------------------
+ * - Verifies Firebase token from Authorization header.
+ * - Finds user in Mongo (by providerId or email).
+ * - Auto-creates user if not found (default role = fan).
+ * - Returns safe fields only (no password).
+ */
 export const getCurrentUser = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
@@ -16,12 +24,12 @@ export const getCurrentUser = async (req, res) => {
     const uid = decoded.uid;
     const email = decoded.email;
 
-    // Look up by UID first, fallback to email
+    // Look up by Firebase UID first, fallback to email
     let user = await User.findOne({
-      $or: [{ "providers.providerId": uid }, { email: email }],
+      $or: [{ "providers.providerId": uid }, { email }],
     });
 
-    // Auto-create if missing (optional)
+    // Auto-create if missing
     if (!user) {
       user = await User.create({
         username: decoded.name || email.split("@")[0],
@@ -37,7 +45,7 @@ export const getCurrentUser = async (req, res) => {
       });
     }
 
-    // Return only safe fields
+    // Return safe fields only
     const { username, avatar, role, providers, cover } = user;
     res.json({
       success: true,
@@ -49,9 +57,16 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
+/**
+ * Get User By ID
+ * -----------------
+ * - Finds user by MongoDB ID.
+ * - Populates followers and following.
+ */
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
+
     const user = await User.findById(id)
       .select(
         "username email avatar cover bio role providers followers following"
@@ -70,7 +85,12 @@ export const getUserById = async (req, res) => {
   }
 };
 
-// Update user profile
+/**
+ * Update User Profile
+ * ----------------------
+ * - Updates username, bio, avatar, or cover.
+ * - Returns populated user with followers/following.
+ */
 export const updateUser = async (req, res) => {
   try {
     const { username, bio, avatar, cover } = req.body;
@@ -97,6 +117,14 @@ export const updateUser = async (req, res) => {
   }
 };
 
+/**
+ * Delete User
+ * --------------
+ * - Only the logged-in user can delete their account.
+ * - Deletes user’s posts and comments.
+ * - Deletes user record in Mongo.
+ * - Deletes user in Firebase (if UID is available).
+ */
 export const deleteUser = async (req, res) => {
   try {
     if (!req.user) {
@@ -105,20 +133,20 @@ export const deleteUser = async (req, res) => {
 
     const userId = req.user._id;
 
-    // Delete user-owned content from MongoDB
+    // Delete related content
     await Promise.all([
       Post.deleteMany({ userId }),
       Comment.deleteMany({ userId }),
     ]);
 
-    // Get Firebase UID (prefer uid field, fallback to providers[0].providerId)
+    // Get Firebase UID (prefer uid field, fallback to providers)
     const firebaseUid =
       req.user.uid || req.user.providers?.[0]?.providerId || null;
 
-    // Delete user from MongoDB
+    // Delete Mongo user
     await User.findByIdAndDelete(userId);
 
-    // Delete user from Firebase if UID exists
+    // Delete Firebase user if UID exists
     if (firebaseUid) {
       await firebaseAdmin.auth().deleteUser(firebaseUid);
     }
@@ -133,6 +161,14 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+/**
+ * List Users (Top Creators)
+ * ----------------------------
+ * - Fetches all users with followers/following.
+ * - Calculates `followersCount`.
+ * - Sorts by followers (descending).
+ * - Returns top 10 users only.
+ */
 export const listUsers = async (req, res) => {
   try {
     const users = await User.find()
@@ -147,7 +183,7 @@ export const listUsers = async (req, res) => {
         followersCount: u.followers?.length || 0,
       }))
       .sort((a, b) => b.followersCount - a.followersCount)
-      .slice(0, 10); // ✅ limit to top 10
+      .slice(0, 10);
 
     res.json({ success: true, users: sorted });
   } catch (err) {
@@ -156,9 +192,16 @@ export const listUsers = async (req, res) => {
   }
 };
 
+/**
+ * Toggle Follow
+ * ----------------
+ * - Current user follows/unfollows a target user.
+ * - Uses atomic MongoDB updates ($addToSet / $pull).
+ * - Returns updated target + current user.
+ */
 export const toggleFollow = async (req, res) => {
   try {
-    const { id } = req.params; // target user
+    const { id } = req.params; // Target user
     const currentUserId = req.user._id;
 
     if (id === currentUserId.toString()) {
@@ -166,27 +209,29 @@ export const toggleFollow = async (req, res) => {
     }
 
     const targetUser = await User.findById(id);
-    if (!targetUser) return res.status(404).json({ error: "User not found" });
+    if (!targetUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
     const isFollowing = targetUser.followers.some(
       (f) => f.toString() === currentUserId.toString()
     );
 
     if (isFollowing) {
-      // ✅ Unfollow (atomic pull)
+      // ✅ Unfollow
       await Promise.all([
         User.findByIdAndUpdate(id, { $pull: { followers: currentUserId } }),
         User.findByIdAndUpdate(currentUserId, { $pull: { following: id } }),
       ]);
     } else {
-      // ✅ Follow (atomic addToSet to avoid duplicates)
+      // ✅ Follow
       await Promise.all([
         User.findByIdAndUpdate(id, { $addToSet: { followers: currentUserId } }),
         User.findByIdAndUpdate(currentUserId, { $addToSet: { following: id } }),
       ]);
     }
 
-    // ✅ Re-fetch both users with populate
+    // Re-fetch both users with followers/following populated
     const updatedTarget = await User.findById(id)
       .populate("followers", "username avatar")
       .populate("following", "username avatar");
@@ -197,7 +242,7 @@ export const toggleFollow = async (req, res) => {
 
     res.json({
       success: true,
-      isFollowing: !isFollowing, // new state
+      isFollowing: !isFollowing, // new state after toggle
       targetUser: updatedTarget,
       currentUser: updatedCurrent,
     });

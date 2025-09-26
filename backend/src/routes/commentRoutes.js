@@ -9,10 +9,11 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// POST /comments
-router.post("/", protect, createComment);
-
+// Public routes
 router.get("/post/:postId", getComments);
+
+// Authenticated routes
+router.post("/", protect, createComment);
 router.put("/:id", protect, updateComment);
 router.delete("/:id", protect, deleteComment);
 
