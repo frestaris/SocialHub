@@ -7,16 +7,16 @@ import { Form, Input, Button, Select, Upload as AntUpload, Switch } from "antd";
 import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
 
 // --- Firebase ---
-import { auth } from "../../../firebase";
-import { uploadToFirebase } from "../../../utils/uploadToFirebase";
+import { auth } from "../../firebase";
+import { uploadToFirebase } from "../../utils/uploadToFirebase";
 
 // --- Utils ---
-import { getVideoDuration } from "../../../utils/getVideoDuration";
-import { fetchYouTubeMetadata } from "../../../utils/fetchYouTubeMetadata";
-import { handleError, handleSuccess } from "../../../utils/handleMessage";
+import { getVideoDuration } from "../../utils/getVideoDuration";
+import { fetchYouTubeMetadata } from "../../utils/fetchYouTubeMetadata";
+import { handleError, handleSuccess } from "../../utils/handleMessage";
 
 // --- Constants ---
-import { categories } from "../../../utils/categories";
+import { categories } from "../../utils/categories";
 
 const { TextArea } = Input;
 

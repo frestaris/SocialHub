@@ -27,7 +27,7 @@ import { logout } from "../redux/auth/authSlice";
 
 // Local components/hooks
 import SettingsModal from "../pages/user/settings/SettingsModal";
-import Upload from "../pages/upload/Upload";
+import Upload from "./post/Upload";
 import SearchBar from "./SearchBar";
 import useSearchHandler from "../hooks/useSearchHandler";
 

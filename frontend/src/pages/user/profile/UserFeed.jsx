@@ -1,15 +1,5 @@
 // --- Ant Design ---
-import {
-  Card,
-  Typography,
-  Dropdown,
-  Button,
-  Modal,
-  Grid,
-  Spin,
-  Result,
-} from "antd";
-import { EditOutlined, DeleteOutlined, MoreOutlined } from "@ant-design/icons";
+import { Card, Typography, Button, Grid, Spin, Result } from "antd";
 
 // --- React ---
 import { useState } from "react";
@@ -25,11 +15,12 @@ import {
 } from "../../../redux/post/postApi";
 
 // --- Components ---
-import EditPostForm from "./EditPostForm";
 import PostActions from "../../../components/PostActions";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../../utils/handleMessage";
+import PostModals from "../../../components/PostModals";
+import PostDropdown from "../../../components/PostDropdown";
 
 const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -46,9 +37,6 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
   // --- Mutations ---
   const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
   const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
-
-  // --- Handlers ---
-  const handleEdit = (post) => setEditingPost(post);
 
   const handleDeleteConfirm = async () => {
     try {
@@ -113,34 +101,12 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
             </Text>
 
             {currentUserId === (item.userId?._id || item.creatorId?._id) && (
-              <Dropdown
-                menu={{
-                  items: [
-                    {
-                      key: "edit",
-                      label: "Edit",
-                      icon: <EditOutlined />,
-                      onClick: () => handleEdit(item),
-                    },
-                    {
-                      key: "delete",
-                      label: "Delete",
-                      danger: true,
-                      icon: <DeleteOutlined />,
-                      onClick: () => setDeletingPost(item),
-                    },
-                  ],
-                }}
-                trigger={["click"]}
-                placement="bottomRight"
-              >
-                <Button
-                  type="text"
-                  size="large"
-                  icon={<MoreOutlined style={{ fontSize: 20 }} />}
-                  shape="circle"
-                />
-              </Dropdown>
+              <PostDropdown
+                item={item}
+                onEdit={setEditingPost}
+                onDelete={setDeletingPost}
+                size="large"
+              />
             )}
           </div>
 
@@ -266,47 +232,18 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
         </Card>
       ))}
 
-      {/* ---- Edit Modal ---- */}
-      <Modal
-        open={!!editingPost}
-        title="Edit Post"
-        onCancel={() => setEditingPost(null)}
-        footer={null}
-        width={isMobile ? "100%" : "70%"}
-        style={{
-          top: isMobile ? 5 : 30,
-          maxWidth: isMobile ? "100%" : 600,
-          padding: "0 16px",
-        }}
-        destroyOnHidden
-      >
-        <EditPostForm
-          post={editingPost}
-          open={!!editingPost}
-          onUpdate={updatePost}
-          onClose={() => setEditingPost(null)}
-          loading={isUpdatingPost}
-        />
-      </Modal>
-
-      {/* ---- Delete Modal ---- */}
-      <Modal
-        open={!!deletingPost}
-        title="Confirm Delete"
-        okText="Yes, delete"
-        okType="danger"
-        confirmLoading={isDeletingPost}
-        onCancel={() => setDeletingPost(null)}
-        onOk={handleDeleteConfirm}
-      >
-        Are you sure you want to delete{" "}
-        <b>
-          {deletingPost?.type === "video"
-            ? deletingPost?.video?.title
-            : "this post"}
-        </b>
-        ?
-      </Modal>
+      {/* Post Setting dropdown */}
+      <PostModals
+        editingPost={editingPost}
+        deletingPost={deletingPost}
+        isMobile={isMobile}
+        isUpdating={isUpdatingPost}
+        isDeleting={isDeletingPost}
+        onUpdate={updatePost}
+        onCloseEdit={() => setEditingPost(null)}
+        onCloseDelete={() => setDeletingPost(null)}
+        onDeleteConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }

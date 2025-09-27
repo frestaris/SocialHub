@@ -42,6 +42,7 @@ import {
 
 // --- Libraries ---
 import moment from "moment";
+import PostDropdown from "../../components/post/PostDropdown";
 
 const { Text } = Typography;
 
@@ -259,35 +260,13 @@ export default function CommentsSection({ postId }) {
 
                     {/* Right: action menu (only for owner) */}
                     {currentUserId === item.userId?._id && (
-                      <Dropdown
-                        menu={{
-                          items: [
-                            {
-                              key: "edit",
-                              label: "Edit",
-                              icon: <EditOutlined />,
-                              onClick: () => handleEdit(item),
-                            },
-                            {
-                              key: "delete",
-                              label: "Delete",
-                              danger: true,
-                              icon: <DeleteOutlined />,
-                              onClick: () => handleDelete(item._id),
-                            },
-                          ],
-                        }}
-                        trigger={["click"]}
-                        placement="bottomRight"
-                      >
-                        <Button
-                          type="text"
-                          size="small"
-                          icon={<MoreOutlined style={{ fontSize: 16 }} />}
-                          shape="circle"
-                          loading={deletingId === item._id}
-                        />
-                      </Dropdown>
+                      <PostDropdown
+                        item={item}
+                        onEdit={() => handleEdit(item)}
+                        onDelete={() => handleDelete(item._id)}
+                        size="small"
+                        loading={deletingId === item._id}
+                      />
                     )}
                   </div>
                 }

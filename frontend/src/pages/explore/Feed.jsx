@@ -12,19 +12,19 @@ import {
 } from "../../redux/post/postApi";
 
 // --- Libraries ---
-import { Grid, Spin, Result, Modal, Button } from "antd";
+import { Grid, Spin, Result, Button } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import Masonry from "react-masonry-css";
 
 // --- Components ---
-import EditPostForm from "../user/profile/EditPostForm";
 import TopCreators from "./TopCreators";
-import PostCard from "../../components/PostCard";
+import PostCard from "../../components/post/PostCard";
 import HotNow from "./HotNow";
-import Upload from "../upload/Upload";
+import Upload from "../../components/post/Upload";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";
+import PostModals from "../../components/post/PostModals";
 
 const { useBreakpoint } = Grid;
 const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
@@ -213,46 +213,18 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
         {isFetching && skip > 0 && <Spin />}
       </div>
 
-      {/* Edit Modal */}
-      <Modal
-        open={!!editingPost}
-        onCancel={() => setEditingPost(null)}
-        footer={null}
-        width={isDesktop ? "70%" : "100%"}
-        style={{
-          top: isDesktop ? 30 : 5,
-          maxWidth: isDesktop ? 600 : "100%",
-          padding: "0 16px",
-        }}
-        destroyOnHidden
-      >
-        <EditPostForm
-          post={editingPost}
-          open={!!editingPost}
-          onUpdate={updatePost}
-          onClose={() => setEditingPost(null)}
-          loading={isUpdatingPost}
-        />
-      </Modal>
-
-      {/* Delete Modal */}
-      <Modal
-        open={!!deletingPost}
-        title="Confirm Delete"
-        okText="Yes, delete"
-        okType="danger"
-        confirmLoading={isDeletingPost}
-        onCancel={() => setDeletingPost(null)}
-        onOk={handleDeleteConfirm}
-      >
-        Are you sure you want to delete{" "}
-        <b>
-          {deletingPost?.type === "video"
-            ? deletingPost?.video?.title
-            : "this post"}
-        </b>
-        ?
-      </Modal>
+      {/* Post Setting dropdown */}
+      <PostModals
+        editingPost={editingPost}
+        deletingPost={deletingPost}
+        isDesktop={isDesktop}
+        isUpdating={isUpdatingPost}
+        isDeleting={isDeletingPost}
+        onUpdate={updatePost}
+        onCloseEdit={() => setEditingPost(null)}
+        onCloseDelete={() => setDeletingPost(null)}
+        onDeleteConfirm={handleDeleteConfirm}
+      />
     </>
   );
 }

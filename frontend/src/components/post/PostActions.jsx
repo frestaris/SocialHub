@@ -12,16 +12,16 @@ import {
 // Redux & Router
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useToggleLikePostMutation } from "../redux/post/postApi";
+import { useToggleLikePostMutation } from "../../redux/post/postApi";
 
 // Local components & utils
-import CategoryBadge from "./CategoryBadge";
-import CommentsSection from "../pages/post/CommentsSection";
+import CategoryBadge from "../CategoryBadge";
+import CommentsSection from "../../pages/post/CommentsSection";
 import {
   clearNotifications,
   handleError,
   handleWarning,
-} from "../utils/handleMessage";
+} from "../../utils/handleMessage";
 
 export default function PostActions({
   post,

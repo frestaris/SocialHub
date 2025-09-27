@@ -1,14 +1,10 @@
-import { Card, Avatar, Typography, Dropdown, Button } from "antd";
-import {
-  UserOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  MoreOutlined,
-} from "@ant-design/icons";
+import { Card, Avatar, Typography } from "antd";
+import { UserOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import moment from "moment";
 
 import PostActions from "./PostActions";
+import PostDropdown from "./PostDropdown";
 
 const { Text, Paragraph } = Typography;
 
@@ -70,34 +66,12 @@ export default function PostCard({
 
         {/* ---------- Dropdown (Edit/Delete for owner only) ---------- */}
         {currentUser?._id === post.userId?._id && (
-          <Dropdown
-            menu={{
-              items: [
-                {
-                  key: "edit",
-                  label: "Edit",
-                  icon: <EditOutlined />,
-                  onClick: () => onEdit(post),
-                },
-                {
-                  key: "delete",
-                  label: "Delete",
-                  danger: true,
-                  icon: <DeleteOutlined />,
-                  onClick: () => onDelete(post),
-                },
-              ],
-            }}
-            trigger={["click"]}
-            placement="bottomRight"
-          >
-            <Button
-              type="text"
-              size="large"
-              icon={<MoreOutlined style={{ fontSize: 20 }} />}
-              shape="circle"
-            />
-          </Dropdown>
+          <PostDropdown
+            item={post}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            size="large"
+          />
         )}
       </div>
 

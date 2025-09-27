@@ -9,12 +9,12 @@ import {
 } from "../../redux/post/postApi";
 
 // --- Libraries ---
-import { Typography, Modal, Grid } from "antd";
+import { Typography, Grid } from "antd";
 
 // --- Components ---
 import ReusableCarousel from "../../components/ReusableCarousel";
-import EditPostForm from "../user/profile/EditPostForm";
-import PostCard from "../../components/PostCard";
+import PostCard from "../../components/post/PostCard";
+import PostModals from "../../components/post/PostModals";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";
@@ -110,42 +110,18 @@ export default function HotNow() {
         </ReusableCarousel>
       </div>
 
-      {/* Edit Modal */}
-      <Modal
-        open={!!editingPost}
-        onCancel={() => setEditingPost(null)}
-        footer={null}
-        width="70%"
-        style={{ top: 30, maxWidth: 600 }}
-        destroyOnHidden
-      >
-        <EditPostForm
-          post={editingPost}
-          open={!!editingPost}
-          onUpdate={updatePost}
-          onClose={() => setEditingPost(null)}
-          loading={isUpdatingPost}
-        />
-      </Modal>
-
-      {/* Delete Modal */}
-      <Modal
-        open={!!deletingPost}
-        title="Confirm Delete"
-        okText="Yes, delete"
-        okType="danger"
-        confirmLoading={isDeletingPost}
-        onCancel={() => setDeletingPost(null)}
-        onOk={handleDeleteConfirm}
-      >
-        Are you sure you want to delete{" "}
-        <b>
-          {deletingPost?.type === "video"
-            ? deletingPost?.video?.title
-            : "this post"}
-        </b>
-        ?
-      </Modal>
+      {/* Post Setting dropdown */}
+      <PostModals
+        editingPost={editingPost}
+        deletingPost={deletingPost}
+        isDesktop={screens.md}
+        isUpdating={isUpdatingPost}
+        isDeleting={isDeletingPost}
+        onUpdate={updatePost}
+        onCloseEdit={() => setEditingPost(null)}
+        onCloseDelete={() => setDeletingPost(null)}
+        onDeleteConfirm={handleDeleteConfirm}
+      />
     </div>
   );
 }
