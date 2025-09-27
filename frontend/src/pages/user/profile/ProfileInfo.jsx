@@ -1,19 +1,18 @@
+import { useState, useMemo, useRef } from "react";
+
 // --- Ant Design ---
 import { Card, Avatar, Typography, Button, Space } from "antd";
 import { SettingOutlined, UserOutlined } from "@ant-design/icons";
-
-// --- React ---
-import { useState, useMemo } from "react";
 
 // --- Redux ---
 import { useSelector } from "react-redux";
 
 // --- Components ---
 import SettingsModal from "../settings/SettingsModal";
-import Upload from "../../upload/Upload";
+import Upload from "../../../components/post/Upload";
 import FollowButton from "../../../components/FollowButton";
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 export default function ProfileInfo({ user }) {
   // --- Redux state ---
@@ -23,12 +22,18 @@ export default function ProfileInfo({ user }) {
   // --- Local state ---
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [hover, setHover] = useState(false);
 
-  // --- Derived state ---
+  // --- Bio expand/collapse ---
+  const [expanded, setExpanded] = useState(false);
+  const bioRef = useRef(null);
+
   const isFollowingUser = useMemo(() => {
     if (!currentUser || !user) return false;
     return user.followers?.some((f) => f._id === currentUser._id);
   }, [user, currentUser]);
+
+  const bio = user?.bio || "";
 
   return (
     <>
@@ -38,7 +43,8 @@ export default function ProfileInfo({ user }) {
           boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           position: "relative",
           padding: 0,
-          overflow: "hidden",
+          height: 400,
+          overflowY: "auto",
         }}
         styles={{ body: { padding: 0 } }}
       >
@@ -55,11 +61,7 @@ export default function ProfileInfo({ user }) {
             <img
               src={user.cover}
               alt="Cover"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
             />
           ) : (
             <div
@@ -76,13 +78,22 @@ export default function ProfileInfo({ user }) {
             <Button
               type="text"
               shape="circle"
-              icon={<SettingOutlined style={{ fontSize: 18, color: "#fff" }} />}
+              icon={<SettingOutlined style={{ fontSize: 20, color: "#fff" }} />}
               onClick={() => setIsSettingsModalOpen(true)}
+              onMouseEnter={() => setHover(true)}
+              onMouseLeave={() => setHover(false)}
               style={{
                 position: "absolute",
                 top: 16,
                 right: 16,
-                background: "rgba(0,0,0,0.4)",
+                width: 36,
+                height: 36,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "none",
+                background: hover ? "rgba(255,255,255,0.15)" : "transparent",
+                transition: "background 0.2s ease",
               }}
             />
           )}
@@ -115,10 +126,42 @@ export default function ProfileInfo({ user }) {
           <Title level={3} style={{ marginTop: 8 }}>
             {user?.username}
           </Title>
-          <Paragraph type="secondary">{user?.email}</Paragraph>
-          <Paragraph>{user?.bio || ""}</Paragraph>
+          <Text type="secondary">{user?.email}</Text>
 
-          <Space direction="vertical" style={{ width: "100%" }}>
+          {/* --- Bio with expand/collapse --- */}
+          {bio && (
+            <div style={{ marginTop: 24, textAlign: "left" }}>
+              <div
+                ref={bioRef}
+                style={{
+                  maxHeight: expanded ? bioRef.current?.scrollHeight : 60,
+                  overflow: "hidden",
+                  transition: "max-height 0.5s ease",
+                }}
+              >
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {bio}
+                </Paragraph>
+              </div>
+
+              {bio.length > 120 && (
+                <Button
+                  type="link"
+                  size="small"
+                  style={{ padding: 0 }}
+                  onClick={() => setExpanded((prev) => !prev)}
+                >
+                  {expanded ? "Show Less" : "Show More"}
+                </Button>
+              )}
+            </div>
+          )}
+
+          <Space direction="vertical" style={{ width: "100%", marginTop: 12 }}>
             {!isOwner && (
               <FollowButton
                 userId={user._id}

@@ -15,12 +15,12 @@ import {
 } from "../../../redux/post/postApi";
 
 // --- Components ---
-import PostActions from "../../../components/PostActions";
+import PostActions from "../../../components/post/PostActions";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../../utils/handleMessage";
-import PostModals from "../../../components/PostModals";
-import PostDropdown from "../../../components/PostDropdown";
+import PostModals from "../../../components/post/PostModals";
+import PostDropdown from "../../../components/post/PostDropdown";
 
 const { Text, Paragraph } = Typography;
 const { useBreakpoint } = Grid;

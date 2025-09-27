@@ -55,7 +55,7 @@ export default function ProfileInfoForm({ form }) {
 
       {/* Bio */}
       <Form.Item label="Bio" name="bio">
-        <Input.TextArea rows={1} />
+        <Input.TextArea rows={5} />
       </Form.Item>
 
       {/* Avatar + Cover side by side */}
