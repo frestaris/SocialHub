@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 // --- Ant Design ---
 import {
@@ -30,100 +30,98 @@ import CoverPreview from "./CoverPreview";
 
 export default function CoverEdit({ cover, isOwner }) {
   // --- Local state ---
-  const [isUrlModalOpen, setIsUrlModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [coverProgress, setCoverProgress] = useState(0);
   const [isFinalizing, setIsFinalizing] = useState(false);
+  const [action, setAction] = useState(""); // "saving" | "removing" | ""
+
   const [hover, setHover] = useState(false);
   const [coverOffset, setCoverOffset] = useState(0);
+
+  const [previewSrc, setPreviewSrc] = useState(null);
+  const [localFile, setLocalFile] = useState(null);
 
   // --- Redux mutation ---
   const [updateUser] = useUpdateUserMutation();
 
   // --- AntD form for URL input ---
   const [form] = Form.useForm();
-  const urlValue = Form.useWatch("url", form);
 
-  // --- Reset URL input when modal opens ---
-  useEffect(() => {
-    if (isUrlModalOpen) {
-      form.setFieldsValue({ url: "" });
+  // --- Handle Upload from PC ---
+  const handleBeforeUpload = (file) => {
+    if (!file.type.startsWith("image/")) {
+      handleError({ message: "Only image files are allowed!" });
+      return false;
     }
-  }, [isUrlModalOpen, form]);
-
-  // Handlers
-
-  // --- Upload from PC ---
-  const handleCoverUpload = async (file) => {
-    try {
-      if (!file.type.startsWith("image/")) {
-        handleError({ message: "Only image files are allowed!" });
-        return false;
-      }
-      if (file.size / 1024 / 1024 > 4) {
-        handleError({ message: "Cover must be smaller than 4MB!" });
-        return false;
-      }
-
-      setCoverProgress(0);
-      setIsFinalizing(false);
-
-      // Upload to Firebase
-      const url = await uploadToFirebase(
-        file,
-        auth.currentUser.uid,
-        (progress) => setCoverProgress(progress),
-        "covers"
-      );
-
-      // Finalize after upload
-      setIsFinalizing(true);
-      await updateUser({ cover: url, coverOffset }).unwrap();
-
-      handleSuccess("Cover photo updated!");
-      setCoverProgress(0);
-      setIsFinalizing(false);
-    } catch (err) {
-      handleError(err, "Failed to upload cover");
-      setCoverProgress(0);
-      setIsFinalizing(false);
+    if (file.size / 1024 / 1024 > 4) {
+      handleError({ message: "Cover must be smaller than 4MB!" });
+      return false;
     }
-    return false; // prevent AntD auto-upload
+
+    const localUrl = URL.createObjectURL(file);
+    setLocalFile(file);
+    setPreviewSrc(localUrl);
+    setIsModalOpen(true);
+
+    return false; // prevent auto-upload
   };
 
-  // --- Update via URL ---
-  const handleCoverUrl = async () => {
+  // --- Handle Confirm (save cover) ---
+  const handleConfirm = async () => {
     try {
-      const { url } = form.getFieldsValue();
-      if (!url) return;
-
+      setAction("saving");
       setIsFinalizing(true);
-      await updateUser({ cover: url, coverOffset }).unwrap();
+
+      let finalUrl = previewSrc;
+
+      // If file upload, push to Firebase first
+      if (localFile) {
+        setIsFinalizing(false);
+        finalUrl = await uploadToFirebase(
+          localFile,
+          auth.currentUser.uid,
+          (progress) => setCoverProgress(progress),
+          "covers"
+        );
+      }
+      setIsFinalizing(true);
+      await updateUser({ cover: finalUrl, coverOffset }).unwrap();
 
       handleSuccess("Cover photo updated!");
-      setIsUrlModalOpen(false);
+
+      // Reset state
+      setIsModalOpen(false);
+      setPreviewSrc(null);
+      setLocalFile(null);
+      setCoverProgress(0);
+      form.resetFields();
     } catch (err) {
-      handleError(err, "Failed to update cover");
+      handleError(err, "Failed to save cover");
     } finally {
       setIsFinalizing(false);
+      setAction("");
     }
   };
 
-  // --- Remove cover (reset to gradient) ---
+  // --- Remove cover ---
   const handleRemoveCover = async () => {
     try {
+      setAction("removing");
       setIsFinalizing(true);
       await updateUser({ cover: "" }).unwrap();
-
       handleSuccess("Cover photo removed!");
+
+      setPreviewSrc(null);
+      setLocalFile(null);
     } catch (err) {
       handleError(err, "Failed to remove cover");
     } finally {
       setIsFinalizing(false);
+      setAction("");
     }
   };
 
-  // Dropdown Menu
-
+  // --- Dropdown Menu ---
   const coverMenu = {
     items: [
       {
@@ -136,7 +134,7 @@ export default function CoverEdit({ cover, isOwner }) {
         key: "url",
         label: "From URL",
         icon: <LinkOutlined />,
-        onClick: () => setIsUrlModalOpen(true),
+        onClick: () => setIsModalOpen(true),
       },
       ...(cover
         ? [
@@ -151,8 +149,6 @@ export default function CoverEdit({ cover, isOwner }) {
         : []),
     ],
   };
-
-  // Render
 
   if (!isOwner) return null;
 
@@ -180,20 +176,18 @@ export default function CoverEdit({ cover, isOwner }) {
             transition: "background 0.2s ease",
           }}
         >
-          {coverProgress > 0 && coverProgress < 100
-            ? `Uploading... ${Math.round(coverProgress)}%`
-            : isFinalizing
-            ? "Finalizing..."
+          {isFinalizing && action === "removing"
+            ? "Removing..."
             : cover
             ? "Edit Cover Photo"
             : "Add Cover Photo"}
         </Button>
       </Dropdown>
 
-      {/* --- Hidden Upload --- */}
+      {/* --- Hidden Upload Input --- */}
       <AntUpload
         id="coverUploadInput"
-        beforeUpload={handleCoverUpload}
+        beforeUpload={handleBeforeUpload}
         showUploadList={false}
         accept="image/*"
         style={{ display: "none" }}
@@ -201,32 +195,48 @@ export default function CoverEdit({ cover, isOwner }) {
         <span />
       </AntUpload>
 
-      {/* --- URL Modal --- */}
+      {/* --- (URL + Upload Preview) --- */}
       <Modal
-        title="Enter Cover Photo URL"
-        open={isUrlModalOpen}
-        onCancel={() => setIsUrlModalOpen(false)}
-        onOk={handleCoverUrl}
-        okButtonProps={{ loading: isFinalizing }}
+        title="Adjust Cover Photo"
+        open={isModalOpen}
+        onCancel={() => {
+          setIsModalOpen(false);
+          setPreviewSrc(null);
+          setLocalFile(null);
+          form.resetFields();
+        }}
+        onOk={handleConfirm}
+        okButtonProps={{
+          loading: coverProgress > 0 || isFinalizing,
+        }}
+        width={600}
+        okText={
+          coverProgress > 0 && coverProgress < 100
+            ? `Uploading... ${Math.round(coverProgress)}%`
+            : isFinalizing
+            ? "Finalizing..."
+            : "Save"
+        }
       >
         <Form form={form} layout="vertical">
-          {/* URL Input */}
-          <Form.Item
-            name="url"
-            rules={[{ type: "url", message: "Invalid URL" }]}
-          >
-            <Input
-              prefix={<LinkOutlined />}
-              placeholder="https://example.com/image.jpg"
-              disabled={isFinalizing}
-            />
-          </Form.Item>
-
-          {/* Preview */}
-          {urlValue && (
-            <CoverPreview src={urlValue} onOffsetChange={setCoverOffset} />
+          {!localFile && (
+            <Form.Item
+              name="url"
+              rules={[{ type: "url", message: "Invalid URL" }]}
+            >
+              <Input
+                prefix={<LinkOutlined />}
+                placeholder="https://example.com/image.jpg"
+                disabled={isFinalizing}
+                onChange={(e) => setPreviewSrc(e.target.value)}
+              />
+            </Form.Item>
           )}
         </Form>
+
+        {previewSrc && (
+          <CoverPreview src={previewSrc} onOffsetChange={setCoverOffset} />
+        )}
       </Modal>
     </>
   );

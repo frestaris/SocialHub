@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
     username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     cover: { type: String },
-    coverOffsetPercent: { type: Number, default: 0 },
+    coverOffset: { type: Number, default: 0 },
     avatar: { type: String },
     role: { type: String, enum: ["creator", "fan"], default: "fan" },
     bio: { type: String },

@@ -14,7 +14,7 @@ import FollowButton from "../../../components/FollowButton";
 import CoverEdit from "./CoverEdit";
 import AvatarEdit from "./AvatarEdit";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
 export default function ProfileInfo({ user }) {
   // --- Redux state ---
@@ -69,7 +69,7 @@ export default function ProfileInfo({ user }) {
                 width: "100%",
                 height: "100%",
                 objectFit: "cover",
-                objectPosition: `center ${user.coverOffsetPercent || 0}%`,
+                objectPosition: `center ${user.coverOffset || 0}%`,
               }}
             />
           ) : (
