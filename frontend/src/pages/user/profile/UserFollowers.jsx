@@ -14,7 +14,7 @@ import { useState } from "react";
 
 const { Text } = Typography;
 
-export default function SuggestedCreators({ followers }) {
+export default function UserFollowers({ followers }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => setIsModalOpen(true);

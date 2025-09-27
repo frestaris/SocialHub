@@ -64,7 +64,7 @@ export const createPost = async (req, res) => {
 };
 
 /**
- * GET POSTS (Feed, HotNow, Explore)
+ * GET POSTS
  * -----------------------------------
  * - Supports filters: category, search_query.
  * - Supports sorts: newest, views, likes, trending.

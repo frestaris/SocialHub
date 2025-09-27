@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
+// Custom hook to sync search bar input with URL query params
 export default function useSearchHandler() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -8,7 +9,7 @@ export default function useSearchHandler() {
   const searchQuery = searchParams.get("search_query") || "";
   const [inputValue, setInputValue] = useState(searchQuery);
 
-  // 🔄 keep inputValue in sync with URL (back/forward navigation, etc.)
+  // Keep local input state in sync with URL
   useEffect(() => {
     setInputValue(searchQuery);
   }, [searchQuery]);

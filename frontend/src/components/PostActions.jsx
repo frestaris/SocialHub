@@ -1,36 +1,46 @@
 import { useState } from "react";
-import { Space, Tag, Button } from "antd";
+
+// Ant Design
+import { Space, Button } from "antd";
 import {
   LikeOutlined,
   LikeFilled,
   CommentOutlined,
   EyeOutlined,
 } from "@ant-design/icons";
+
+// Redux & Router
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { useToggleLikePostMutation } from "../redux/post/postApi";
+
+// Local components & utils
 import CategoryBadge from "./CategoryBadge";
 import CommentsSection from "../pages/post/CommentsSection";
-import { useToggleLikePostMutation } from "../redux/post/postApi";
 import {
   clearNotifications,
   handleError,
   handleWarning,
 } from "../utils/handleMessage";
-import { useNavigate } from "react-router-dom";
 
 export default function PostActions({
   post,
   isSmall,
   showCommentsSection = true,
 }) {
+  const navigate = useNavigate();
   const currentUser = useSelector((state) => state.auth.user);
   const [toggleLikePost] = useToggleLikePostMutation();
-  const [showComments, setShowComments] = useState(false);
-  const navigate = useNavigate();
 
+  const [showComments, setShowComments] = useState(false);
+
+  // check if current user has liked the post
   const hasLiked = post.likes?.some((id) => id.toString() === currentUser?._id);
 
+  // ---- Handlers ----
   const handleLikeToggle = async () => {
     if (!currentUser) {
+      // redirect unauthenticated users to login
       handleWarning(
         "Login Required",
         "You need to log in to like posts.",
@@ -73,10 +83,10 @@ export default function PostActions({
           paddingTop: 8,
         }}
       >
-        {/* Category on the left */}
+        {/* Category (left) */}
         <CategoryBadge category={post.category} />
 
-        {/* Actions on the right */}
+        {/* Actions (right) */}
         <div
           style={{
             display: "flex",
@@ -129,9 +139,9 @@ export default function PostActions({
         </div>
       </Space>
 
-      {/* Expandable comment section (only if enabled) */}
+      {/* Expandable comments section */}
       {showCommentsSection && showComments && (
-        <div style={{ marginTop: "16px" }}>
+        <div style={{ marginTop: 16 }}>
           <CommentsSection postId={post._id} />
         </div>
       )}

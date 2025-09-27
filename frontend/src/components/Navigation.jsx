@@ -1,4 +1,6 @@
 import { useState } from "react";
+
+// Ant Design
 import {
   Layout,
   Menu,
@@ -17,42 +19,60 @@ import {
   ProfileOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
+
+// Routing & Redux
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/auth/authSlice";
+
+// Local components/hooks
 import SettingsModal from "../pages/user/settings/SettingsModal";
 import Upload from "../pages/upload/Upload";
 import SearchBar from "./SearchBar";
-import useSearchHandler from "../utils/useSearchHandler"; // ✅ only this
+import useSearchHandler from "../hooks/useSearchHandler";
 
 const { Header } = Layout;
 const { useBreakpoint } = Grid;
 
 export default function Navigation() {
+  // Local UI state
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
+
+  // Responsive breakpoints
   const screens = useBreakpoint();
+
+  // Router + Redux
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // Global state
   const currentUser = useSelector((state) => state.auth.user);
 
-  // centralized search logic
+  // Custom hooks
   const { inputValue, setInputValue, handleSearch } = useSearchHandler();
 
+  // ---- Helpers ----
   const handleLogout = () => {
     dispatch(logout());
     navigate("/explore");
   };
 
+  // Navigate + close drawer (mobile)
+  const handleNavigate = (path, close = true) => {
+    navigate(path);
+    if (close) setDrawerOpen(false);
+  };
+
+  // Dropdown menu (desktop avatar)
   const avatarMenu = {
     items: [
       {
         key: "profile",
         icon: <ProfileOutlined />,
         label: "Profile",
-        onClick: () => navigate(`/profile/${currentUser._id}`),
+        onClick: () => handleNavigate(`/profile/${currentUser._id}`, false),
       },
       {
         key: "settings",
@@ -142,7 +162,7 @@ export default function Navigation() {
                 </Dropdown>
               </>
             ) : (
-              <Button type="primary" onClick={() => navigate("/login")}>
+              <Button type="primary" onClick={() => handleNavigate("/login")}>
                 Become a Creator
               </Button>
             )}
@@ -164,7 +184,7 @@ export default function Navigation() {
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
       >
-        {/* 👇 SearchBar inside drawer on mobile */}
+        {/* SearchBar inside drawer */}
         <div style={{ marginBottom: 16 }}>
           <SearchBar
             value={inputValue}
@@ -179,10 +199,7 @@ export default function Navigation() {
         <Menu
           mode="vertical"
           selectable={false}
-          onClick={() => {
-            navigate("/explore");
-            setDrawerOpen(false);
-          }}
+          onClick={() => handleNavigate("/explore")}
           items={[{ key: "explore", label: "Explore" }]}
         />
 
@@ -191,10 +208,7 @@ export default function Navigation() {
             <Button
               type="primary"
               block
-              onClick={() => {
-                navigate("/login");
-                setDrawerOpen(false);
-              }}
+              onClick={() => handleNavigate("/login")}
             >
               Become a Creator
             </Button>
@@ -215,10 +229,7 @@ export default function Navigation() {
 
               <Button
                 block
-                onClick={() => {
-                  navigate(`/profile/${currentUser._id}`);
-                  setDrawerOpen(false);
-                }}
+                onClick={() => handleNavigate(`/profile/${currentUser._id}`)}
                 style={{ marginTop: "8px" }}
               >
                 Profile

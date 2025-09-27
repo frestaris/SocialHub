@@ -3,7 +3,7 @@ import { Row, Col, Spin, Result } from "antd";
 import { useGetUserByIdQuery } from "../../../redux/user/userApi";
 import { useGetUserFeedQuery } from "../../../redux/post/postApi";
 import ProfileInfo from "./ProfileInfo";
-import SuggestedCreators from "./SuggestedCreators";
+import UserFollowers from "./UserFollowers";
 import UserFeed from "./UserFeed";
 import { useState } from "react";
 import { useSelector } from "react-redux";
@@ -77,7 +77,7 @@ export default function Profile() {
           <div style={{ position: "sticky", top: 90 }}>
             <div className="fade-slide-in">
               <ProfileInfo user={user} />
-              <SuggestedCreators followers={user.followers} />
+              <UserFollowers followers={user.followers} />
               {/* Footer card */}
               <div
                 style={{

@@ -6,7 +6,7 @@ import { MenuUnfoldOutlined } from "@ant-design/icons";
 import Sidebar from "./Sidebar";
 import Feed from "./Feed";
 import SearchBar from "../../components/SearchBar";
-import useSearchHandler from "../../utils/useSearchHandler";
+import useSearchHandler from "../../hooks/useSearchHandler";
 import Footer from "../../components/Footer";
 
 const { Sider, Content } = Layout;

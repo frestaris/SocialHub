@@ -11,7 +11,7 @@ import Masonry from "react-masonry-css";
 import TopCreators from "./TopCreators";
 import { handleError, handleSuccess } from "../../utils/handleMessage";
 import PostCard from "../../components/PostCard";
-import HotNow from "../homepage/HotNow";
+import HotNow from "./HotNow";
 import Upload from "../upload/Upload";
 import { useNavigate } from "react-router-dom";
 import { PlusOutlined } from "@ant-design/icons";

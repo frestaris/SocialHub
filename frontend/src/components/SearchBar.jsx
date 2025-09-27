@@ -21,6 +21,7 @@ export default function SearchBar({ value, onChange, onSearch }) {
         padding: "2px 8px",
       }}
     >
+      {/* Search Input */}
       <Input
         placeholder="Search"
         size="large"
@@ -35,18 +36,22 @@ export default function SearchBar({ value, onChange, onSearch }) {
           boxShadow: "none",
         }}
       />
+
+      {/* Search Button */}
       <Button
         type="text"
         icon={<SearchOutlined style={{ color: "#555", fontSize: 18 }} />}
         onClick={() => onSearch(value)}
         style={{
           borderRadius: "50%",
+          backgroundColor: "#f9f9f9",
+          transition: "background-color 0.2s ease",
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = "#e0e0e0";
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.backgroundColor = "#f0f0f0";
+          e.currentTarget.style.backgroundColor = "#f9f9f9";
         }}
       />
     </div>

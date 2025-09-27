@@ -7,7 +7,10 @@ export default function CategoryBadge({ category }) {
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
 
+  // Find the category object (label + icon) from utils
   const categoryObj = categories.find((c) => c.key === category);
+
+  // Fallback: use raw category string if not found
   const label = categoryObj?.label || category;
 
   return (

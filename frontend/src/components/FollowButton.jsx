@@ -1,8 +1,14 @@
-import { Button } from "antd";
-import { useToggleFollowUserMutation } from "../redux/user/userApi";
+import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+
+// --- UI ---
+import { Button } from "antd";
+
+// --- Redux ---
+import { useToggleFollowUserMutation } from "../redux/user/userApi";
+
+// --- Utils ---
 import {
   handleError,
   handleWarning,
@@ -19,6 +25,7 @@ export default function FollowButton({ userId, isFollowing, size = "middle" }) {
   const handleFollowToggle = async (e) => {
     e.stopPropagation();
 
+    // Block if not logged in → show login warning
     if (!currentUser) {
       handleWarning(
         "Login Required",
@@ -37,6 +44,7 @@ export default function FollowButton({ userId, isFollowing, size = "middle" }) {
       return;
     }
 
+    // Toggle follow/unfollow
     setLoading(true);
     try {
       await toggleFollowUser(userId).unwrap();

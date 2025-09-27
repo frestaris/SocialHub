@@ -1,6 +1,7 @@
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "../firebase";
 
+// Upload a file to Firebase Storage (with progress tracking + optional thumbnails)
 export const uploadToFirebase = (
   file,
   userId,
@@ -10,10 +11,10 @@ export const uploadToFirebase = (
 ) => {
   return new Promise((resolve, reject) => {
     try {
-      // Store thumbnails inside the videos folder
+      // Store thumbnails inside the same videos folder
       const baseFolder = folder === "thumbnails" ? "videos" : folder;
 
-      // If it's a thumbnail, prepend "thumb_" to filename for clarity
+      // Prepend "thumb_" to filename if uploading a thumbnail
       const fileName = `${isThumbnail ? "thumb_" : ""}${Date.now()}_${
         file.name
       }`;

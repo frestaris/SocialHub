@@ -7,6 +7,7 @@ import {
 } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import moment from "moment";
+
 import PostActions from "./PostActions";
 
 const { Text, Paragraph } = Typography;
@@ -22,15 +23,14 @@ export default function PostCard({
     <Card
       key={post._id}
       style={{
-        breakInside: "avoid",
+        breakInside: "avoid", // prevents Masonry layout overlap
         marginBottom: 16,
         borderRadius: 12,
         overflow: "hidden",
         boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
       }}
-      stylesbody={{ padding: "12px" }}
     >
-      {/* Header */}
+      {/* ---------- Header (avatar + username + timestamp) ---------- */}
       <div
         style={{
           display: "flex",
@@ -68,6 +68,7 @@ export default function PostCard({
           </div>
         </div>
 
+        {/* ---------- Dropdown (Edit/Delete for owner only) ---------- */}
         {currentUser?._id === post.userId?._id && (
           <Dropdown
             menu={{
@@ -100,7 +101,7 @@ export default function PostCard({
         )}
       </div>
 
-      {/* Media */}
+      {/* ---------- Media (video thumbnail or image) ---------- */}
       {post.type === "video" && post.video && (
         <Link to={`/post/${post._id}`}>
           <div
@@ -121,6 +122,7 @@ export default function PostCard({
                 objectFit: "cover",
               }}
             />
+            {/* Video duration overlay */}
             {post.video.duration > 0 && (
               <span
                 style={{
@@ -166,7 +168,7 @@ export default function PostCard({
         </Link>
       )}
 
-      {/* Content */}
+      {/* ---------- Content ---------- */}
       {post.type === "video" ? (
         <>
           <Paragraph
@@ -200,7 +202,7 @@ export default function PostCard({
         </Paragraph>
       )}
 
-      {/* Footer */}
+      {/* ---------- Footer ---------- */}
       <PostActions post={post} isSmall={isSmall} />
     </Card>
   );

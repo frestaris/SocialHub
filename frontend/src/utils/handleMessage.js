@@ -4,7 +4,7 @@ import { getFirebaseErrorMessage } from "./firebaseErrorMessages";
 export const handleError = (err, context = "Error", isRegister = false) => {
   let msg;
 
-  // Backend/network errors
+  // Network/server errors
   if (
     err?.status === "FETCH_ERROR" ||
     err?.originalStatus === 0 ||
@@ -14,12 +14,12 @@ export const handleError = (err, context = "Error", isRegister = false) => {
     msg = "Our server is offline. Please try again later.";
     context = "Server error";
   }
-  // Firebase auth errors
+  // Firebase Auth errors
   else if (err?.code && err.code.startsWith("auth/")) {
     msg = getFirebaseErrorMessage(err.code);
     context = isRegister ? "Registration failed" : context;
   }
-  // Generic backend errors (with message fields)
+  // Backend-provided errors
   else if (err?.data?.message || err?.data?.error || err?.message) {
     msg = err.data?.message || err.data?.error || err.message;
   }
