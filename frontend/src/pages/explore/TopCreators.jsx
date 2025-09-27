@@ -28,7 +28,7 @@ export default function TopCreators() {
   const screens = useBreakpoint();
   const avatarSize = screens.md ? 100 : 70;
   const fontSize = screens.md ? "16px" : "14px";
-  const coverHeight = 80;
+  const coverHeight = 120;
 
   // --- Loading / Error states ---
   if (isLoading) {

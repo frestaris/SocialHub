@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function CoverPreview({ src, height = 100, onOffsetChange }) {
+export default function CoverPreview({ src, onOffsetChange }) {
   const [offsetY, setOffsetY] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [startY, setStartY] = useState(0);
@@ -25,7 +25,7 @@ export default function CoverPreview({ src, height = 100, onOffsetChange }) {
       style={{
         marginTop: 12,
         width: "100%",
-        height,
+        height: 140,
         borderRadius: 8,
         overflow: "hidden",
         position: "relative",

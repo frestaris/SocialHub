@@ -56,7 +56,8 @@ export default function ProfileInfo({ user }) {
           style={{
             position: "relative",
             width: "100%",
-            height: 100,
+            height: 140,
+            overflow: "hidden",
             background: "#f0f0f0",
           }}
         >
@@ -64,7 +65,12 @@ export default function ProfileInfo({ user }) {
             <img
               src={user.cover}
               alt="Cover"
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: `center ${user.coverOffsetPercent || 0}%`,
+              }}
             />
           ) : (
             <div
@@ -168,7 +174,6 @@ export default function ProfileInfo({ user }) {
           <Title level={3} style={{ marginTop: 8 }}>
             {user?.username}
           </Title>
-          <Text type="secondary">{user?.email}</Text>
 
           {/* --- Bio with expand/collapse --- */}
           {bio && (

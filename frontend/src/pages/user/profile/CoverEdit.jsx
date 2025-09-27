@@ -77,7 +77,7 @@ export default function CoverEdit({ cover, isOwner }) {
 
       // Finalize after upload
       setIsFinalizing(true);
-      await updateUser({ cover: url }).unwrap();
+      await updateUser({ cover: url, coverOffset }).unwrap();
 
       handleSuccess("Cover photo updated!");
       setCoverProgress(0);
@@ -224,11 +224,7 @@ export default function CoverEdit({ cover, isOwner }) {
 
           {/* Preview */}
           {urlValue && (
-            <CoverPreview
-              src={urlValue}
-              height={100}
-              onOffsetChange={setCoverOffset}
-            />
+            <CoverPreview src={urlValue} onOffsetChange={setCoverOffset} />
           )}
         </Form>
       </Modal>

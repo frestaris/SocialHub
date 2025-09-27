@@ -46,10 +46,18 @@ export const getCurrentUser = async (req, res) => {
     }
 
     // Return safe fields only
-    const { username, avatar, role, providers, cover } = user;
+    const { username, avatar, role, providers, cover, coverOffset } = user;
     res.json({
       success: true,
-      user: { username, email: user.email, avatar, cover, role, providers },
+      user: {
+        username,
+        email: user.email,
+        avatar,
+        cover,
+        coverOffset,
+        role,
+        providers,
+      },
     });
   } catch (err) {
     console.error("Get user error:", err);
@@ -69,7 +77,7 @@ export const getUserById = async (req, res) => {
 
     const user = await User.findById(id)
       .select(
-        "username email avatar cover bio role providers followers following"
+        "username email avatar cover coverOffset bio role providers followers following"
       )
       .populate("followers", "username avatar")
       .populate("following", "username avatar");
@@ -93,17 +101,17 @@ export const getUserById = async (req, res) => {
  */
 export const updateUser = async (req, res) => {
   try {
-    const { username, bio, avatar, cover } = req.body;
+    const { username, bio, avatar, cover, coverOffset } = req.body;
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { username, bio, avatar, cover },
+      { username, bio, avatar, cover, coverOffset },
       { new: true }
     )
       .populate("followers", "username avatar")
       .populate("following", "username avatar")
       .select(
-        "username email avatar cover bio role providers followers following"
+        "username email avatar cover coverOffset  bio role providers followers following"
       );
 
     if (!user) {
@@ -172,7 +180,9 @@ export const deleteUser = async (req, res) => {
 export const listUsers = async (req, res) => {
   try {
     const users = await User.find()
-      .select("username email avatar cover bio role followers following")
+      .select(
+        "username email avatar cover coverOffset bio role followers following"
+      )
       .populate("followers", "username avatar")
       .populate("following", "username avatar")
       .lean();
