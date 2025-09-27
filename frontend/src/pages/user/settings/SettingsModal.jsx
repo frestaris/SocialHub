@@ -1,6 +1,10 @@
-import { Modal, Divider, Form, Button, Spin, Input, Space } from "antd";
 import { useState, useEffect, useMemo } from "react";
-import ProfileInfoForm from "./ProfileInfoForm";
+
+// --- Ant Design ---
+import { Modal, Divider, Form, Button, Spin, Input, Space } from "antd";
+import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
+
+// --- Firebase ---
 import { auth, googleProvider, githubProvider } from "../../../firebase";
 import {
   EmailAuthProvider,
@@ -8,19 +12,29 @@ import {
   linkWithPopup,
   updatePassword,
 } from "firebase/auth";
+
+// --- Redux ---
 import {
   useUpdateUserMutation,
   useDeleteUserMutation,
 } from "../../../redux/user/userApi";
-import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { logout } from "../../../redux/auth/authSlice";
+
+// --- Routing ---
+import { useNavigate } from "react-router-dom";
+
+// --- Components ---
+import ProfileInfoForm from "./ProfileInfoForm";
+
+// --- Utils ---
 import { uploadToFirebase } from "../../../utils/uploadToFirebase";
 import { handleError, handleSuccess } from "../../../utils/handleMessage";
 
 export default function SettingsModal({ open, onClose, user }) {
   const [form] = Form.useForm();
+
+  // --- Local state ---
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -30,12 +44,15 @@ export default function SettingsModal({ open, onClose, user }) {
   const [avatarProgress, setAvatarProgress] = useState(0);
   const [coverProgress, setCoverProgress] = useState(0);
 
+  // --- Redux hooks ---
   const [updateUser] = useUpdateUserMutation();
   const [deleteUser] = useDeleteUserMutation();
-
-  const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // --- Router ---
+  const navigate = useNavigate();
+
+  // --- Initial form values ---
   const initialValues = useMemo(
     () => ({
       username: user?.username || "",
@@ -48,6 +65,7 @@ export default function SettingsModal({ open, onClose, user }) {
     [user]
   );
 
+  //Detect if user has password set (email/password provider)
   useEffect(() => {
     if (auth.currentUser) {
       const pw = auth.currentUser.providerData.some(
@@ -57,6 +75,7 @@ export default function SettingsModal({ open, onClose, user }) {
     }
   }, []);
 
+  //Reset form values when modal opens
   useEffect(() => {
     if (open) {
       form.setFieldsValue(initialValues);
@@ -64,20 +83,21 @@ export default function SettingsModal({ open, onClose, user }) {
     }
   }, [open, initialValues, form]);
 
+  // Detect if form values are changed from initial
   const handleValuesChange = () => {
     const currentValues = form.getFieldsValue();
     const unchanged = Object.keys(initialValues).every((key) => {
       if (key === "password" || key === "newPassword") {
-        return !currentValues[key];
+        return !currentValues[key]; // ignore empty passwords
       }
       const initialVal = (initialValues[key] ?? "").toString().trim();
       const currentVal = (currentValues[key] ?? "").toString().trim();
       return initialVal === currentVal;
     });
-
     setIsChanged(!unchanged);
   };
 
+  // Link external providers (Google/GitHub)
   const handleLinkProvider = async (provider) => {
     try {
       if (!auth.currentUser) {
@@ -99,10 +119,11 @@ export default function SettingsModal({ open, onClose, user }) {
     }
   };
 
+  // Save profile changes (username, bio, avatar, cover, password)
   const handleSave = async (values) => {
     setSaving(true);
     try {
-      // 🔹 Password logic
+      // --- Password logic ---
       if (!hasPassword && values.password) {
         const credential = EmailAuthProvider.credential(
           auth.currentUser.email,
@@ -125,17 +146,15 @@ export default function SettingsModal({ open, onClose, user }) {
         }
       }
 
-      // 🔹 Handle avatar (URL or file upload to Firebase)
+      // --- Handle avatar (upload or keep URL) ---
       let avatarUrl = values.avatar;
       if (values.avatarFile?.[0]?.originFileObj) {
         const file = values.avatarFile[0].originFileObj;
-
         if (file.size / 1024 / 1024 > 4) {
           handleError({ message: "Avatar must be smaller than 4MB!" });
           setSaving(false);
           return;
         }
-
         avatarUrl = await uploadToFirebase(
           file,
           auth.currentUser.uid,
@@ -144,17 +163,15 @@ export default function SettingsModal({ open, onClose, user }) {
         );
       }
 
-      // 🔹 Handle cover (URL or file upload to Firebase)
+      // --- Handle cover (upload or keep URL) ---
       let coverUrl = values.cover;
       if (values.coverFile?.[0]?.originFileObj) {
         const file = values.coverFile[0].originFileObj;
-
         if (file.size / 1024 / 1024 > 4) {
           handleError({ message: "Cover must be smaller than 4MB!" });
           setSaving(false);
           return;
         }
-
         coverUrl = await uploadToFirebase(
           file,
           auth.currentUser.uid,
@@ -163,7 +180,7 @@ export default function SettingsModal({ open, onClose, user }) {
         );
       }
 
-      // 🔹 Save to backend
+      // --- Update user in backend ---
       await updateUser({
         username: values.username,
         bio: values.bio,
@@ -182,6 +199,7 @@ export default function SettingsModal({ open, onClose, user }) {
     }
   };
 
+  // Delete account
   const handleDelete = async () => {
     setDeleting(true);
     try {
@@ -201,17 +219,14 @@ export default function SettingsModal({ open, onClose, user }) {
 
   return (
     <>
+      {/* ---- Main Settings Modal ---- */}
       <Modal
         title="Profile Settings"
         open={open}
         onCancel={onClose}
         footer={null}
         width="100%"
-        style={{
-          top: 10,
-          maxWidth: 600,
-          padding: "0 16px",
-        }}
+        style={{ top: 10, maxWidth: 600, padding: "0 16px" }}
         destroyOnHidden
       >
         <Form
@@ -222,29 +237,30 @@ export default function SettingsModal({ open, onClose, user }) {
           onValuesChange={handleValuesChange}
         >
           <ProfileInfoForm />
-          <Divider></Divider>
+
+          <Divider />
+
+          {/* Password section */}
           {!hasPassword ? (
-            <>
-              <Form.Item
-                label="Set Password"
-                name="password"
-                rules={[
-                  {
-                    validator: (_, value) => {
-                      if (!value) return Promise.resolve();
-                      if (value.length < 6) {
-                        return Promise.reject(
-                          new Error("Password must be at least 6 characters")
-                        );
-                      }
-                      return Promise.resolve();
-                    },
+            <Form.Item
+              label="Set Password"
+              name="password"
+              rules={[
+                {
+                  validator: (_, value) => {
+                    if (!value) return Promise.resolve();
+                    if (value.length < 6) {
+                      return Promise.reject(
+                        new Error("Password must be at least 6 characters")
+                      );
+                    }
+                    return Promise.resolve();
                   },
-                ]}
-              >
-                <Input.Password placeholder="Leave empty if you don’t want to set a password yet" />
-              </Form.Item>
-            </>
+                },
+              ]}
+            >
+              <Input.Password placeholder="Leave empty if you don’t want to set a password yet" />
+            </Form.Item>
           ) : (
             <Form.Item
               label="New Password"
@@ -285,6 +301,7 @@ export default function SettingsModal({ open, onClose, user }) {
             </Button>
           </Space>
 
+          {/* Footer actions */}
           <div
             style={{
               marginTop: 24,
@@ -319,7 +336,7 @@ export default function SettingsModal({ open, onClose, user }) {
         </Form>
       </Modal>
 
-      {/* Confirm Delete Modal */}
+      {/* ---- Confirm Delete Modal ---- */}
       <Modal
         title="Confirm Account Deletion"
         open={confirmOpen}

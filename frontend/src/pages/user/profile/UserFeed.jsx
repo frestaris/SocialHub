@@ -1,3 +1,4 @@
+// --- Ant Design ---
 import {
   Card,
   Typography,
@@ -9,15 +10,25 @@ import {
   Result,
 } from "antd";
 import { EditOutlined, DeleteOutlined, MoreOutlined } from "@ant-design/icons";
+
+// --- React ---
+import { useState } from "react";
 import moment from "moment";
+
+// --- Routing ---
+import { Link } from "react-router-dom";
+
+// --- Redux ---
 import {
   useUpdatePostMutation,
   useDeletePostMutation,
 } from "../../../redux/post/postApi";
-import { useState } from "react";
+
+// --- Components ---
 import EditPostForm from "./EditPostForm";
-import { Link } from "react-router-dom";
 import PostActions from "../../../components/PostActions";
+
+// --- Utils ---
 import { handleError, handleSuccess } from "../../../utils/handleMessage";
 
 const { Text, Paragraph } = Typography;
@@ -26,14 +37,17 @@ const { useBreakpoint } = Grid;
 export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
-  const [expandedPostId, setExpandedPostId] = useState(null);
 
-  const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
-  const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
-
+  // --- Local state ---
+  const [expandedPostId, setExpandedPostId] = useState(null); // track expanded text
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
 
+  // --- Mutations ---
+  const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
+  const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
+
+  // --- Handlers ---
   const handleEdit = (post) => setEditingPost(post);
 
   const handleDeleteConfirm = async () => {
@@ -53,6 +67,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
     }
   };
 
+  // --- Loading state ---
   if (isLoading) {
     return (
       <div
@@ -68,6 +83,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
     );
   }
 
+  // --- Empty state ---
   if (!feed || feed.length === 0) {
     return (
       <Result
@@ -82,7 +98,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
       {feed.map((item) => (
         <Card key={item._id} style={{ borderRadius: 12 }}>
-          {/* Header: date + dropdown */}
+          {/* --- Header: timestamp + dropdown (owner only) --- */}
           <div
             style={{
               display: "flex",
@@ -128,8 +144,9 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
             )}
           </div>
 
-          {/* Content */}
+          {/* --- Post Content --- */}
           <>
+            {/* Video title */}
             {item.type === "video" && (
               <Text
                 strong
@@ -206,7 +223,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
                 </div>
               )}
 
-              {/* Content / Description */}
+              {/* Text content */}
               {item.content && (
                 <div style={{ flex: 1 }}>
                   <div
@@ -243,6 +260,8 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
               )}
             </div>
           </>
+
+          {/* --- Actions (like/comment/share) --- */}
           <PostActions post={item} isSmall={isMobile} />
         </Card>
       ))}

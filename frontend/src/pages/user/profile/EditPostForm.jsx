@@ -1,12 +1,22 @@
-import { Form, Input, Button, Select, Upload as AntUpload, Switch } from "antd";
-import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
+
+// --- Ant Design ---
+import { Form, Input, Button, Select, Upload as AntUpload, Switch } from "antd";
+
+// --- Ant Design Icons ---
+import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
+
+// --- Firebase ---
+import { auth } from "../../../firebase";
 import { uploadToFirebase } from "../../../utils/uploadToFirebase";
+
+// --- Utils ---
 import { getVideoDuration } from "../../../utils/getVideoDuration";
 import { fetchYouTubeMetadata } from "../../../utils/fetchYouTubeMetadata";
-import { auth } from "../../../firebase";
-import { categories } from "../../../utils/categories";
 import { handleError, handleSuccess } from "../../../utils/handleMessage";
+
+// --- Constants ---
+import { categories } from "../../../utils/categories";
 
 const { TextArea } = Input;
 
@@ -17,25 +27,27 @@ export default function EditPostForm({
   onUpdate,
   loading,
 }) {
+  // --- Form state ---
   const [form] = Form.useForm();
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isChanged, setIsChanged] = useState(false);
   const [previewSrc, setPreviewSrc] = useState(null);
 
-  // toggle state
+  // --- Toggle state (URL vs Upload) ---
   const [useUrl, setUseUrl] = useState(
     post?.image?.startsWith("http") || post?.video?.url?.startsWith("http")
   );
 
-  // Watch fields
+  // --- Watch fields ---
   const mediaFile = Form.useWatch("mediaFile", form);
   const mediaUrl = Form.useWatch("mediaUrl", form);
   const thumbnailFile = Form.useWatch("thumbnail", form);
 
-  // YouTube metadata
+  // --- YouTube metadata ---
   const [ytMeta, setYtMeta] = useState(null);
 
+  // --- File/URL type checks ---
   const isVideoFile =
     mediaFile?.length > 0 &&
     mediaFile[0]?.originFileObj?.type?.startsWith("video/");
@@ -50,7 +62,7 @@ export default function EditPostForm({
       isYouTubeUrl);
   const isImageUrl = mediaUrl && !isVideoUrl;
 
-  // Prefill values when editing
+  // --- Prefill initial values ---
   const initialValues = {
     content: post?.content,
     category: post?.category,
@@ -58,23 +70,25 @@ export default function EditPostForm({
     mediaUrl: post?.video?.url || post?.image || "",
   };
 
+  // --- Effects ---
+
+  // Cleanup YouTube fields when switching to upload mode (non-URL)
   useEffect(() => {
     if (!isYouTubeUrl && !useUrl) {
-      // 👇 remove stale YouTube thumbnail + title when switching to upload mode
       form.setFieldsValue({
-        thumbnail: [],
-        title: form.getFieldValue("title") || "", // keep if user typed manually
+        thumbnail: [], // remove YouTube thumbnail
+        title: form.getFieldValue("title") || "", // preserve manual title if typed
       });
     }
   }, [isYouTubeUrl, useUrl, form]);
 
+  // If user selects an image (file or URL), wipe video-specific fields
   useEffect(() => {
-    // If switching to an image (either file or URL),
-    // remove leftover video fields like thumbnail + title
     if (
       isImageUrl ||
       mediaFile?.[0]?.originFileObj?.type?.startsWith("image/")
     ) {
+      // clear values
       form.setFieldsValue({
         thumbnail: [],
         title: "",
@@ -82,6 +96,7 @@ export default function EditPostForm({
     }
   }, [isImageUrl, mediaFile, form]);
 
+  // Reset form values when modal opens or post changes
   useEffect(() => {
     if (open && post) {
       form.setFieldsValue(initialValues);
@@ -89,34 +104,36 @@ export default function EditPostForm({
     }
   }, [open, post]);
 
+  // Generate preview image for uploads, URLs, or YouTube
   useEffect(() => {
     let url;
     let isBlob = false;
 
     if (mediaFile?.[0]?.originFileObj?.type?.startsWith("image/")) {
-      // 🖼️ New uploaded image
+      // New uploaded image
       url = URL.createObjectURL(mediaFile[0].originFileObj);
       isBlob = true;
     } else if (thumbnailFile?.[0]?.originFileObj) {
-      // 🎞️ New uploaded video thumbnail
+      // New uploaded video thumbnail
       url = URL.createObjectURL(thumbnailFile[0].originFileObj);
       isBlob = true;
     } else if (post?.video?.thumbnail) {
-      // 📂 Existing saved video thumbnail from DB
+      // Existing video thumbnail from DB
       url = post.video.thumbnail;
     } else if (post?.image) {
-      // 📂 Existing saved image from DB
+      // Existing image from DB
       url = post.image;
     } else if (isImageUrl && !isVideoUrl) {
-      // 🌐 Direct image URL (but not video URL!)
+      // Direct image URL
       url = mediaUrl;
     } else if (isYouTubeUrl && ytMeta?.thumbnail) {
-      // ▶️ YouTube metadata thumbnail
+      //  YouTube-provided thumbnail
       url = ytMeta.thumbnail;
     }
 
     setPreviewSrc(url);
 
+    // cleanup: revoke blob URLs to avoid memory leaks
     return () => {
       if (isBlob && url?.startsWith("blob:")) {
         URL.revokeObjectURL(url);
@@ -133,7 +150,7 @@ export default function EditPostForm({
     post,
   ]);
 
-  // Fetch YouTube metadata
+  //  Fetch YouTube metadata (title + thumbnail) when a YouTube URL is entered
   useEffect(() => {
     let cancelled = false;
     const getMeta = async () => {
@@ -148,17 +165,20 @@ export default function EditPostForm({
         setYtMeta(null);
       }
     };
+
     if (isYouTubeUrl) {
       getMeta();
     } else {
       setYtMeta(null);
     }
+
+    // cancel fetch if component unmounts
     return () => {
       cancelled = true;
     };
   }, [mediaUrl, isYouTubeUrl, form]);
 
-  // Track if form is changed
+  // --- Handlers ---
   const handleValuesChange = (_, allValues) => {
     const changed = Object.keys(initialValues).some(
       (key) => allValues[key] !== initialValues[key]
@@ -248,7 +268,7 @@ export default function EditPostForm({
       handleSuccess("Post updated!");
       setIsUploading(false);
       setUploadProgress(0);
-      setIsChanged(false); // reset
+      setIsChanged(false);
       if (onClose) onClose();
     } catch (err) {
       console.error("Update post error:", err);
@@ -258,6 +278,7 @@ export default function EditPostForm({
     }
   };
 
+  // --- Render ---
   return (
     <Form
       form={form}
@@ -265,6 +286,7 @@ export default function EditPostForm({
       onFinish={handleFinish}
       onValuesChange={handleValuesChange}
     >
+      {/* Content */}
       <Form.Item
         label="Edit Post"
         name="content"
@@ -273,6 +295,7 @@ export default function EditPostForm({
         <TextArea rows={3} placeholder="What's on your mind?" />
       </Form.Item>
 
+      {/* Category */}
       <Form.Item
         label="Category"
         name="category"
@@ -287,6 +310,7 @@ export default function EditPostForm({
         </Select>
       </Form.Item>
 
+      {/* Media */}
       <Form.Item label="Media">
         <div style={{ marginBottom: 12 }}>
           <Switch
@@ -356,7 +380,7 @@ export default function EditPostForm({
         </>
       )}
 
-      {/* Media Preview (Feed-style) */}
+      {/* Media Preview */}
       {previewSrc && (
         <div
           style={{
@@ -379,6 +403,7 @@ export default function EditPostForm({
         </div>
       )}
 
+      {/* Submit button */}
       <Button
         type="primary"
         htmlType="submit"

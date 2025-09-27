@@ -1,7 +1,14 @@
+// --- Ant Design ---
 import { Card, Avatar, Typography, Button, Space } from "antd";
 import { SettingOutlined, UserOutlined } from "@ant-design/icons";
-import { useSelector } from "react-redux";
+
+// --- React ---
 import { useState, useMemo } from "react";
+
+// --- Redux ---
+import { useSelector } from "react-redux";
+
+// --- Components ---
 import SettingsModal from "../settings/SettingsModal";
 import Upload from "../../upload/Upload";
 import FollowButton from "../../../components/FollowButton";
@@ -9,12 +16,15 @@ import FollowButton from "../../../components/FollowButton";
 const { Title, Paragraph } = Typography;
 
 export default function ProfileInfo({ user }) {
+  // --- Redux state ---
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner = currentUser && user && currentUser._id === user._id;
 
+  // --- Local state ---
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
+  // --- Derived state ---
   const isFollowingUser = useMemo(() => {
     if (!currentUser || !user) return false;
     return user.followers?.some((f) => f._id === currentUser._id);
@@ -30,9 +40,7 @@ export default function ProfileInfo({ user }) {
           padding: 0,
           overflow: "hidden",
         }}
-        styles={{
-          body: { padding: 0 },
-        }}
+        styles={{ body: { padding: 0 } }}
       >
         {/* Cover image */}
         <div
@@ -63,6 +71,7 @@ export default function ProfileInfo({ user }) {
             />
           )}
 
+          {/* Settings button (owner only) */}
           {isOwner && (
             <Button
               type="text"
@@ -137,7 +146,6 @@ export default function ProfileInfo({ user }) {
         onClose={() => setIsSettingsModalOpen(false)}
         user={user}
       />
-
       <Upload
         open={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}

@@ -1,6 +1,11 @@
+// ---  Libraries ---
 import { Menu } from "antd";
-import { categories } from "../../utils/categories";
+
+// --- Routing ---
 import { useNavigate } from "react-router-dom";
+
+// --- Utils ---
+import { categories } from "../../utils/categories";
 
 export default function Sidebar({
   selectedCategories = [],
@@ -9,15 +14,19 @@ export default function Sidebar({
 }) {
   const navigate = useNavigate();
 
+  // --- Handle category selection ---
   const handleCategoryClick = ({ key }) => {
     if (selectedCategories.includes(key)) {
+      // Deselect category → reset explore
       onCategoryChange([]);
       navigate("/explore");
     } else {
+      // Select category → navigate with key
       onCategoryChange([key]);
       navigate(`/explore/${key}`);
     }
 
+    // Close Drawer (on mobile)
     if (onClose) onClose();
   };
 
@@ -26,8 +35,12 @@ export default function Sidebar({
       mode="inline"
       selectable={false}
       selectedKeys={selectedCategories}
-      style={{ position: "sticky", height: "100%", borderRight: 0 }}
       onClick={handleCategoryClick}
+      style={{
+        position: "sticky",
+        height: "100%",
+        borderRight: 0,
+      }}
       items={categories.map((c) => ({
         key: c.key,
         icon: <c.icon />,

@@ -1,27 +1,39 @@
-import { Divider, Spin, Result, Button } from "antd";
+import { useEffect } from "react";
+
+// --- Routing ---
 import { useParams, useNavigate } from "react-router-dom";
+
+// --- Redux / API ---
 import {
   useGetPostByIdQuery,
   useIncrementPostViewsMutation,
 } from "../../redux/post/postApi";
-import { useEffect } from "react";
 
+// --- Libraries ---
+import { Divider, Spin, Result, Button } from "antd";
+
+// --- Components ---
 import PostInfo from "./PostInfo";
 import CommentsSection from "./CommentsSection";
 
 export default function Post() {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // --- API calls ---
   const { data, isLoading } = useGetPostByIdQuery(id);
-  const post = data?.post;
   const [incrementPostViews] = useIncrementPostViewsMutation();
 
+  const post = data?.post;
+
+  // --- Increment views on mount ---
   useEffect(() => {
     if (id) {
       incrementPostViews(id);
     }
   }, [id, incrementPostViews]);
 
+  // --- Loading state ---
   if (isLoading) {
     return (
       <div
@@ -36,6 +48,8 @@ export default function Post() {
       </div>
     );
   }
+
+  // --- Not found state ---
   if (!post) {
     return (
       <div
@@ -60,6 +74,7 @@ export default function Post() {
     );
   }
 
+  // --- Success state ---
   return (
     <div
       style={{
@@ -68,9 +83,12 @@ export default function Post() {
         padding: "20px",
       }}
     >
+      {/* Post details */}
       <PostInfo post={post} />
 
       <Divider />
+
+      {/* Comments */}
       <CommentsSection postId={post._id} />
     </div>
   );

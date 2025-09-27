@@ -1,7 +1,11 @@
 import { useState } from "react";
+
+// --- Libraries ---
 import { Form, Input, Button, Typography, Spin } from "antd";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
+
+// --- Utilities ---
 import { auth } from "../../firebase";
 import { baseURL } from "../../utils/baseURL";
 import { handleError, handleSuccess } from "../../utils/handleMessage";
@@ -13,9 +17,9 @@ export default function ForgotPassword() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
 
+  // Handle form submit
   const handleFinish = async (values) => {
     setIsLoading(true);
-
     try {
       const actionCodeSettings = {
         url: `${baseURL}/reset-password`,
@@ -54,17 +58,19 @@ export default function ForgotPassword() {
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
+        {/* Heading */}
         <Title level={3} style={{ textAlign: "center" }}>
           Forgot Password
         </Title>
 
+        {/* Reset Form */}
         <Form layout="vertical" onFinish={handleFinish}>
           <Form.Item
             label="Email"
             name="email"
             rules={[{ required: true, message: "Please enter your email" }]}
           >
-            <Input />
+            <Input placeholder="Enter your email" />
           </Form.Item>
 
           <Button type="primary" htmlType="submit" block disabled={isLoading}>
@@ -72,6 +78,7 @@ export default function ForgotPassword() {
           </Button>
         </Form>
 
+        {/* Navigation back to login */}
         <div style={{ textAlign: "center", marginTop: 16 }}>
           <Button type="link" onClick={() => navigate("/login")}>
             Back to Login

@@ -1,40 +1,44 @@
+import { useState, useEffect, useMemo } from "react";
+
+// --- Ant Design components ---
 import { Form, Input, Button, Select, Upload as AntUpload, Switch } from "antd";
+
+// --- Ant Design icons ---
 import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
-import { useState, useEffect } from "react";
+
+// --- Firebase ---
+import { auth } from "../../firebase";
 import { uploadToFirebase } from "../../utils/uploadToFirebase";
+
+// --- Utils ---
 import { getVideoDuration } from "../../utils/getVideoDuration";
 import { fetchYouTubeMetadata } from "../../utils/fetchYouTubeMetadata";
-import { auth } from "../../firebase";
-import { categories } from "../../utils/categories";
 import { handleError } from "../../utils/handleMessage";
+
+// --- Constants ---
+import { categories } from "../../utils/categories";
 
 const { TextArea } = Input;
 
 export default function PostForm({ onCreatePost, loading }) {
   const [form] = Form.useForm();
+
+  // --- State ---
+  const [useUpload, setUseUpload] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [ytMeta, setYtMeta] = useState(null);
+  const [previewSrc, setPreviewSrc] = useState(null);
 
-  // toggle state
-  const [useUpload, setUseUpload] = useState(false);
-
-  // Watch fields
+  // --- Watch fields ---
   const mediaFile = Form.useWatch("mediaFile", form);
   const mediaUrl = Form.useWatch("mediaUrl", form);
   const thumbnailFile = Form.useWatch("thumbnail", form);
 
-  // YouTube metadata state
-  const [ytMeta, setYtMeta] = useState(null);
-
-  // Detect file type
-  const isVideoFile =
-    mediaFile?.length > 0 &&
-    mediaFile[0]?.originFileObj?.type?.startsWith("video/");
-
-  // Detect URL type
+  // --- Derived booleans ---
+  const isVideoFile = mediaFile?.[0]?.originFileObj?.type?.startsWith("video/");
   const isYouTubeUrl =
-    mediaUrl &&
-    (mediaUrl.includes("youtube.com") || mediaUrl.includes("youtu.be"));
+    mediaUrl?.includes("youtube.com") || mediaUrl?.includes("youtu.be");
   const isVideoUrl =
     mediaUrl &&
     (mediaUrl.endsWith(".mp4") ||
@@ -42,92 +46,70 @@ export default function PostForm({ onCreatePost, loading }) {
       mediaUrl.endsWith(".mov") ||
       isYouTubeUrl);
   const isImageUrl = mediaUrl && !isVideoUrl;
-  const [previewSrc, setPreviewSrc] = useState(null);
 
+  // --- Preview handling ---
   useEffect(() => {
-    let url;
+    let url = null;
 
     if (mediaFile?.[0]?.originFileObj?.type?.startsWith("image/")) {
-      // New uploaded image
       url = URL.createObjectURL(mediaFile[0].originFileObj);
     } else if (thumbnailFile?.[0]?.originFileObj) {
-      // 👈 New uploaded thumbnail file
       url = URL.createObjectURL(thumbnailFile[0].originFileObj);
     } else if (isImageUrl) {
-      // Direct image URL
       url = mediaUrl;
     } else if (isYouTubeUrl && ytMeta?.thumbnail) {
-      // YouTube thumbnail
       url = ytMeta.thumbnail;
     }
 
     setPreviewSrc(url);
 
     return () => {
-      if (url?.startsWith("blob:")) {
-        URL.revokeObjectURL(url);
-      }
+      if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
     };
   }, [mediaFile, mediaUrl, thumbnailFile, ytMeta, isImageUrl, isYouTubeUrl]);
 
-  // Fetch YouTube metadata (title only)
+  // --- Fetch YouTube metadata ---
   useEffect(() => {
     let cancelled = false;
-    const getMeta = async () => {
+    const fetchMeta = async () => {
       try {
         const meta = await fetchYouTubeMetadata(mediaUrl);
-        if (cancelled) return;
-        setYtMeta(meta || null);
-
-        if (meta?.title && !form.getFieldValue("title")) {
-          form.setFieldsValue({ title: meta.title });
+        if (!cancelled) {
+          setYtMeta(meta || null);
+          if (meta?.title && !form.getFieldValue("title")) {
+            form.setFieldsValue({ title: meta.title });
+          }
         }
       } catch {
         setYtMeta(null);
       }
     };
 
-    if (isYouTubeUrl) {
-      getMeta();
-    } else {
-      setYtMeta(null);
-    }
+    if (isYouTubeUrl) fetchMeta();
+    else setYtMeta(null);
+
     return () => {
       cancelled = true;
     };
   }, [mediaUrl, isYouTubeUrl, form]);
 
-  // Auto-clear URL if file is chosen
+  // --- Keep only one media input active ---
   useEffect(() => {
     if (mediaFile?.length > 0 && mediaUrl) {
       form.setFieldsValue({ mediaUrl: "" });
     }
-  }, [mediaFile]);
-
-  // Auto-clear file if URL is typed
-  useEffect(() => {
     if (mediaUrl && mediaFile?.length > 0) {
       form.setFieldsValue({ mediaFile: [] });
     }
-  }, [mediaUrl]);
+  }, [mediaFile, mediaUrl, form]);
 
+  // --- Submit handler ---
   const handleFinish = async (values) => {
     try {
-      if (mediaFile?.length > 0 && mediaUrl) {
-        handleError(
-          { message: "Please use either upload OR URL, not both." },
-          "Validation Error"
-        );
-        return;
-      }
-
-      let payload = {
-        category: values.category,
-        content: values.content,
-      };
+      let payload = { category: values.category, content: values.content };
       let type = "text";
 
-      // ---------- FILE ----------
+      // --- File upload path ---
       if (mediaFile?.[0]?.originFileObj) {
         const file = mediaFile[0].originFileObj;
 
@@ -136,27 +118,25 @@ export default function PostForm({ onCreatePost, loading }) {
           const imageUrl = await uploadToFirebase(
             file,
             auth.currentUser?.uid,
-            (progress) => setUploadProgress(progress),
+            (p) => setUploadProgress(p),
             "posts"
           );
           payload.image = imageUrl;
           type = "image";
-          setIsUploading(false);
-          setUploadProgress(0);
         } else if (file.type.startsWith("video/")) {
           setIsUploading(true);
-          const videoUrlUploaded = await uploadToFirebase(
+          const videoUrl = await uploadToFirebase(
             file,
             auth.currentUser?.uid,
-            (progress) => setUploadProgress(progress),
+            (p) => setUploadProgress(p),
             "videos"
           );
           const duration = await getVideoDuration(file);
 
           let thumbnailUrl = "";
-          if (values.thumbnail?.[0]?.originFileObj) {
+          if (thumbnailFile?.[0]?.originFileObj) {
             thumbnailUrl = await uploadToFirebase(
-              values.thumbnail[0].originFileObj,
+              thumbnailFile[0].originFileObj,
               auth.currentUser?.uid,
               null,
               "videos",
@@ -167,17 +147,15 @@ export default function PostForm({ onCreatePost, loading }) {
           payload.video = {
             title: values.title,
             category: values.category,
-            url: videoUrlUploaded,
+            url: videoUrl,
             thumbnail: thumbnailUrl,
             duration,
           };
           type = "video";
-          setIsUploading(false);
-          setUploadProgress(0);
         }
       }
 
-      // ---------- URL ----------
+      // --- URL path ---
       else if (mediaUrl) {
         if (isImageUrl) {
           payload.image = mediaUrl.trim();
@@ -207,12 +185,24 @@ export default function PostForm({ onCreatePost, loading }) {
       form.resetFields();
       setYtMeta(null);
     } catch (err) {
-      console.error("Create post error:", err);
+      console.error("❌ Create post error:", err);
       handleError(err, "Failed to publish post");
+    } finally {
       setIsUploading(false);
       setUploadProgress(0);
     }
   };
+
+  // --- Button text ---
+  const buttonLabel = useMemo(() => {
+    if (isUploading) {
+      return uploadProgress < 100
+        ? `Uploading... ${Math.round(uploadProgress)}%`
+        : "Finalizing...";
+    }
+    if (loading) return "Publishing...";
+    return "Publish";
+  }, [isUploading, uploadProgress, loading]);
 
   return (
     <Form form={form} layout="vertical" onFinish={handleFinish}>
@@ -240,7 +230,7 @@ export default function PostForm({ onCreatePost, loading }) {
         </Select>
       </Form.Item>
 
-      {/* Media */}
+      {/* Media toggle */}
       <Form.Item label="Media">
         <div style={{ marginBottom: 12 }}>
           <Switch
@@ -251,18 +241,14 @@ export default function PostForm({ onCreatePost, loading }) {
           />
         </div>
 
-        {/* URL mode (default) */}
-        {!useUpload && (
+        {!useUpload ? (
           <Form.Item name="mediaUrl">
             <Input
               prefix={<LinkOutlined />}
               placeholder="Paste image / video URL"
             />
           </Form.Item>
-        )}
-
-        {/* Upload mode */}
-        {useUpload && (
+        ) : (
           <Form.Item
             name="mediaFile"
             valuePropName="fileList"
@@ -279,7 +265,7 @@ export default function PostForm({ onCreatePost, loading }) {
         )}
       </Form.Item>
 
-      {/* Extra fields if video */}
+      {/* Extra video fields */}
       {(isVideoFile || isVideoUrl) && (
         <>
           <Form.Item
@@ -310,7 +296,7 @@ export default function PostForm({ onCreatePost, loading }) {
         </>
       )}
 
-      {/* Media Preview (supports image + thumbnail + YouTube) */}
+      {/* Preview */}
       {previewSrc && (
         <div
           style={{
@@ -333,19 +319,14 @@ export default function PostForm({ onCreatePost, loading }) {
         </div>
       )}
 
+      {/* Submit */}
       <Button
         type="primary"
         htmlType="submit"
         block
         loading={isUploading || loading}
       >
-        {isUploading
-          ? uploadProgress < 100
-            ? `Uploading... ${Math.round(uploadProgress)}%`
-            : "Finalizing..."
-          : loading
-          ? "Publishing..."
-          : "Publish"}
+        {buttonLabel}
       </Button>
     </Form>
   );

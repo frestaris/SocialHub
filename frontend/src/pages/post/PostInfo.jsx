@@ -1,9 +1,19 @@
 import { useState, useMemo } from "react";
+
+// --- Libraries ---
 import { Typography, Avatar, Button } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+
+// --- Utils ---
 import moment from "moment";
+
+// --- Routing ---
 import { Link } from "react-router-dom";
+
+// --- Redux ---
 import { useSelector } from "react-redux";
+
+// --- Components ---
 import VideoPlayer from "./VideoPlayer";
 import FollowButton from "../../components/FollowButton";
 import PostActions from "../../components/PostActions";
@@ -13,10 +23,12 @@ const { Text, Paragraph, Title } = Typography;
 export default function PostInfo({ post }) {
   const [expanded, setExpanded] = useState(false);
 
+  // --- Redux state ---
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner =
     currentUser && post.userId && currentUser._id === post.userId._id;
 
+  // --- Derived state: following ---
   const isFollowingUser = useMemo(() => {
     if (!currentUser || !post?.userId) return false;
     return currentUser.following?.some((f) => f._id === post.userId._id);
@@ -24,7 +36,7 @@ export default function PostInfo({ post }) {
 
   return (
     <div style={{ marginBottom: "20px" }}>
-      {/* Media */}
+      {/* Media (video or image) */}
       {post.type === "video" && post.video?.url && (
         <VideoPlayer src={post.video.url} title={post.video?.title} />
       )}
@@ -55,6 +67,7 @@ export default function PostInfo({ post }) {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          {/* Avatar */}
           <Link to={`/profile/${post.userId._id}`}>
             <Avatar
               src={post.userId?.avatar || null}
@@ -62,6 +75,8 @@ export default function PostInfo({ post }) {
               icon={!post.userId?.avatar && <UserOutlined />}
             />
           </Link>
+
+          {/* Username + timestamp */}
           <div>
             <Link
               to={`/profile/${post.userId?._id}`}
@@ -76,7 +91,7 @@ export default function PostInfo({ post }) {
               <Text style={{ color: "#1677ff" }} strong>
                 {post.userId?.username}
               </Text>
-            </Link>{" "}
+            </Link>
             <br />
             <Text type="secondary">
               {moment(post.createdAt).fromNow()}
@@ -85,6 +100,7 @@ export default function PostInfo({ post }) {
           </div>
         </div>
 
+        {/* Follow button (hidden for owner) */}
         {!isOwner && (
           <FollowButton
             userId={post.userId._id}
@@ -95,7 +111,7 @@ export default function PostInfo({ post }) {
         )}
       </div>
 
-      {/* Title (for video posts) */}
+      {/* Title (only for video posts) */}
       {post.type === "video" && (
         <Title level={3} style={{ marginBottom: "10px" }}>
           {post.video?.title}
@@ -124,6 +140,7 @@ export default function PostInfo({ post }) {
             </Paragraph>
           </div>
 
+          {/* Expand/Collapse toggle */}
           {post.content.length > 120 && (
             <Button
               type="link"
@@ -136,6 +153,7 @@ export default function PostInfo({ post }) {
         </div>
       )}
 
+      {/* Post actions (likes, comments, share) */}
       <PostActions post={post} isSmall={false} showCommentsSection={false} />
     </div>
   );

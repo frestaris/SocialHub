@@ -1,3 +1,4 @@
+// --- Ant Design ---
 import {
   Card,
   Avatar,
@@ -8,23 +9,28 @@ import {
   Modal,
   List,
 } from "antd";
-import { Link } from "react-router-dom";
 import { UserOutlined, EllipsisOutlined } from "@ant-design/icons";
+
+// --- React / Router ---
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const { Text } = Typography;
 
 export default function UserFollowers({ followers }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // --- Handlers ---
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
+  // --- Derived state ---
   const visibleFollowers = followers?.slice(0, 4) || [];
   const extraCount = followers?.length > 4 ? followers.length - 4 : 0;
 
   return (
     <>
+      {/* --- Card preview (first 4 followers) --- */}
       <Card
         style={{
           marginTop: 24,
@@ -38,7 +44,7 @@ export default function UserFollowers({ followers }) {
             </Text>
             <Badge
               count={followers?.length || 0}
-              overflowCount={99}
+              overflowCount={99} // shows "99+"
               style={{ backgroundColor: "#1677ff" }}
             />
           </Space>
@@ -57,10 +63,10 @@ export default function UserFollowers({ followers }) {
               </Tooltip>
             ))
           ) : (
-            <p>No followers yet</p>
+            <Text type="secondary">No followers yet</Text>
           )}
 
-          {/* Ellipsis for more */}
+          {/* Ellipsis avatar opens modal if more followers exist */}
           {extraCount > 0 && (
             <Tooltip title={`+${extraCount} more`}>
               <Avatar
@@ -77,7 +83,7 @@ export default function UserFollowers({ followers }) {
         </Space>
       </Card>
 
-      {/* Modal with scrollable follower list */}
+      {/* --- Modal with full list of followers --- */}
       <Modal
         title="All Followers"
         open={isModalOpen}

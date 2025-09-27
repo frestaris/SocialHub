@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+
+// --- Ant Design ---
 import {
   Form,
   Input,
@@ -13,24 +15,25 @@ import {
 import { UploadOutlined } from "@ant-design/icons";
 
 export default function ProfileInfoForm({ form }) {
+  // --- Local state for toggling between URL vs File ---
   const [useAvatarFile, setUseAvatarFile] = useState(false);
   const [useCoverFile, setUseCoverFile] = useState(false);
 
-  // preview states
+  // --- Preview states for image previews ---
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
 
-  // watch form fields
+  // --- Watch form fields for URLs ---
   const avatarUrl = Form.useWatch("avatar", form);
   const coverUrl = Form.useWatch("cover", form);
 
-  // preload existing URLs when editing profile
+  // Preload previews when editing profile (URL-based avatar/cover).
   useEffect(() => {
     if (avatarUrl && !useAvatarFile) setAvatarPreview(avatarUrl);
     if (coverUrl && !useCoverFile) setCoverPreview(coverUrl);
   }, [avatarUrl, coverUrl, useAvatarFile, useCoverFile]);
 
-  // cleanup blob URLs
+  //Cleanup blob URLs when component unmounts Prevents memory leaks from object URLs.
   useEffect(() => {
     return () => {
       if (avatarPreview?.startsWith("blob:"))
@@ -62,14 +65,12 @@ export default function ProfileInfoForm({ form }) {
           <Form.Item label="Avatar Source">
             <Space>
               <span>URL</span>
-              <Switch
-                checked={useAvatarFile}
-                onChange={(val) => setUseAvatarFile(val)}
-              />
+              <Switch checked={useAvatarFile} onChange={setUseAvatarFile} />
               <span>File</span>
             </Space>
           </Form.Item>
 
+          {/* Avatar URL Mode */}
           {!useAvatarFile ? (
             <Form.Item label="Avatar URL" name="avatar">
               <Input
@@ -78,6 +79,7 @@ export default function ProfileInfoForm({ form }) {
               />
             </Form.Item>
           ) : (
+            // Avatar File Mode
             <Form.Item
               label="Upload Avatar"
               name="avatarFile"
@@ -89,7 +91,7 @@ export default function ProfileInfoForm({ form }) {
                 } else {
                   setAvatarPreview(null);
                 }
-                return e && e.fileList;
+                return e?.fileList;
               }}
             >
               <AntUpload
@@ -110,6 +112,7 @@ export default function ProfileInfoForm({ form }) {
             </Form.Item>
           )}
 
+          {/* Avatar Preview */}
           {avatarPreview && (
             <img
               src={avatarPreview}
@@ -131,14 +134,12 @@ export default function ProfileInfoForm({ form }) {
           <Form.Item label="Cover Source">
             <Space>
               <span>URL</span>
-              <Switch
-                checked={useCoverFile}
-                onChange={(val) => setUseCoverFile(val)}
-              />
+              <Switch checked={useCoverFile} onChange={setUseCoverFile} />
               <span>File</span>
             </Space>
           </Form.Item>
 
+          {/* Cover URL Mode */}
           {!useCoverFile ? (
             <Form.Item label="Cover URL" name="cover">
               <Input
@@ -147,6 +148,7 @@ export default function ProfileInfoForm({ form }) {
               />
             </Form.Item>
           ) : (
+            // Cover File Mode
             <Form.Item
               label="Upload Cover"
               name="coverFile"
@@ -158,7 +160,7 @@ export default function ProfileInfoForm({ form }) {
                 } else {
                   setCoverPreview(null);
                 }
-                return e && e.fileList;
+                return e?.fileList;
               }}
             >
               <AntUpload
@@ -179,6 +181,7 @@ export default function ProfileInfoForm({ form }) {
             </Form.Item>
           )}
 
+          {/* Cover Preview */}
           {coverPreview && (
             <img
               src={coverPreview}

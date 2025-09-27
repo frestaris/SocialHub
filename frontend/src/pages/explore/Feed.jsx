@@ -1,42 +1,58 @@
-import { Grid, Spin, Result, Modal, Button } from "antd";
+import { useState, useEffect, useRef } from "react";
+
+// --- Routing ---
+import { useNavigate } from "react-router-dom";
+
+// --- Redux ---
 import { useSelector } from "react-redux";
 import {
   useGetPostsQuery,
   useUpdatePostMutation,
   useDeletePostMutation,
 } from "../../redux/post/postApi";
-import { useState, useEffect, useRef } from "react";
-import EditPostForm from "../user/profile/EditPostForm";
+
+// --- Libraries ---
+import { Grid, Spin, Result, Modal, Button } from "antd";
+import { PlusOutlined } from "@ant-design/icons";
 import Masonry from "react-masonry-css";
+
+// --- Components ---
+import EditPostForm from "../user/profile/EditPostForm";
 import TopCreators from "./TopCreators";
-import { handleError, handleSuccess } from "../../utils/handleMessage";
 import PostCard from "../../components/PostCard";
 import HotNow from "./HotNow";
 import Upload from "../upload/Upload";
-import { useNavigate } from "react-router-dom";
-import { PlusOutlined } from "@ant-design/icons";
 
-const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
+// --- Utils ---
+import { handleError, handleSuccess } from "../../utils/handleMessage";
+
 const { useBreakpoint } = Grid;
+const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
 
 export default function Feed({ searchQuery = "", selectedCategories = [] }) {
+  // --- State ---
   const [skip, setSkip] = useState(0);
   const limit = 20;
   const loaderRef = useRef();
-  const screens = useBreakpoint();
-  const isDesktop = screens.md;
-  const isSmall = !screens.sm;
-  const currentUser = useSelector((state) => state.auth.user);
-  const navigate = useNavigate();
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
 
+  // --- Redux state ---
+  const currentUser = useSelector((state) => state.auth.user);
+
+  // --- Hooks ---
+  const screens = useBreakpoint();
+  const isDesktop = screens.md;
+  const isSmall = !screens.sm;
+  const navigate = useNavigate();
+
+  // --- Mutations ---
   const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
   const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
 
-  // 🔹 fetch posts directly from RTK Query (no local posts state)
+  // --- Fetch posts ---
   const { data, isLoading, isFetching, isError } = useGetPostsQuery(
     {
       searchQuery,
@@ -44,34 +60,28 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
       skip,
       limit,
     },
-    {
-      refetchOnMountOrArgChange: true,
-    }
+    { refetchOnMountOrArgChange: true }
   );
 
   const posts = data?.posts || [];
   const total = data?.total || 0;
-  // Infinite scroll observer
+
+  // --- Infinite scroll observer ---
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && !isFetching && posts.length < total) {
-          setSkip((prev) => {
-            const next = prev + limit;
-            return next;
-          });
+          setSkip((prev) => prev + limit);
         }
       },
       { threshold: 1 }
     );
 
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
-
+    if (loaderRef.current) observer.observe(loaderRef.current);
     return () => observer.disconnect();
   }, [isFetching, posts.length, total, limit]);
 
+  // --- Delete post confirm ---
   const handleDeleteConfirm = async () => {
     try {
       if (!deletingPost) return;
@@ -89,6 +99,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
     }
   };
 
+  // --- Loading state (initial load only) ---
   if ((isLoading || isFetching) && skip === 0) {
     return (
       <div
@@ -104,6 +115,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
     );
   }
 
+  // --- Error state ---
   if (isError) {
     return (
       <Result
@@ -114,6 +126,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
     );
   }
 
+  // --- Empty state ---
   if (posts.length === 0 && !isFetching) {
     return (
       <>
@@ -126,9 +139,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => {
-                  setUploadOpen(true);
-                }}
+                onClick={() => setUploadOpen(true)}
               >
                 Post
               </Button>
@@ -140,7 +151,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
           }
         />
 
-        {/* Upload modal (only when logged in) */}
+        {/* Upload modal (only if logged in) */}
         {currentUser && (
           <Upload open={uploadOpen} onClose={() => setUploadOpen(false)} />
         )}
@@ -148,7 +159,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
     );
   }
 
-  // group posts into chunks for injected components
+  // --- Group posts into chunks for injecting components ---
   const chunkSize = 12;
   const chunks = Array.from(
     { length: Math.ceil(posts.length / chunkSize) },
@@ -162,6 +173,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
 
   return (
     <>
+      {/* Feed chunks with masonry layout */}
       {chunks.map((chunkPosts, chunkIndex) => (
         <div key={chunkIndex}>
           <Masonry
@@ -184,6 +196,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
             ))}
           </Masonry>
 
+          {/* Inject HotNow/TopCreators between chunks */}
           {chunkIndex < injectedComponents.length && (
             <div style={{ margin: "32px 0" }}>
               {injectedComponents[chunkIndex]}

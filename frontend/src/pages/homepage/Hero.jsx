@@ -1,7 +1,11 @@
+import { useEffect, useRef } from "react";
+
+// --- Libraries ---
 import { Typography } from "antd";
 import { DownOutlined } from "@ant-design/icons";
+
+// --- Assets ---
 import image from "../../assets/image-1.jpg";
-import { useEffect, useRef } from "react";
 
 const { Title, Paragraph } = Typography;
 
@@ -9,6 +13,7 @@ export default function Hero() {
   const textRef = useRef(null);
   const paraRef = useRef(null);
 
+  // --- Scroll to next section ---
   const handleScroll = () => {
     const nextSection = document.getElementById("how-it-works");
     if (nextSection) {
@@ -16,6 +21,7 @@ export default function Hero() {
     }
   };
 
+  // --- Fade-in animations ---
   useEffect(() => {
     const elements = [textRef.current, paraRef.current];
     const observer = new IntersectionObserver(

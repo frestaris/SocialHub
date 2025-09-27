@@ -1,12 +1,14 @@
-export default function VideoPlayer({ src, title }) {
+export default function VideoPlayer({ src, title = "Video player" }) {
   const isYouTube = src?.includes("youtube.com") || src?.includes("youtu.be");
 
-  // Normalize YouTube embed URL
+  // --- Normalize YouTube embed URL ---
   let embedUrl = src;
   if (isYouTube) {
-    const videoIdMatch = src.match(/(?:v=|youtu\.be\/)([^&]+)/);
-    const videoId = videoIdMatch ? videoIdMatch[1] : null;
-    embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : src;
+    const match = src.match(/(?:v=|\/)([0-9A-Za-z_-]{11})(?:[?&]|$)/) || [];
+    const videoId = match[1];
+    if (videoId) {
+      embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    }
   }
 
   return (
@@ -24,12 +26,18 @@ export default function VideoPlayer({ src, title }) {
           <iframe
             src={embedUrl}
             title={title}
+            aria-label="YouTube video player"
             style={{ border: "none" }}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
         ) : (
-          <video src={src} controls />
+          <video
+            src={src}
+            controls
+            title={title}
+            aria-label="HTML5 video player"
+          />
         )}
       </div>
 
@@ -40,7 +48,6 @@ export default function VideoPlayer({ src, title }) {
             width: 100%;
           }
 
-          /* Mobile & tablets: keep 16:9 ratio */
           .video-wrapper iframe,
           .video-wrapper video {
             position: absolute;
@@ -51,7 +58,7 @@ export default function VideoPlayer({ src, title }) {
           }
 
           .video-wrapper {
-            padding-top: 56.25%; /* 16:9 ratio */
+            padding-top: 56.25%;
           }
 
           /* Desktop (md and up): fullscreen minus navbar */

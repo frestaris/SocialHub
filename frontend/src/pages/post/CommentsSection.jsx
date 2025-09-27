@@ -1,4 +1,6 @@
 import { useState, useRef } from "react";
+
+// --- Libraries ---
 import {
   List,
   Avatar,
@@ -18,7 +20,11 @@ import {
   DownOutlined,
   UpOutlined,
 } from "@ant-design/icons";
-import moment from "moment";
+
+// --- Routing ---
+import { Link } from "react-router-dom";
+
+// --- Redux ---
 import { useSelector } from "react-redux";
 import {
   useGetCommentsByPostQuery,
@@ -26,39 +32,47 @@ import {
   useUpdateCommentMutation,
   useDeleteCommentMutation,
 } from "../../redux/comment/commentApi";
-import { Link } from "react-router-dom";
+
+// --- Utils ---
 import {
   handleError,
   handleSuccess,
   handleWarning,
 } from "../../utils/handleMessage";
 
+// --- Libraries ---
+import moment from "moment";
+
 const { Text } = Typography;
 
 export default function CommentsSection({ postId }) {
+  // --- Redux state ---
   const currentUser = useSelector((state) => state.auth.user);
   const currentUserId = currentUser?._id;
 
+  // --- Local state ---
   const [content, setContent] = useState("");
   const [editingComment, setEditingComment] = useState(null);
   const [visibleCount, setVisibleCount] = useState(3);
   const [error, setError] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
+  const [expandedComments, setExpandedComments] = useState({});
 
+  // --- API queries/mutations ---
   const { data, isLoading: isLoadingComments } =
     useGetCommentsByPostQuery(postId);
-
   const [createComment, { isLoading: isPosting }] = useCreateCommentMutation();
   const [updateComment, { isLoading: isUpdating }] = useUpdateCommentMutation();
   const [deleteComment] = useDeleteCommentMutation();
 
   const textareaRef = useRef(null);
   const comments = data?.comments || [];
-  const [expandedComments, setExpandedComments] = useState({}); // 👈 track expanded per comment
 
+  // --- Derived state ---
   const isUnchanged =
     editingComment && content.trim() === editingComment.content.trim();
 
+  // --- Expand/collapse toggle ---
   const toggleExpanded = (id) => {
     setExpandedComments((prev) => ({
       ...prev,
@@ -66,7 +80,7 @@ export default function CommentsSection({ postId }) {
     }));
   };
 
-  // ---- Submit new comment ----
+  // --- Submit new comment ---
   const handleSubmit = async () => {
     if (!currentUser) {
       handleWarning("Login Required", "Please log in to comment.");
@@ -86,20 +100,23 @@ export default function CommentsSection({ postId }) {
     }
   };
 
-  // ---- Handle Edit ----
+  // --- Enter edit mode ---
   const handleEdit = (item) => {
     setEditingComment(item);
     setContent(item.content);
+
+    // focus textarea after short delay
     setTimeout(() => {
       const el = textareaRef.current?.resizableTextArea?.textArea;
       if (el) el.focus({ preventScroll: true });
     }, 100);
   };
 
-  // ---- Handle Update ----
+  // --- Update comment ---
   const handleUpdate = async () => {
     if (!editingComment) return;
 
+    // Empty → ask to delete instead
     if (!content.trim()) {
       Modal.confirm({
         title: "Delete Comment?",
@@ -136,7 +153,7 @@ export default function CommentsSection({ postId }) {
     }
   };
 
-  // ---- Handle Delete ----
+  // --- Delete comment ---
   const handleDelete = async (commentId) => {
     try {
       setDeletingId(commentId);
@@ -174,14 +191,14 @@ export default function CommentsSection({ postId }) {
         {editingComment ? "Update Comment" : "Comment"}
       </Button>
 
-      {/* Spinner */}
+      {/* Loading Spinner */}
       {isLoadingComments && (
         <div style={{ textAlign: "center", marginTop: 16 }}>
           <Spin />
         </div>
       )}
 
-      {/* List */}
+      {/* Comment List */}
       <List itemLayout="horizontal" style={{ marginTop: 16 }}>
         {comments.slice(0, visibleCount).map((item) => (
           <div key={item._id} className="fade-slide-in">
@@ -211,13 +228,13 @@ export default function CommentsSection({ postId }) {
                         display: "flex",
                         alignItems: "center",
                         gap: 8,
-                        minWidth: 0, // 🔑 allows flex children to shrink
+                        minWidth: 0, // lets name shrink
                       }}
                     >
                       <Link
                         to={`/profile/${item.userId?._id}`}
                         style={{
-                          maxWidth: 120, // 👈 adjust to what fits your layout
+                          maxWidth: 120,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -240,7 +257,7 @@ export default function CommentsSection({ postId }) {
                       </Text>
                     </div>
 
-                    {/* Right: MoreOutlined */}
+                    {/* Right: action menu (only for owner) */}
                     {currentUserId === item.userId?._id && (
                       <Dropdown
                         menu={{
@@ -276,6 +293,7 @@ export default function CommentsSection({ postId }) {
                 }
                 description={
                   <>
+                    {/* Content (collapsible) */}
                     <div
                       style={{
                         maxHeight: expandedComments[item._id]
@@ -293,6 +311,7 @@ export default function CommentsSection({ postId }) {
                       </Typography.Paragraph>
                     </div>
 
+                    {/* Toggle expand button */}
                     {item.content.length > 120 && (
                       <Button
                         type="link"

@@ -239,8 +239,10 @@ export const postApi = createApi({
       async onQueryStarted(postId, { dispatch, queryFulfilled, getState }) {
         try {
           const { data } = await queryFulfilled;
+          const state = getState();
+          const queries = state.postApi.queries;
 
-          // Update getPostById
+          // ✅ Update getPostById
           dispatch(
             postApi.util.updateQueryData("getPostById", postId, (draft) => {
               if (draft?.post) {
@@ -249,15 +251,48 @@ export const postApi = createApi({
             })
           );
 
-          // Update all getPosts caches
-          const state = getState();
-          const queries = state.postApi.queries;
-
+          // ✅ Update all getPosts caches
           Object.entries(queries).forEach(([cacheKey, entry]) => {
             if (cacheKey.startsWith("getPosts") && entry.originalArgs) {
               dispatch(
                 postApi.util.updateQueryData(
                   "getPosts",
+                  entry.originalArgs,
+                  (draft) => {
+                    const idx = draft.posts?.findIndex((p) => p._id === postId);
+                    if (idx !== -1) {
+                      draft.posts[idx].views = data.views;
+                    }
+                  }
+                )
+              );
+            }
+          });
+
+          // ✅ Update all getUserFeed caches
+          Object.entries(queries).forEach(([cacheKey, entry]) => {
+            if (cacheKey.startsWith("getUserFeed") && entry.originalArgs) {
+              dispatch(
+                postApi.util.updateQueryData(
+                  "getUserFeed",
+                  entry.originalArgs,
+                  (draft) => {
+                    const idx = draft.feed?.findIndex((f) => f._id === postId);
+                    if (idx !== -1) {
+                      draft.feed[idx].views = data.views;
+                    }
+                  }
+                )
+              );
+            }
+          });
+
+          // ✅ Update all getPostsByUser caches
+          Object.entries(queries).forEach(([cacheKey, entry]) => {
+            if (cacheKey.startsWith("getPostsByUser") && entry.originalArgs) {
+              dispatch(
+                postApi.util.updateQueryData(
+                  "getPostsByUser",
                   entry.originalArgs,
                   (draft) => {
                     const idx = draft.posts?.findIndex((p) => p._id === postId);

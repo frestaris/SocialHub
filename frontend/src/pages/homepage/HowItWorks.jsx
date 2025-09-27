@@ -1,16 +1,21 @@
+import { useEffect, useRef } from "react";
+
+// --- Libraries ---
 import { Row, Col, Typography, Grid, Button } from "antd";
 import {
   UserAddOutlined,
   PlusCircleOutlined,
   MessageOutlined,
 } from "@ant-design/icons";
-import { useEffect, useRef } from "react";
+
+// --- Redux / Routing ---
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 const { Title, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
 
+// --- Steps data ---
 const steps = [
   {
     id: 1,
@@ -37,20 +42,20 @@ const steps = [
 export default function HowItWorks() {
   const stepRefs = useRef([]);
   const buttonRef = useRef(null);
+
   const screens = useBreakpoint();
   const isSmall = !screens.md;
 
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
 
+  // --- CTA Button handler ---
   const handleCTA = () => {
-    if (user) {
-      navigate("/explore");
-    } else {
-      navigate("/login");
-    }
+    if (user) navigate("/explore");
+    else navigate("/login");
   };
 
+  // --- Intersection observer animations ---
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -78,15 +83,16 @@ export default function HowItWorks() {
         background: "#fff",
         display: "flex",
         alignItems: "center",
-        position: "relative",
-        overflowX: "hidden",
         flexDirection: "column",
         justifyContent: "center",
+        position: "relative",
+        overflowX: "hidden",
       }}
     >
       <div
         style={{ maxWidth: "1000px", margin: "0 auto", textAlign: "center" }}
       >
+        {/* Title */}
         <Title
           level={2}
           style={{
@@ -96,6 +102,8 @@ export default function HowItWorks() {
         >
           How It Works
         </Title>
+
+        {/* Steps */}
         <Row gutter={[32, 32]} justify="center">
           {steps.map((step, i) => (
             <Col xs={24} sm={12} md={8} key={step.id}>
@@ -108,8 +116,8 @@ export default function HowItWorks() {
                     textAlign: "center",
                     padding: "24px",
                     borderRadius: "12px",
-                    transition: "all 0.3s ease",
                     background: "#fff",
+                    transition: "all 0.3s ease",
                   }}
                 >
                   {step.icon}

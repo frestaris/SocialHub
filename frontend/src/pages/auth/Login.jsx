@@ -1,16 +1,28 @@
 import { useState } from "react";
 import { useDispatch } from "react-redux";
+
+// --- Firebase Auth ---
 import {
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
 } from "firebase/auth";
+
+// --- Routing ---
 import { useLocation, useNavigate } from "react-router-dom";
-import { auth, googleProvider, githubProvider } from "../../firebase";
+
+// --- Redux API ---
 import { useFirebaseLoginMutation } from "../../redux/auth/authApi";
 import { setCredentials } from "../../redux/auth/authSlice";
+
+// --- Firebase Config ---
+import { auth, googleProvider, githubProvider } from "../../firebase";
+
+// --- Libraries ---
 import { Button, Form, Input, Divider, Typography, Space, Spin } from "antd";
 import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
+
+// --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";
 
 const { Title } = Typography;
@@ -20,17 +32,26 @@ export default function Login() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
+  // API hook
   const [firebaseLogin, { isLoading: socialLoading }] =
     useFirebaseLoginMutation();
+  const [activeMethod, setActiveMethod] = useState(null); // "form" | "google" | "github"
 
+  // Local state
   const [isRegister, setIsRegister] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
 
+  // Redirect after login
   const from = location.state?.from || "/explore";
 
-  // Social login
+  // --- Social login handler ---
   const handleSocialLogin = async (provider) => {
     try {
+      // figure out which provider
+      if (provider.providerId?.includes("google")) setActiveMethod("google");
+      else if (provider.providerId?.includes("github"))
+        setActiveMethod("github");
+
       const result = await signInWithPopup(auth, provider);
       const token = await result.user.getIdToken();
 
@@ -42,15 +63,18 @@ export default function Login() {
       }
     } catch (err) {
       handleError(err, "Login failed");
+    } finally {
+      setActiveMethod(null); // reset after done
     }
   };
 
-  // Email/password login or register
+  // --- Email/password login or register ---
   const handleFormFinish = async (values) => {
     try {
+      setActiveMethod("form");
       setFormLoading(true);
-      let fbUser;
 
+      let fbUser;
       if (isRegister) {
         fbUser = await createUserWithEmailAndPassword(
           auth,
@@ -82,6 +106,7 @@ export default function Login() {
       handleError(err, "Login failed", isRegister);
     } finally {
       setFormLoading(false);
+      setActiveMethod(null); // reset after done
     }
   };
 
@@ -107,10 +132,12 @@ export default function Login() {
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
+        {/* Title */}
         <Title level={3} style={{ textAlign: "center" }}>
           {isRegister ? "Create Account" : "Login"}
         </Title>
 
+        {/* Email/Password Form */}
         <Form layout="vertical" onFinish={handleFormFinish}>
           {isRegister && (
             <Form.Item
@@ -140,12 +167,19 @@ export default function Login() {
             <Input.Password />
           </Form.Item>
 
+          {/* Forgot Password Link */}
           <Button type="link" onClick={() => navigate("/forgot-password")}>
             Forgot password?
           </Button>
 
-          <Button type="primary" htmlType="submit" block disabled={formLoading}>
-            {formLoading ? (
+          {/* Submit Button */}
+          <Button
+            type="primary"
+            htmlType="submit"
+            block
+            disabled={formLoading || (socialLoading && activeMethod === "form")}
+          >
+            {formLoading || (socialLoading && activeMethod === "form") ? (
               <>
                 <Spin size="small" />{" "}
                 {isRegister ? "Registering..." : "Logging in..."}
@@ -158,28 +192,39 @@ export default function Login() {
           </Button>
         </Form>
 
+        {/* Divider */}
         <Divider>or</Divider>
 
+        {/* Social Buttons */}
         <Space direction="vertical" style={{ width: "100%" }}>
           <Button
             icon={<GoogleOutlined />}
             block
             onClick={() => handleSocialLogin(googleProvider)}
-            disabled={socialLoading}
+            disabled={socialLoading && activeMethod === "google"}
           >
-            {socialLoading ? <Spin size="small" /> : "Continue with Google"}
+            {socialLoading && activeMethod === "google" ? (
+              <Spin size="small" />
+            ) : (
+              "Continue with Google"
+            )}
           </Button>
 
           <Button
             icon={<GithubOutlined />}
             block
             onClick={() => handleSocialLogin(githubProvider)}
-            disabled={socialLoading}
+            disabled={socialLoading && activeMethod === "github"}
           >
-            {socialLoading ? <Spin size="small" /> : "Continue with GitHub"}
+            {socialLoading && activeMethod === "github" ? (
+              <Spin size="small" />
+            ) : (
+              "Continue with GitHub"
+            )}
           </Button>
         </Space>
 
+        {/* Toggle Login/Register */}
         <div style={{ textAlign: "center" }}>
           <Button type="link" onClick={() => setIsRegister(!isRegister)}>
             {isRegister

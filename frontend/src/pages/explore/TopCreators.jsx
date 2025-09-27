@@ -1,8 +1,15 @@
-import { Typography, Avatar, Button, Grid } from "antd";
+// --- Libraries ---
+import { Typography, Avatar, Button, Grid, Spin, Result } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+
+// --- Routing ---
 import { Link } from "react-router-dom";
-import { useListUsersQuery } from "../../redux/user/userApi";
+
+// --- Redux ---
 import { useSelector } from "react-redux";
+import { useListUsersQuery } from "../../redux/user/userApi";
+
+// --- Components ---
 import FollowButton from "../../components/FollowButton";
 import ReusableCarousel from "../../components/ReusableCarousel";
 
@@ -10,17 +17,37 @@ const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
 export default function TopCreators() {
+  // --- API query ---
   const { data, isLoading, isError } = useListUsersQuery();
   const users = data?.users || [];
+
+  // --- Redux state ---
   const currentUser = useSelector((state) => state.auth.user);
+
+  // --- Responsive breakpoints ---
   const screens = useBreakpoint();
-
-  if (isLoading) return <p>Loading creators...</p>;
-  if (isError) return <p>Failed to load creators.</p>;
-
   const avatarSize = screens.md ? 100 : 70;
   const fontSize = screens.md ? "16px" : "14px";
   const coverHeight = 80;
+
+  // --- Loading / Error states ---
+  if (isLoading) {
+    return (
+      <div style={{ textAlign: "center", padding: "40px 0" }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Result
+        status="error"
+        title="Failed to load creators"
+        subTitle="Something went wrong while fetching creators. Please try again later."
+      />
+    );
+  }
 
   return (
     <div style={{ margin: "20px 0" }}>
@@ -29,9 +56,9 @@ export default function TopCreators() {
       <ReusableCarousel>
         {users.map((user) => {
           const isOwner = currentUser && currentUser._id === user._id;
-          const isFollowingUser =
-            currentUser &&
-            currentUser.following?.some((f) => f._id === user._id);
+          const isFollowingUser = currentUser?.following?.some(
+            (f) => f._id === user._id
+          );
 
           return (
             <div key={user._id} style={{ padding: "8px 16px 8px 4px" }}>
@@ -57,7 +84,7 @@ export default function TopCreators() {
                     width: "100%",
                   }}
                 >
-                  {/* Cover */}
+                  {/* Cover image or fallback gradient */}
                   <div
                     style={{
                       width: "100%",
@@ -69,7 +96,7 @@ export default function TopCreators() {
                       position: "relative",
                     }}
                   >
-                    {/* Avatar */}
+                    {/* Avatar overlay */}
                     <Avatar
                       size={avatarSize}
                       src={
@@ -104,7 +131,7 @@ export default function TopCreators() {
                       maxWidth: "160px",
                       marginInline: "auto",
                       fontSize,
-                      marginTop: avatarSize / 2 + 12, // push below avatar
+                      marginTop: avatarSize / 2 + 12,
                     }}
                     title={user.username}
                   >
@@ -112,7 +139,7 @@ export default function TopCreators() {
                   </h3>
                 </Link>
 
-                {/* Buttons + followers stay outside Link so they don’t trigger navigation */}
+                {/* Follow/Unfollow button (outside Link) */}
                 {!isOwner ? (
                   <FollowButton
                     userId={user._id}
@@ -124,6 +151,7 @@ export default function TopCreators() {
                   </Button>
                 )}
 
+                {/* Followers count */}
                 <p
                   style={{
                     marginTop: "8px",

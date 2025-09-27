@@ -3,9 +3,35 @@ import { baseURL } from "../../utils/baseURL";
 import { auth } from "../../firebase";
 import { postApi } from "../post/postApi";
 
+function updateFeedCaches(postApi, dispatch, queries, postId, updater) {
+  Object.entries(queries).forEach(([cacheKey, entry]) => {
+    if (
+      (cacheKey.startsWith("getPosts") || cacheKey.startsWith("getUserFeed")) &&
+      entry.originalArgs
+    ) {
+      dispatch(
+        postApi.util.updateQueryData(
+          cacheKey.split("(")[0],
+          entry.originalArgs,
+          (draft) => {
+            const collection = draft.posts || draft.feed;
+            if (!collection) {
+              return;
+            }
+
+            const idx = collection.findIndex((p) => p._id === postId);
+            if (idx !== -1) {
+              updater(collection[idx]);
+            }
+          }
+        )
+      );
+    }
+  });
+}
+
 // Comment API slice (RTK Query)
 // Handles fetching, creating, updating, and deleting comments
-
 export const commentApi = createApi({
   reducerPath: "commentApi",
   baseQuery: fetchBaseQuery({
@@ -63,26 +89,10 @@ export const commentApi = createApi({
               })
             );
 
-            // Update all cached getPosts queries
-            Object.entries(queries).forEach(([cacheKey, entry]) => {
-              if (cacheKey.startsWith("getPosts") && entry.originalArgs) {
-                dispatch(
-                  postApi.util.updateQueryData(
-                    "getPosts",
-                    entry.originalArgs,
-                    (draft) => {
-                      const idx = draft.posts?.findIndex(
-                        (p) => p._id === postId
-                      );
-                      if (idx !== -1) {
-                        if (!draft.posts[idx].comments)
-                          draft.posts[idx].comments = [];
-                        draft.posts[idx].comments.push(data.comment._id);
-                      }
-                    }
-                  )
-                );
-              }
+            // Update all cached getPosts + getUserFeed queries
+            updateFeedCaches(postApi, dispatch, queries, postId, (post) => {
+              if (!post.comments) post.comments = [];
+              post.comments.push(data.comment._id);
             });
           }
         } catch (err) {
@@ -129,9 +139,14 @@ export const commentApi = createApi({
         url: `/${id}`,
         method: "DELETE",
       }),
-      async onQueryStarted({ id, postId }, { dispatch, queryFulfilled }) {
+      async onQueryStarted(
+        { id, postId },
+        { dispatch, queryFulfilled, getState }
+      ) {
         try {
           await queryFulfilled;
+          const state = getState();
+          const queries = state.postApi.queries;
 
           if (postId) {
             // Remove from cached comments list
@@ -145,14 +160,19 @@ export const commentApi = createApi({
               )
             );
 
-            // Update Post cache
+            // Update single post cache
             dispatch(
               postApi.util.updateQueryData("getPostById", postId, (draft) => {
                 draft.post.comments = draft.post.comments.filter(
-                  (c) => c._id !== id
+                  (c) => c !== id
                 );
               })
             );
+
+            // Update all cached getPosts + getUserFeed queries
+            updateFeedCaches(postApi, dispatch, queries, postId, (post) => {
+              post.comments = post.comments.filter((c) => c !== id);
+            });
           }
         } catch (err) {
           console.error("Delete comment cache update failed:", err);

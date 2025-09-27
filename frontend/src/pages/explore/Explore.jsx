@@ -1,13 +1,20 @@
 import { useState, useEffect } from "react";
+
+// --- Routing ---
 import { useParams } from "react-router-dom";
+
+// --- Libraries ---
 import { Layout, Drawer, Button, Grid } from "antd";
 import { MenuUnfoldOutlined } from "@ant-design/icons";
 
+// --- Components ---
 import Sidebar from "./Sidebar";
 import Feed from "./Feed";
 import SearchBar from "../../components/SearchBar";
-import useSearchHandler from "../../hooks/useSearchHandler";
 import Footer from "../../components/Footer";
+
+// --- Hooks ---
+import useSearchHandler from "../../hooks/useSearchHandler";
 
 const { Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -15,16 +22,20 @@ const { useBreakpoint } = Grid;
 export default function Explore() {
   const { category } = useParams();
 
+  // --- State ---
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState([]);
 
+  // Breakpoint detection (AntD Grid hook)
   const screens = useBreakpoint();
   const isSmallScreen = !screens.sm;
 
+  // Search handler hook
   const { inputValue, setInputValue, searchQuery, handleSearch } =
     useSearchHandler();
 
+  // --- Effect: update categories when URL param changes ---
   useEffect(() => {
     if (category) {
       setSelectedCategories([category]);
@@ -35,6 +46,7 @@ export default function Explore() {
 
   return (
     <Layout style={{ minHeight: "calc(100vh - 64px)" }}>
+      {/* --- Sidebar (desktop/tablet) --- */}
       <Sider
         width={200}
         breakpoint="sm"
@@ -71,7 +83,7 @@ export default function Explore() {
         <div
           style={{
             position: "sticky",
-            top: 80 + 400 + 16,
+            top: 80 + 400 + 16, // push below sidebar
             marginTop: 16,
             borderRadius: "12px",
             boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
@@ -82,6 +94,7 @@ export default function Explore() {
         </div>
       </Sider>
 
+      {/* --- Drawer (mobile only) --- */}
       <Drawer
         title="Categories"
         placement="left"
@@ -96,7 +109,7 @@ export default function Explore() {
           },
         }}
       >
-        {/* Sidebar (scrollable area) */}
+        {/* Sidebar */}
         <div style={{ flex: 1, overflowY: "auto" }}>
           <Sidebar
             selectedCategories={selectedCategories}
@@ -105,14 +118,15 @@ export default function Explore() {
           />
         </div>
 
-        {/* Footer (always at bottom) */}
+        {/* Footer */}
         <div style={{ borderTop: "1px solid #f0f0f0" }}>
           <Footer />
         </div>
       </Drawer>
 
+      {/* --- Main Content Area --- */}
       <Layout style={{ flex: 1 }}>
-        {/* Header row only on small screens */}
+        {/* Header row (only small screens) */}
         {isSmallScreen && (
           <div
             style={{
@@ -127,6 +141,7 @@ export default function Explore() {
               gap: "12px",
             }}
           >
+            {/* Drawer toggle button */}
             {isMobile && (
               <Button
                 type="text"
@@ -136,6 +151,7 @@ export default function Explore() {
               />
             )}
 
+            {/* Search bar */}
             <div style={{ flex: 1 }}>
               <SearchBar
                 value={inputValue}
@@ -146,6 +162,7 @@ export default function Explore() {
           </div>
         )}
 
+        {/* Feed */}
         <Content
           style={{
             background: "#fafafa",

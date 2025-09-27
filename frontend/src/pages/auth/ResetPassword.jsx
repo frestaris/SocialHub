@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
-import { Form, Input, Button, Typography, Spin, Result } from "antd";
+
+// --- Routing ---
 import { useNavigate, useSearchParams } from "react-router-dom";
+
+// --- Firebase ---
 import { auth } from "../../firebase";
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
+
+// --- UI Libraries ---
+import { Form, Input, Button, Typography, Spin, Result } from "antd";
+
+// --- Utils ---
 import { handleSuccess, handleError } from "../../utils/handleMessage";
 
 const { Title } = Typography;
@@ -12,9 +20,11 @@ export default function ResetPassword() {
   const [searchParams] = useSearchParams();
   const oobCode = searchParams.get("oobCode");
 
+  // Local state
   const [isLoading, setIsLoading] = useState(false);
   const [validCode, setValidCode] = useState(false);
 
+  // --- Verify code on mount ---
   useEffect(() => {
     if (oobCode) {
       verifyPasswordResetCode(auth, oobCode)
@@ -25,6 +35,7 @@ export default function ResetPassword() {
     }
   }, [oobCode]);
 
+  // --- Handle form submit ---
   const handleFinish = async (values) => {
     setIsLoading(true);
     try {
@@ -38,6 +49,7 @@ export default function ResetPassword() {
     }
   };
 
+  // --- Guard: missing reset code ---
   if (!oobCode) {
     return (
       <Result
@@ -48,6 +60,7 @@ export default function ResetPassword() {
     );
   }
 
+  // --- Guard: invalid or expired code ---
   if (!validCode) {
     return (
       <Result
@@ -58,6 +71,7 @@ export default function ResetPassword() {
     );
   }
 
+  // --- Main UI ---
   return (
     <div
       style={{
@@ -80,10 +94,12 @@ export default function ResetPassword() {
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
+        {/* Title */}
         <Title level={3} style={{ textAlign: "center" }}>
           Reset Password
         </Title>
 
+        {/* Reset Form */}
         <Form layout="vertical" onFinish={handleFinish}>
           <Form.Item
             label="New Password"

@@ -1,17 +1,28 @@
+// --- Ant Design ---
 import { Modal, Grid } from "antd";
-import PostForm from "./PostForm";
-import { useCreatePostMutation } from "../../redux/post/postApi";
+
+// --- React Router ---
 import { useNavigate } from "react-router-dom";
+
+// --- Redux ---
+import { useCreatePostMutation } from "../../redux/post/postApi";
+
+// --- Components ---
+import PostForm from "./PostForm";
+
+// --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";
 
 const { useBreakpoint } = Grid;
 
 export default function Upload({ open, onClose }) {
+  // --- Hooks ---
   const [createPost, { isLoading }] = useCreatePostMutation();
   const navigate = useNavigate();
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
 
+  // --- Handlers ---
   const handleCreatePost = async (data) => {
     try {
       await createPost(data).unwrap();
@@ -24,6 +35,7 @@ export default function Upload({ open, onClose }) {
     }
   };
 
+  // --- Render ---
   return (
     <Modal
       open={open}

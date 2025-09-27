@@ -1,32 +1,45 @@
+import { useState } from "react";
+
+// --- React Router ---
 import { useParams } from "react-router-dom";
+
+// --- Ant Design ---
 import { Row, Col, Spin, Result } from "antd";
+
+// --- Redux ---
+import { useSelector } from "react-redux";
 import { useGetUserByIdQuery } from "../../../redux/user/userApi";
 import { useGetUserFeedQuery } from "../../../redux/post/postApi";
+
+// --- Components ---
 import ProfileInfo from "./ProfileInfo";
 import UserFollowers from "./UserFollowers";
 import UserFeed from "./UserFeed";
-import { useState } from "react";
-import { useSelector } from "react-redux";
 import Footer from "../../../components/Footer";
 
 export default function Profile() {
+  // --- Routing ---
   const { id } = useParams();
+
+  // --- Queries ---
   const {
     data: userData,
     isLoading: userLoading,
     isFetching,
   } = useGetUserByIdQuery(id);
   const user = userData?.user;
+
   const { user: currentUser } = useSelector((state) => state.auth);
+
   const [sortBy] = useState("newest");
 
   const { data: feedData, isLoading: isLoadingFeed } = useGetUserFeedQuery({
     userId: id,
     sort: sortBy,
   });
-
   const feed = feedData?.feed || [];
 
+  // --- Loading state (user info) ---
   if (userLoading || isFetching) {
     return (
       <div
@@ -43,6 +56,7 @@ export default function Profile() {
     );
   }
 
+  // --- Error/empty user state ---
   if (!user) {
     return (
       <div
@@ -63,6 +77,7 @@ export default function Profile() {
     );
   }
 
+  // --- Render ---
   return (
     <div
       style={{
@@ -72,12 +87,13 @@ export default function Profile() {
       }}
     >
       <Row gutter={[24, 24]}>
-        {/* Left column */}
+        {/* Left column (sidebar) */}
         <Col xs={24} md={8}>
           <div style={{ position: "sticky", top: 90 }}>
             <div className="fade-slide-in">
               <ProfileInfo user={user} />
               <UserFollowers followers={user.followers} />
+
               {/* Footer card */}
               <div
                 style={{
@@ -88,12 +104,12 @@ export default function Profile() {
                 }}
               >
                 <Footer />
-              </div>{" "}
+              </div>
             </div>
           </div>
         </Col>
 
-        {/* Right column */}
+        {/* Right column (feed) */}
         <Col xs={24} md={16}>
           <div className="fade-slide-in">
             <UserFeed

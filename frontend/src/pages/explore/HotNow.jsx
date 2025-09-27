@@ -1,50 +1,68 @@
-import { Typography, Modal, Grid } from "antd";
-import { useSelector } from "react-redux";
 import { useState } from "react";
+
+// --- Redux ---
+import { useSelector } from "react-redux";
 import {
   useGetPostsQuery,
   useUpdatePostMutation,
   useDeletePostMutation,
 } from "../../redux/post/postApi";
+
+// --- Libraries ---
+import { Typography, Modal, Grid } from "antd";
+
+// --- Components ---
 import ReusableCarousel from "../../components/ReusableCarousel";
 import EditPostForm from "../user/profile/EditPostForm";
-import { handleError, handleSuccess } from "../../utils/handleMessage";
 import PostCard from "../../components/PostCard";
+
+// --- Utils ---
+import { handleError, handleSuccess } from "../../utils/handleMessage";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
 export default function HotNow() {
+  // --- Fetch trending posts ---
   const { data, isLoading } = useGetPostsQuery({
     sort: "trending",
     limit: 8,
   });
 
+  // --- Breakpoints ---
   const screens = useBreakpoint();
   const isSmall = !screens.md;
+
+  // --- Deduplicate posts by ID ---
   const posts = (data?.posts || []).filter(
     (p, i, arr) => arr.findIndex((x) => x._id === p._id) === i
   );
 
+  // --- Redux state ---
   const currentUser = useSelector((state) => state.auth.user);
 
-  // 🔹 state for edit/delete modals
+  // --- Local state for modals ---
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
 
+  // --- Mutations ---
   const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
   const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
 
+  // --- Loading/empty guard ---
   if (isLoading || posts.length === 0) return null;
 
+  // --- Delete confirm handler ---
   const handleDeleteConfirm = async () => {
     try {
       if (!deletingPost) return;
+
       await deletePost({
         id: deletingPost._id,
         userId: deletingPost.userId?._id,
         sort: "trending",
       }).unwrap();
+
       handleSuccess("Post deleted!");
       setDeletingPost(null);
     } catch (err) {
@@ -55,9 +73,10 @@ export default function HotNow() {
 
   return (
     <div>
+      {/* Section Title */}
       <Title level={2}>Hot Now</Title>
 
-      {/* wrapper to cancel half-gutters so it aligns with Feed */}
+      {/* Carousel wrapper (gutters aligned with Feed) */}
       <div style={{ marginLeft: -8, marginRight: -8 }}>
         <ReusableCarousel
           slidesToShow={{
