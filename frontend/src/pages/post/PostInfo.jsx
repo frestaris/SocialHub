@@ -16,7 +16,7 @@ import { useSelector } from "react-redux";
 // --- Components ---
 import VideoPlayer from "./VideoPlayer";
 import FollowButton from "../../components/FollowButton";
-import PostActions from "../../components/PostActions";
+import PostActions from "../../components/post/PostActions";
 
 const { Text, Paragraph, Title } = Typography;
 

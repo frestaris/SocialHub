@@ -11,6 +11,8 @@ import { useSelector } from "react-redux";
 import SettingsModal from "../settings/SettingsModal";
 import Upload from "../../../components/post/Upload";
 import FollowButton from "../../../components/FollowButton";
+import CoverEdit from "./CoverEdit";
+import AvatarEdit from "./AvatarEdit";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -26,6 +28,7 @@ export default function ProfileInfo({ user }) {
 
   // --- Bio expand/collapse ---
   const [expanded, setExpanded] = useState(false);
+  const [avatarProgress, setAvatarProgress] = useState(0);
   const bioRef = useRef(null);
 
   const isFollowingUser = useMemo(() => {
@@ -43,7 +46,7 @@ export default function ProfileInfo({ user }) {
           boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           position: "relative",
           padding: 0,
-          height: 400,
+          maxHeight: 400,
           overflowY: "auto",
         }}
         styles={{ body: { padding: 0 } }}
@@ -73,12 +76,15 @@ export default function ProfileInfo({ user }) {
             />
           )}
 
+          {/* Cover Editor for owner */}
+          <CoverEdit cover={user?.cover} isOwner={isOwner} />
+
           {/* Settings button (owner only) */}
           {isOwner && (
             <Button
               type="text"
               shape="circle"
-              icon={<SettingOutlined style={{ fontSize: 20, color: "#fff" }} />}
+              icon={<SettingOutlined style={{ fontSize: 22, color: "#fff" }} />}
               onClick={() => setIsSettingsModalOpen(true)}
               onMouseEnter={() => setHover(true)}
               onMouseLeave={() => setHover(false)}
@@ -92,7 +98,7 @@ export default function ProfileInfo({ user }) {
                 alignItems: "center",
                 justifyContent: "center",
                 border: "none",
-                background: hover ? "rgba(255,255,255,0.15)" : "transparent",
+                background: hover ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.6)",
                 transition: "background 0.2s ease",
               }}
             />
@@ -105,23 +111,59 @@ export default function ProfileInfo({ user }) {
             textAlign: "center",
             marginTop: -48,
             padding: "0 16px 16px",
+            position: "relative",
           }}
         >
-          <Avatar
-            src={user.avatar && user.avatar.trim() !== "" ? user.avatar : null}
-            icon={
-              !user.avatar || user.avatar.trim() === "" ? (
-                <UserOutlined />
-              ) : null
-            }
-            size={96}
-            style={{
-              border: "3px solid #fff",
-              background: "#cecece",
-            }}
-          >
-            {!user?.avatar && user?.username?.[0]}
-          </Avatar>
+          <div style={{ position: "relative", display: "inline-block" }}>
+            {/* Avatar */}
+            <Avatar
+              src={
+                user.avatar && user.avatar.trim() !== "" ? user.avatar : null
+              }
+              icon={
+                !user.avatar || user.avatar.trim() === "" ? (
+                  <UserOutlined />
+                ) : null
+              }
+              size={96}
+              style={{
+                border: "3px solid #fff",
+                background: "#cecece",
+              }}
+            />
+
+            {/* Overlay progress text */}
+            {(avatarProgress > 0 && avatarProgress < 100) ||
+            avatarProgress === 100 ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  color: "#fff",
+                  fontWeight: "bold",
+                  background: "rgba(0,0,0,0.5)",
+                  padding: "2px 6px",
+                  borderRadius: "8px",
+                  fontSize: 14,
+                }}
+              >
+                {avatarProgress > 0 && avatarProgress < 100
+                  ? `${Math.round(avatarProgress)}%`
+                  : "Finalizing..."}
+              </div>
+            ) : null}
+
+            {/* Camera / edit button */}
+            <AvatarEdit
+              avatar={user?.avatar}
+              isOwner={isOwner}
+              onProgress={(p) => {
+                setAvatarProgress(p);
+              }}
+            />
+          </div>
 
           <Title level={3} style={{ marginTop: 8 }}>
             {user?.username}
@@ -139,13 +181,7 @@ export default function ProfileInfo({ user }) {
                   transition: "max-height 0.5s ease",
                 }}
               >
-                <Paragraph
-                  style={{
-                    whiteSpace: "pre-line",
-                  }}
-                >
-                  {bio}
-                </Paragraph>
+                <Paragraph style={{ whiteSpace: "pre-line" }}>{bio}</Paragraph>
               </div>
 
               {bio.length > 120 && (

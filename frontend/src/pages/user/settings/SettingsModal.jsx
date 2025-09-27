@@ -28,7 +28,6 @@ import { useNavigate } from "react-router-dom";
 import ProfileInfoForm from "./ProfileInfoForm";
 
 // --- Utils ---
-import { uploadToFirebase } from "../../../utils/uploadToFirebase";
 import { handleError, handleSuccess } from "../../../utils/handleMessage";
 
 export default function SettingsModal({ open, onClose, user }) {
@@ -41,8 +40,6 @@ export default function SettingsModal({ open, onClose, user }) {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [isChanged, setIsChanged] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
-  const [avatarProgress, setAvatarProgress] = useState(0);
-  const [coverProgress, setCoverProgress] = useState(0);
 
   // --- Redux hooks ---
   const [updateUser] = useUpdateUserMutation();
@@ -57,15 +54,13 @@ export default function SettingsModal({ open, onClose, user }) {
     () => ({
       username: user?.username || "",
       bio: user?.bio || "",
-      avatar: user?.avatar || "",
-      cover: user?.cover || "",
       password: "",
       newPassword: "",
     }),
     [user]
   );
 
-  //Detect if user has password set (email/password provider)
+  // Detect if user has password set (email/password provider)
   useEffect(() => {
     if (auth.currentUser) {
       const pw = auth.currentUser.providerData.some(
@@ -75,7 +70,7 @@ export default function SettingsModal({ open, onClose, user }) {
     }
   }, []);
 
-  //Reset form values when modal opens
+  // Reset form values when modal opens
   useEffect(() => {
     if (open) {
       form.setFieldsValue(initialValues);
@@ -119,7 +114,7 @@ export default function SettingsModal({ open, onClose, user }) {
     }
   };
 
-  // Save profile changes (username, bio, avatar, cover, password)
+  // Save profile changes (username, bio, password)
   const handleSave = async (values) => {
     setSaving(true);
     try {
@@ -131,11 +126,9 @@ export default function SettingsModal({ open, onClose, user }) {
         );
         await linkWithCredential(auth.currentUser, credential);
         setHasPassword(true);
-        handleSuccess("Password has been added successfully!");
       } else if (hasPassword && values.newPassword) {
         try {
           await updatePassword(auth.currentUser, values.newPassword);
-          handleSuccess("Password updated successfully!");
         } catch (err) {
           if (err.code === "auth/requires-recent-login") {
             handleError(
@@ -146,46 +139,10 @@ export default function SettingsModal({ open, onClose, user }) {
         }
       }
 
-      // --- Handle avatar (upload or keep URL) ---
-      let avatarUrl = values.avatar;
-      if (values.avatarFile?.[0]?.originFileObj) {
-        const file = values.avatarFile[0].originFileObj;
-        if (file.size / 1024 / 1024 > 4) {
-          handleError({ message: "Avatar must be smaller than 4MB!" });
-          setSaving(false);
-          return;
-        }
-        avatarUrl = await uploadToFirebase(
-          file,
-          auth.currentUser.uid,
-          (progress) => setAvatarProgress(progress),
-          "avatars"
-        );
-      }
-
-      // --- Handle cover (upload or keep URL) ---
-      let coverUrl = values.cover;
-      if (values.coverFile?.[0]?.originFileObj) {
-        const file = values.coverFile[0].originFileObj;
-        if (file.size / 1024 / 1024 > 4) {
-          handleError({ message: "Cover must be smaller than 4MB!" });
-          setSaving(false);
-          return;
-        }
-        coverUrl = await uploadToFirebase(
-          file,
-          auth.currentUser.uid,
-          (progress) => setCoverProgress(progress),
-          "covers"
-        );
-      }
-
       // --- Update user in backend ---
       await updateUser({
         username: values.username,
         bio: values.bio,
-        avatar: avatarUrl,
-        cover: coverUrl,
       }).unwrap();
 
       handleSuccess("Profile updated successfully");
@@ -236,54 +193,10 @@ export default function SettingsModal({ open, onClose, user }) {
           onFinish={handleSave}
           onValuesChange={handleValuesChange}
         >
-          <ProfileInfoForm />
-
-          <Divider />
-
-          {/* Password section */}
-          {!hasPassword ? (
-            <Form.Item
-              label="Set Password"
-              name="password"
-              rules={[
-                {
-                  validator: (_, value) => {
-                    if (!value) return Promise.resolve();
-                    if (value.length < 6) {
-                      return Promise.reject(
-                        new Error("Password must be at least 6 characters")
-                      );
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
-            >
-              <Input.Password placeholder="Leave empty if you don’t want to set a password yet" />
-            </Form.Item>
-          ) : (
-            <Form.Item
-              label="New Password"
-              name="newPassword"
-              rules={[
-                {
-                  validator: (_, value) => {
-                    if (!value) return Promise.resolve();
-                    if (value.length < 6) {
-                      return Promise.reject(
-                        new Error("Password must be at least 6 characters")
-                      );
-                    }
-                    return Promise.resolve();
-                  },
-                },
-              ]}
-            >
-              <Input.Password placeholder="Leave empty if you don’t want to change it" />
-            </Form.Item>
-          )}
+          <ProfileInfoForm hasPassword={hasPassword} />
 
           <Divider>Linked Accounts</Divider>
+
           <Space direction="vertical" style={{ width: "100%" }}>
             <Button
               icon={<GoogleOutlined />}
@@ -320,13 +233,7 @@ export default function SettingsModal({ open, onClose, user }) {
               {saving ? (
                 <>
                   <Spin size="small" style={{ marginRight: 8 }} />
-                  {avatarProgress > 0 && avatarProgress < 100
-                    ? `Saving... ${Math.round(avatarProgress)}%`
-                    : coverProgress > 0 && coverProgress < 100
-                    ? `Saving... ${Math.round(coverProgress)}%`
-                    : avatarProgress === 100 || coverProgress === 100
-                    ? "Finalizing..."
-                    : "Saving..."}
+                  Saving...
                 </>
               ) : (
                 "Save"
