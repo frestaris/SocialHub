@@ -1,30 +1,5 @@
 import { useState, useRef } from "react";
-
-// --- Libraries ---
-import {
-  List,
-  Avatar,
-  Input,
-  Button,
-  Typography,
-  Dropdown,
-  Empty,
-  Modal,
-  Spin,
-} from "antd";
-import {
-  UserOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  MoreOutlined,
-  DownOutlined,
-  UpOutlined,
-} from "@ant-design/icons";
-
-// --- Routing ---
-import { Link } from "react-router-dom";
-
-// --- Redux ---
+import { List, Input, Button, Empty, Spin } from "antd";
 import { useSelector } from "react-redux";
 import {
   useGetCommentsByPostQuery,
@@ -32,36 +7,33 @@ import {
   useUpdateCommentMutation,
   useDeleteCommentMutation,
 } from "../../redux/comment/commentApi";
-
-// --- Utils ---
 import {
   handleError,
   handleSuccess,
   handleWarning,
 } from "../../utils/handleMessage";
+import CommentItem from "./CommentItem";
 
-// --- Libraries ---
-import moment from "moment";
-import PostDropdown from "../../components/post/PostDropdown";
-
-const { Text } = Typography;
-
+/**
+ * CommentsSection:
+ * - Lists comments for a post (query)
+ * - Allows create, edit, delete (mutations)
+ * - Supports expand/collapse and pagination (Show More)
+ */
 export default function CommentsSection({ postId }) {
-  // --- Redux state ---
-  const currentUser = useSelector((state) => state.auth.user);
-  const currentUserId = currentUser?._id;
-
   // --- Local state ---
   const [content, setContent] = useState("");
   const [editingComment, setEditingComment] = useState(null);
   const [visibleCount, setVisibleCount] = useState(3);
-  const [error, setError] = useState(false);
+  const [expanded, setExpanded] = useState({});
   const [deletingId, setDeletingId] = useState(null);
-  const [expandedComments, setExpandedComments] = useState({});
+  const [error, setError] = useState(false);
 
-  // --- API queries/mutations ---
-  const { data, isLoading: isLoadingComments } =
-    useGetCommentsByPostQuery(postId);
+  // --- Redux ---
+  const currentUser = useSelector((s) => s.auth.user);
+
+  // --- API ---
+  const { data, isLoading } = useGetCommentsByPostQuery(postId);
   const [createComment, { isLoading: isPosting }] = useCreateCommentMutation();
   const [updateComment, { isLoading: isUpdating }] = useUpdateCommentMutation();
   const [deleteComment] = useDeleteCommentMutation();
@@ -69,88 +41,37 @@ export default function CommentsSection({ postId }) {
   const textareaRef = useRef(null);
   const comments = data?.comments || [];
 
-  // --- Derived state ---
+  // --- Derived ---
   const isUnchanged =
     editingComment && content.trim() === editingComment.content.trim();
 
-  // --- Expand/collapse toggle ---
-  const toggleExpanded = (id) => {
-    setExpandedComments((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
+  // --- Handlers ---
+  const toggleExpanded = (id) =>
+    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  // --- Submit new comment ---
   const handleSubmit = async () => {
-    if (!currentUser) {
-      handleWarning("Login Required", "Please log in to comment.");
-      return;
-    }
+    if (!currentUser)
+      return handleWarning("Login Required", "Please log in to comment.");
     if (!content.trim()) {
       setError(true);
       handleError({ message: "Comment cannot be empty." }, "Empty Comment");
       return;
     }
     try {
-      await createComment({ postId, content }).unwrap();
-      handleSuccess("Your comment has been posted successfully.");
+      if (editingComment) {
+        await updateComment({
+          id: editingComment._id,
+          content: content.trim(),
+        }).unwrap();
+        handleSuccess("Comment updated!");
+        setEditingComment(null);
+      } else {
+        await createComment({ postId, content: content.trim() }).unwrap();
+        handleSuccess("Comment added!");
+      }
       setContent("");
     } catch (err) {
-      handleError(err, "Failed to add comment");
-    }
-  };
-
-  // --- Enter edit mode ---
-  const handleEdit = (item) => {
-    setEditingComment(item);
-    setContent(item.content);
-
-    // focus textarea after short delay
-    setTimeout(() => {
-      const el = textareaRef.current?.resizableTextArea?.textArea;
-      if (el) el.focus({ preventScroll: true });
-    }, 100);
-  };
-
-  // --- Update comment ---
-  const handleUpdate = async () => {
-    if (!editingComment) return;
-
-    // Empty → ask to delete instead
-    if (!content.trim()) {
-      Modal.confirm({
-        title: "Delete Comment?",
-        content: "The comment is empty. Do you want to delete it instead?",
-        okText: "Yes, delete",
-        okType: "danger",
-        cancelText: "Cancel",
-        onOk: async () => {
-          try {
-            setDeletingId(editingComment._id);
-            await deleteComment({ id: editingComment._id, postId }).unwrap();
-            handleSuccess("Comment Deleted");
-            setEditingComment(null);
-            setContent("");
-            setError(false);
-          } catch (err) {
-            handleError(err, "Delete Failed");
-          } finally {
-            setDeletingId(null);
-          }
-        },
-      });
-      return;
-    }
-
-    try {
-      await updateComment({ id: editingComment._id, postId, content }).unwrap();
-      handleSuccess("Comment Updated");
-      setEditingComment(null);
-      setContent("");
-      setError(false);
-    } catch (err) {
-      handleError(err, "Update Failed");
+      handleError(err, "Failed to save comment");
     }
   };
 
@@ -167,178 +88,78 @@ export default function CommentsSection({ postId }) {
     }
   };
 
+  // --- Render ---
+  if (isLoading) return <Spin />;
+
   return (
     <div>
-      {/* Input */}
+      <List
+        dataSource={comments.slice(0, visibleCount)}
+        locale={{ emptyText: <Empty description="No comments yet" /> }}
+        renderItem={(item) => (
+          <CommentItem
+            key={item._id}
+            item={item}
+            isOwner={currentUser?._id === item.userId?._id}
+            expanded={expanded[item._id]}
+            onToggleExpanded={() => toggleExpanded(item._id)}
+            onEdit={(c) => {
+              setEditingComment(c);
+              setContent(c.content);
+              textareaRef.current?.focus();
+            }}
+            onDelete={(id) => handleDelete(id, postId)}
+            deleting={deletingId === item._id}
+          />
+        )}
+      />
+
+      {comments.length > visibleCount && (
+        <Button
+          type="link"
+          onClick={() => setVisibleCount((c) => c + 3)}
+          style={{ marginTop: 8 }}
+        >
+          Show more
+        </Button>
+      )}
+
       <Input.TextArea
         ref={textareaRef}
-        rows={3}
-        placeholder={
-          editingComment ? "Edit your comment..." : "Add a comment..."
-        }
         value={content}
         onChange={(e) => {
           setContent(e.target.value);
-          if (error && e.target.value.trim()) setError(false);
+          setError(false);
         }}
-        style={{ marginBottom: 12, borderColor: error ? "red" : undefined }}
+        placeholder={
+          editingComment ? "Edit your comment..." : "Write a comment..."
+        }
+        autoSize={{ minRows: 2, maxRows: 4 }}
+        status={error ? "error" : ""}
+        style={{ marginTop: 12 }}
       />
-      <Button
-        type="primary"
-        onClick={editingComment ? handleUpdate : handleSubmit}
-        loading={isPosting || isUpdating}
-        disabled={!currentUser || isUnchanged}
-      >
-        {editingComment ? "Update Comment" : "Comment"}
-      </Button>
 
-      {/* Loading Spinner */}
-      {isLoadingComments && (
-        <div style={{ textAlign: "center", marginTop: 16 }}>
-          <Spin />
-        </div>
-      )}
-
-      {/* Comment List */}
-      <List itemLayout="horizontal" style={{ marginTop: 16 }}>
-        {comments.slice(0, visibleCount).map((item) => (
-          <div key={item._id} className="fade-slide-in">
-            <List.Item>
-              <List.Item.Meta
-                avatar={
-                  <Avatar
-                    src={
-                      item.userId?.avatar && item.userId.avatar.trim() !== ""
-                        ? item.userId.avatar
-                        : null
-                    }
-                    icon={<UserOutlined />}
-                  />
-                }
-                title={
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    {/* Left: name + timestamp */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        minWidth: 0, // lets name shrink
-                      }}
-                    >
-                      <Link
-                        to={`/profile/${item.userId?._id}`}
-                        style={{
-                          maxWidth: 120,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          display: "inline-block",
-                        }}
-                      >
-                        <Text style={{ color: "#1677ff" }} strong>
-                          {item.userId?.username}
-                        </Text>
-                      </Link>
-
-                      <Text
-                        type="secondary"
-                        style={{ fontSize: 12, whiteSpace: "nowrap" }}
-                      >
-                        {moment(item.createdAt).fromNow()}
-                        {item.edited && (
-                          <span style={{ marginLeft: 6 }}>(edited)</span>
-                        )}
-                      </Text>
-                    </div>
-
-                    {/* Right: action menu (only for owner) */}
-                    {currentUserId === item.userId?._id && (
-                      <PostDropdown
-                        item={item}
-                        onEdit={() => handleEdit(item)}
-                        onDelete={() => handleDelete(item._id)}
-                        size="small"
-                        loading={deletingId === item._id}
-                      />
-                    )}
-                  </div>
-                }
-                description={
-                  <>
-                    {/* Content (collapsible) */}
-                    <div
-                      style={{
-                        maxHeight: expandedComments[item._id]
-                          ? "500px"
-                          : "40px",
-                        overflow: "hidden",
-                        transition: "max-height 0.5s ease",
-                      }}
-                    >
-                      <Typography.Paragraph
-                        type="secondary"
-                        style={{ marginBottom: 0 }}
-                      >
-                        {item.content}
-                      </Typography.Paragraph>
-                    </div>
-
-                    {/* Toggle expand button */}
-                    {item.content.length > 120 && (
-                      <Button
-                        type="link"
-                        style={{ padding: 0, fontSize: 12 }}
-                        onClick={() => toggleExpanded(item._id)}
-                      >
-                        {expandedComments[item._id] ? "Show Less" : "Show More"}
-                      </Button>
-                    )}
-                  </>
-                }
-              />
-            </List.Item>
-          </div>
-        ))}
-      </List>
-
-      {/* Show More / Less comments */}
-      {comments.length > 3 && (
-        <div style={{ textAlign: "center", marginTop: 12 }}>
+      <div style={{ marginTop: 8, textAlign: "right" }}>
+        {editingComment && (
           <Button
-            type="link"
-            icon={
-              visibleCount >= comments.length ? (
-                <UpOutlined />
-              ) : (
-                <DownOutlined />
-              )
-            }
-            onClick={() =>
-              setVisibleCount((prev) =>
-                prev >= comments.length ? 3 : prev + 3
-              )
-            }
+            onClick={() => {
+              setEditingComment(null);
+              setContent("");
+            }}
+            style={{ marginRight: 8 }}
           >
-            {visibleCount >= comments.length ? "Show Less" : "Show More"}
+            Cancel
           </Button>
-        </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoadingComments && comments.length === 0 && (
-        <Empty
-          image={Empty.PRESENTED_IMAGE_SIMPLE}
-          description="No comments yet"
-          style={{ marginTop: 16 }}
-        />
-      )}
+        )}
+        <Button
+          type="primary"
+          onClick={handleSubmit}
+          loading={isPosting || isUpdating}
+          disabled={isUnchanged}
+        >
+          {editingComment ? "Update" : "Comment"}
+        </Button>
+      </div>
     </div>
   );
 }
