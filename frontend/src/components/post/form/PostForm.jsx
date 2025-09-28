@@ -47,6 +47,7 @@ export default function PostForm({ onCreatePost, loading }) {
         setIsUploading,
         setUploadProgress,
       });
+      if (!payload) return;
 
       await onCreatePost(payload);
       form.resetFields();

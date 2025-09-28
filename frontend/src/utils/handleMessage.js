@@ -4,6 +4,11 @@ import { getFirebaseErrorMessage } from "./firebaseErrorMessages";
 export const handleError = (err, context = "Error", isRegister = false) => {
   let msg;
 
+  // normalize plain strings into Error objects
+  if (typeof err === "string") {
+    err = new Error(err);
+  }
+
   // Network/server errors
   if (
     err?.status === "FETCH_ERROR" ||

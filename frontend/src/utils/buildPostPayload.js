@@ -2,6 +2,9 @@ import { uploadToFirebase } from "./uploadToFirebase";
 import { getVideoDuration } from "./getVideoDuration";
 import { fetchYouTubeMetadata } from "./fetchYouTubeMetadata";
 import { auth } from "../firebase";
+import { handleError } from "./handleMessage";
+
+const MAX_ITEMS = 5;
 
 /**
  * Build a normalized post payload before sending to backend
@@ -35,13 +38,22 @@ export async function buildPostPayload(values, options, postId = null) {
    * Handle image(s) or video uploaded from local device
    */
   if (mediaFile?.length > 0) {
+    // enforce max uploads
+    if (mediaFile.length > MAX_ITEMS) {
+      handleError(
+        `You can only upload up to ${MAX_ITEMS} files.`,
+        "Upload limit reached"
+      );
+      return null; // stop building payload
+    }
+
     const firstFile = mediaFile[0].originFileObj;
 
     // --- Image upload ---
     if (firstFile.type.startsWith("image/")) {
       setIsUploading?.(true);
-
       const uploadedUrls = [];
+
       const total = mediaFile.length;
       let completed = 0;
 
@@ -59,7 +71,6 @@ export async function buildPostPayload(values, options, postId = null) {
           },
           "posts"
         );
-
         uploadedUrls.push(url);
         completed += 1;
         setUploadProgress?.((completed / total) * 100);
@@ -110,16 +121,26 @@ export async function buildPostPayload(values, options, postId = null) {
      * --- CASE 2: URLs ---
      * Handle YouTube videos or external image URLs
      */
-    const urls = mediaUrls.map((u) => u.trim()).filter(Boolean);
+    const cleanUrls = mediaUrls.map((u) => u?.trim()).filter(Boolean);
 
-    const youtubeUrls = urls.filter(
+    // enforce max URLs
+    if (cleanUrls.length > MAX_ITEMS) {
+      handleError(
+        `You can only add up to ${MAX_ITEMS} URLs.`,
+        "Link limit reached"
+      );
+      return null;
+    }
+
+    const youtubeUrls = cleanUrls.filter(
       (u) => u.includes("youtube.com") || u.includes("youtu.be")
     );
-    const imageUrls = urls.filter((u) => !youtubeUrls.includes(u));
+    const imageUrls = cleanUrls.filter((u) => !youtubeUrls.includes(u));
 
     // --- Safety: allow only one YouTube URL ---
     if (youtubeUrls.length > 1) {
-      throw new Error("Only one YouTube video URL is allowed.");
+      handleError("Only one YouTube video URL is allowed.", "Invalid links");
+      return null;
     }
 
     // --- YouTube video ---

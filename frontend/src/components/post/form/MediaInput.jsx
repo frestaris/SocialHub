@@ -1,12 +1,8 @@
-import {
-  Form,
-  Input,
-  Button,
-  Upload as AntUpload,
-  Switch,
-  message,
-} from "antd";
+import { Form, Input, Button, Upload as AntUpload, Switch } from "antd";
 import { LinkOutlined, PlusOutlined, DeleteOutlined } from "@ant-design/icons";
+import { handleError } from "../../../utils/handleMessage";
+
+const MAX_ITEMS = 5;
 
 const MediaIcon = () => (
   <svg
@@ -22,29 +18,62 @@ const MediaIcon = () => (
   </svg>
 );
 
+// --- Deduplicated error handler ---
+let lastError = null;
+const triggerError = (msg, context, key) => {
+  if (lastError !== key) {
+    handleError(msg, context);
+    lastError = key;
+    setTimeout(() => (lastError = null), 300);
+  }
+};
+
 export default function MediaInput({ useUpload, setUseUpload }) {
+  /**
+   * --- File Validation (AntD Upload `beforeUpload`) ---
+   */
   const beforeUpload = (file, fileList) => {
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
 
+    // Limit check
+    if (fileList.length > MAX_ITEMS) {
+      triggerError(
+        `You can only upload up to ${MAX_ITEMS} files.`,
+        "Upload limit reached",
+        "uploadLimit"
+      );
+      return AntUpload.LIST_IGNORE;
+    }
+
     if (!isImage && !isVideo) {
-      message.error("Only images or videos are allowed.");
+      triggerError(
+        "Only images or videos are allowed.",
+        "Invalid file",
+        "fileType"
+      );
       return AntUpload.LIST_IGNORE;
     }
 
-    // If first file is a video → allow only one
     if (isVideo && fileList.length > 1) {
-      message.error("You can only upload one video.");
+      triggerError(
+        "You can only upload one video.",
+        "Invalid upload",
+        "multiVideo"
+      );
       return AntUpload.LIST_IGNORE;
     }
 
-    // If first file is an image → prevent mixing with video
     if (fileList[0]?.type.startsWith("image/") && isVideo) {
-      message.error("Cannot mix images and video. Choose only images.");
+      triggerError(
+        "Cannot mix images and video. Choose only images.",
+        "Invalid upload",
+        "mixed"
+      );
       return AntUpload.LIST_IGNORE;
     }
 
-    return false; // prevent auto upload
+    return false;
   };
 
   return (
@@ -73,7 +102,6 @@ export default function MediaInput({ useUpload, setUseUpload }) {
                       const cleanUrls = urls
                         .map((u) => u?.trim())
                         .filter(Boolean);
-
                       const youtubeUrls = cleanUrls.filter(
                         (u) =>
                           u.includes("youtube.com") || u.includes("youtu.be")
@@ -82,18 +110,31 @@ export default function MediaInput({ useUpload, setUseUpload }) {
                         (u) => !youtubeUrls.includes(u)
                       );
 
-                      if (youtubeUrls.length > 1) {
-                        return Promise.reject(
-                          new Error("Only one YouTube URL is allowed.")
+                      if (urls.length > MAX_ITEMS) {
+                        triggerError(
+                          `You can only add up to ${MAX_ITEMS} URLs.`,
+                          "Limit reached",
+                          "urlLimit"
                         );
+                        return Promise.reject();
+                      }
+
+                      if (youtubeUrls.length > 1) {
+                        triggerError(
+                          "Only one YouTube URL is allowed.",
+                          "Invalid links",
+                          "multiYouTube"
+                        );
+                        return Promise.reject();
                       }
 
                       if (youtubeUrls.length === 1 && imageUrls.length > 0) {
-                        return Promise.reject(
-                          new Error(
-                            "You cannot mix YouTube and image URLs in the same post."
-                          )
+                        triggerError(
+                          "You cannot mix YouTube and image URLs in the same post.",
+                          "Invalid links",
+                          "mixedUrl"
                         );
+                        return Promise.reject();
                       }
 
                       return Promise.resolve();
@@ -123,19 +164,20 @@ export default function MediaInput({ useUpload, setUseUpload }) {
                         />
                       </Form.Item>
                     ))}
-                    <Button
-                      type="dashed"
-                      onClick={() => add()}
-                      block
-                      icon={<PlusOutlined />}
-                    >
-                      Add URL
-                    </Button>
+                    {fields.length < MAX_ITEMS && (
+                      <Button
+                        type="dashed"
+                        onClick={() => add()}
+                        block
+                        icon={<PlusOutlined />}
+                      >
+                        Add URL
+                      </Button>
+                    )}
                   </>
                 )}
               </Form.List>
 
-              {/* Show validation errors */}
               {getFieldError("mediaUrls")?.length > 0 && (
                 <div style={{ color: "red", marginTop: 4 }}>
                   {getFieldError("mediaUrls")[0]}
@@ -149,7 +191,18 @@ export default function MediaInput({ useUpload, setUseUpload }) {
         <Form.Item
           name="mediaFile"
           valuePropName="fileList"
-          getValueFromEvent={(e) => e?.fileList}
+          getValueFromEvent={(e) => {
+            let fileList = e?.fileList || [];
+            if (fileList.length > MAX_ITEMS) {
+              triggerError(
+                `You can only upload up to ${MAX_ITEMS} files.`,
+                "Upload limit reached",
+                "uploadLimit"
+              );
+              fileList = fileList.slice(0, MAX_ITEMS);
+            }
+            return fileList;
+          }}
         >
           <AntUpload
             multiple
