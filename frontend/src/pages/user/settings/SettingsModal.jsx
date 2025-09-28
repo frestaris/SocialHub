@@ -199,7 +199,7 @@ export default function SettingsModal({ open, onClose, user }) {
         onCancel={onClose}
         footer={null}
         width="100%"
-        style={{ top: 10, maxWidth: 600, padding: "0 16px" }}
+        style={{ top: 50, maxWidth: 600, padding: "0 16px" }}
         destroyOnHidden
       >
         <Form

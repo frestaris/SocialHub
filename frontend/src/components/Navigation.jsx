@@ -111,7 +111,7 @@ export default function Navigation() {
           style={{ fontWeight: "bold", fontSize: "20px", cursor: "pointer" }}
           onClick={() => navigate("/")}
         >
-          CreatorHub
+          Social Hub
         </div>
 
         {/* SearchBar (only on desktop) */}

@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { List, Input, Button, Empty, Spin } from "antd";
+import { List, Input, Button, Empty, Spin, Modal } from "antd";
 import { useSelector } from "react-redux";
 import {
   useGetCommentsByPostQuery,
@@ -52,21 +52,52 @@ export default function CommentsSection({ postId }) {
   const handleSubmit = async () => {
     if (!currentUser)
       return handleWarning("Login Required", "Please log in to comment.");
-    if (!content.trim()) {
+
+    const trimmed = content.trim();
+
+    // --- Case 2: editing and empty ---
+    if (editingComment && !trimmed) {
+      Modal.confirm({
+        title: "Delete Comment?",
+        content: "The comment is empty. Do you want to delete it instead?",
+        okText: "Yes, delete",
+        okType: "danger",
+        cancelText: "Cancel",
+        onOk: async () => {
+          try {
+            setDeletingId(editingComment._id);
+            await deleteComment({ id: editingComment._id, postId }).unwrap();
+            handleSuccess("Comment deleted!");
+            setEditingComment(null);
+            setContent("");
+          } catch (err) {
+            handleError(err, "Failed to delete comment");
+          } finally {
+            setDeletingId(null);
+          }
+        },
+      });
+      return;
+    }
+
+    // --- Case 1: creating and empty ---
+    if (!editingComment && !trimmed) {
       setError(true);
       handleError({ message: "Comment cannot be empty." }, "Empty Comment");
       return;
     }
+
+    // --- Normal update/create ---
     try {
       if (editingComment) {
         await updateComment({
           id: editingComment._id,
-          content: content.trim(),
+          content: trimmed,
         }).unwrap();
         handleSuccess("Comment updated!");
         setEditingComment(null);
       } else {
-        await createComment({ postId, content: content.trim() }).unwrap();
+        await createComment({ postId, content: trimmed }).unwrap();
         handleSuccess("Comment added!");
       }
       setContent("");
