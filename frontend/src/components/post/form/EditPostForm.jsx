@@ -25,40 +25,46 @@ export default function EditPostForm({
   loading,
 }) {
   const [form] = Form.useForm();
+
+  const [useUpload, setUseUpload] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isChanged, setIsChanged] = useState(false);
+  const [ytMeta, setYtMeta] = useState(null);
   const [previewSrc, setPreviewSrc] = useState(null);
-
-  // --- Toggle state (URL vs Upload) ---
-  const [useUpload, setUseUpload] = useState(
-    !(post?.image?.startsWith("http") || post?.video?.url?.startsWith("http"))
-  );
 
   // --- Watch fields ---
   const mediaFile = Form.useWatch("mediaFile", form);
-  const mediaUrl = Form.useWatch("mediaUrl", form);
+  const mediaUrls = Form.useWatch("mediaUrls", form);
   const thumbnailFile = Form.useWatch("thumbnail", form);
-
-  const [ytMeta, setYtMeta] = useState(null);
 
   const isVideoFile = mediaFile?.[0]?.originFileObj?.type?.startsWith("video/");
   const isYouTubeUrl =
-    mediaUrl?.includes("youtube.com") || mediaUrl?.includes("youtu.be");
+    Array.isArray(mediaUrls) &&
+    mediaUrls.some(
+      (u) => u?.includes("youtube.com") || u?.includes("youtu.be")
+    );
   const isVideoUrl =
-    mediaUrl &&
-    (mediaUrl.endsWith(".mp4") ||
-      mediaUrl.endsWith(".webm") ||
-      mediaUrl.endsWith(".mov") ||
-      isYouTubeUrl);
-  const isImageUrl = mediaUrl && !isVideoUrl;
+    Array.isArray(mediaUrls) &&
+    mediaUrls.some(
+      (u) =>
+        u?.endsWith(".mp4") ||
+        u?.endsWith(".webm") ||
+        u?.endsWith(".mov") ||
+        u?.includes("youtube.com") ||
+        u?.includes("youtu.be")
+    );
 
   // --- Initial values ---
   const initialValues = {
     content: post?.content,
     category: post?.category,
     title: post?.video?.title,
-    mediaUrl: post?.video?.url || post?.image || "",
+    mediaUrls: post?.video?.url
+      ? [post.video.url]
+      : Array.isArray(post?.images)
+      ? post.images
+      : [],
   };
 
   useEffect(() => {
@@ -71,71 +77,79 @@ export default function EditPostForm({
   // Track changes
   const handleValuesChange = (_, allValues) => {
     const changed = Object.keys(initialValues).some(
-      (key) => allValues[key] !== initialValues[key]
+      (key) =>
+        JSON.stringify(allValues[key]) !== JSON.stringify(initialValues[key])
     );
     setIsChanged(changed);
   };
 
-  // Preview setup
-  useEffect(() => {
-    let url;
-    let isBlob = false;
-
-    if (mediaFile?.[0]?.originFileObj?.type?.startsWith("image/")) {
-      url = URL.createObjectURL(mediaFile[0].originFileObj);
-      isBlob = true;
-    } else if (thumbnailFile?.[0]?.originFileObj) {
-      url = URL.createObjectURL(thumbnailFile[0].originFileObj);
-      isBlob = true;
-    } else if (post?.video?.thumbnail) {
-      url = post.video.thumbnail;
-    } else if (post?.image) {
-      url = post.image;
-    } else if (isImageUrl && !isVideoUrl) {
-      url = mediaUrl;
-    } else if (isYouTubeUrl && ytMeta?.thumbnail) {
-      url = ytMeta.thumbnail;
-    }
-
-    setPreviewSrc(url);
-    return () => {
-      if (isBlob && url?.startsWith("blob:")) URL.revokeObjectURL(url);
-    };
-  }, [
-    mediaFile,
-    thumbnailFile,
-    mediaUrl,
-    ytMeta,
-    isImageUrl,
-    isVideoUrl,
-    isYouTubeUrl,
-    post,
-  ]);
-
   // YouTube metadata
   useEffect(() => {
     let cancelled = false;
-    const getMeta = async () => {
+    const getMeta = async (url) => {
       try {
-        const meta = await fetchYouTubeMetadata(mediaUrl);
-        if (cancelled) return;
-        setYtMeta(meta || null);
-        if (meta?.title && !form.getFieldValue("title")) {
-          form.setFieldsValue({ title: meta.title });
+        const meta = await fetchYouTubeMetadata(url);
+        if (!cancelled) {
+          setYtMeta(meta || null);
+          if (meta?.title && !form.getFieldValue("title")) {
+            form.setFieldsValue({ title: meta.title });
+          }
         }
       } catch {
         setYtMeta(null);
       }
     };
 
-    if (isYouTubeUrl) getMeta();
-    else setYtMeta(null);
+    if (Array.isArray(mediaUrls)) {
+      const ytUrl = mediaUrls.find(
+        (u) => u && (u.includes("youtube.com") || u.includes("youtu.be"))
+      );
+      if (ytUrl) getMeta(ytUrl);
+      else setYtMeta(null);
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [mediaUrl, isYouTubeUrl, form]);
+  }, [mediaUrls, form]);
 
+  // --- Preview handling ---
+  useEffect(() => {
+    let urls = [];
+
+    if (mediaFile?.length > 0) {
+      if (mediaFile[0].originFileObj.type.startsWith("image/")) {
+        urls = mediaFile.map((f) => URL.createObjectURL(f.originFileObj));
+      } else if (thumbnailFile?.[0]?.originFileObj) {
+        urls = [URL.createObjectURL(thumbnailFile[0].originFileObj)];
+      }
+    } else if (Array.isArray(mediaUrls)) {
+      const cleanUrls = mediaUrls.map((u) => u?.trim()).filter(Boolean);
+      const youtubeUrl = cleanUrls.find(
+        (u) => u.includes("youtube.com") || u.includes("youtu.be")
+      );
+      const imageUrls = cleanUrls.filter(
+        (u) => !u.includes("youtube.com") && !u.includes("youtu.be")
+      );
+
+      if (youtubeUrl && ytMeta?.thumbnail) {
+        urls.push(ytMeta.thumbnail);
+      }
+      if (imageUrls.length > 0) {
+        urls = [...urls, ...imageUrls];
+      }
+    }
+
+    setPreviewSrc(urls);
+
+    return () => {
+      urls.forEach((u) => {
+        if (u?.startsWith("blob:")) URL.revokeObjectURL(u);
+      });
+    };
+  }, [mediaFile, mediaUrls, thumbnailFile, ytMeta]);
+
+  // --- Submit handler ---
   const handleFinish = async (values) => {
     try {
       let payload = {
@@ -145,43 +159,51 @@ export default function EditPostForm({
       };
       let type = "text";
 
-      // File path
-      if (!useUpload && mediaFile?.[0]?.originFileObj) {
-        const file = mediaFile[0].originFileObj;
-        if (file.type.startsWith("image/")) {
+      // File upload path
+      if (mediaFile?.length > 0) {
+        const firstFile = mediaFile[0].originFileObj;
+
+        if (firstFile.type.startsWith("image/")) {
           setIsUploading(true);
-          const imageUrl = await uploadToFirebase(
-            file,
-            auth.currentUser?.uid,
-            (p) => setUploadProgress(p),
-            "posts"
-          );
-          payload.image = imageUrl;
+          const uploadedUrls = [];
+
+          for (let f of mediaFile) {
+            const url = await uploadToFirebase(
+              f.originFileObj,
+              auth.currentUser?.uid,
+              null,
+              "posts"
+            );
+            uploadedUrls.push(url);
+          }
+
+          payload.images = uploadedUrls;
           type = "image";
-        } else if (file.type.startsWith("video/")) {
+        } else if (firstFile.type.startsWith("video/")) {
           setIsUploading(true);
-          const videoUrlUploaded = await uploadToFirebase(
-            file,
+          const videoUrl = await uploadToFirebase(
+            firstFile,
             auth.currentUser?.uid,
             (p) => setUploadProgress(p),
             "videos"
           );
-          const duration = await getVideoDuration(file);
+          const duration = await getVideoDuration(firstFile);
 
-          let thumbnailUrl = post.video?.thumbnail || "";
-          if (values.thumbnail?.[0]?.originFileObj) {
+          let thumbnailUrl = "";
+          if (thumbnailFile?.[0]?.originFileObj) {
             thumbnailUrl = await uploadToFirebase(
-              values.thumbnail[0].originFileObj,
+              thumbnailFile[0].originFileObj,
               auth.currentUser?.uid,
               null,
-              "videos"
+              "videos",
+              true
             );
           }
 
           payload.video = {
             title: values.title,
             category: values.category,
-            url: videoUrlUploaded,
+            url: videoUrl,
             thumbnail: thumbnailUrl,
             duration,
           };
@@ -190,39 +212,47 @@ export default function EditPostForm({
       }
 
       // URL path
-      else if (useUpload && mediaUrl) {
-        if (isImageUrl) {
-          payload.image = mediaUrl.trim();
-          type = "image";
-        } else if (isVideoUrl) {
+      else if (values.mediaUrls?.length > 0) {
+        const urls = values.mediaUrls.map((u) => u.trim()).filter(Boolean);
+        const youtubeUrls = urls.filter(
+          (u) => u.includes("youtube.com") || u.includes("youtu.be")
+        );
+        const imageUrls = urls.filter((u) => !youtubeUrls.includes(u));
+
+        if (youtubeUrls.length > 1)
+          throw new Error("Only one YouTube video URL is allowed.");
+
+        if (youtubeUrls.length === 1) {
+          const ytUrl = youtubeUrls[0];
           const meta =
-            isYouTubeUrl &&
-            (ytMeta ||
-              (await fetchYouTubeMetadata(mediaUrl).catch(() => null)));
+            ytMeta || (await fetchYouTubeMetadata(ytUrl).catch(() => null));
+
           payload.video = {
             title: values.title || meta?.title || "",
             category: values.category,
-            url: mediaUrl.trim(),
-            thumbnail: isYouTubeUrl
-              ? meta?.thumbnail || ""
-              : post.video?.thumbnail || "",
-            duration: meta?.duration || post.video?.duration || 0,
+            url: ytUrl,
+            thumbnail: meta?.thumbnail || "",
+            duration: meta?.duration || 0,
           };
           type = "video";
+        }
+
+        if (imageUrls.length > 0) {
+          payload.images = imageUrls;
+          if (!type || type === "text") type = "image";
         }
       }
 
       payload.type = type;
 
-      await onUpdate(payload).unwrap();
+      await onUpdate(payload);
       handleSuccess("Post updated!");
-      setIsUploading(false);
-      setUploadProgress(0);
       setIsChanged(false);
       if (onClose) onClose();
     } catch (err) {
-      console.error("Update post error:", err);
+      console.error("❌ Update post error:", err);
       handleError(err, "Failed to update post");
+    } finally {
       setIsUploading(false);
       setUploadProgress(0);
     }

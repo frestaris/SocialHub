@@ -20,8 +20,7 @@ export default function VideoFields({ isYouTubeUrl, useUpload }) {
           getValueFromEvent={(e) => e?.fileList}
         >
           <AntUpload
-            accept="image/*"
-            listType="picture"
+            accept=".jpg,.jpeg,.png"
             maxCount={1}
             beforeUpload={() => false}
           >

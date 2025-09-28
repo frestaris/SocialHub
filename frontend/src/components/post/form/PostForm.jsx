@@ -29,47 +29,34 @@ export default function PostForm({ onCreatePost, loading }) {
 
   // --- Watch fields ---
   const mediaFile = Form.useWatch("mediaFile", form);
-  const mediaUrl = Form.useWatch("mediaUrl", form);
+  const mediaUrls = Form.useWatch("mediaUrls", form);
   const thumbnailFile = Form.useWatch("thumbnail", form);
 
   // --- Derived booleans ---
   const isVideoFile = mediaFile?.[0]?.originFileObj?.type?.startsWith("video/");
   const isYouTubeUrl =
-    mediaUrl?.includes("youtube.com") || mediaUrl?.includes("youtu.be");
+    Array.isArray(mediaUrls) &&
+    mediaUrls.some(
+      (u) => u?.includes("youtube.com") || u?.includes("youtu.be")
+    );
   const isVideoUrl =
-    mediaUrl &&
-    (mediaUrl.endsWith(".mp4") ||
-      mediaUrl.endsWith(".webm") ||
-      mediaUrl.endsWith(".mov") ||
-      isYouTubeUrl);
-  const isImageUrl = mediaUrl && !isVideoUrl;
-
-  // --- Preview handling ---
-  useEffect(() => {
-    let url = null;
-
-    if (mediaFile?.[0]?.originFileObj?.type?.startsWith("image/")) {
-      url = URL.createObjectURL(mediaFile[0].originFileObj);
-    } else if (thumbnailFile?.[0]?.originFileObj) {
-      url = URL.createObjectURL(thumbnailFile[0].originFileObj);
-    } else if (isImageUrl) {
-      url = mediaUrl;
-    } else if (isYouTubeUrl && ytMeta?.thumbnail) {
-      url = ytMeta.thumbnail;
-    }
-
-    setPreviewSrc(url);
-    return () => {
-      if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
-    };
-  }, [mediaFile, mediaUrl, thumbnailFile, ytMeta, isImageUrl, isYouTubeUrl]);
+    Array.isArray(mediaUrls) &&
+    mediaUrls.some(
+      (u) =>
+        u?.endsWith(".mp4") ||
+        u?.endsWith(".webm") ||
+        u?.endsWith(".mov") ||
+        u?.includes("youtube.com") ||
+        u?.includes("youtu.be")
+    );
 
   // --- Fetch YouTube metadata ---
   useEffect(() => {
     let cancelled = false;
-    const fetchMeta = async () => {
+
+    const getMeta = async (url) => {
       try {
-        const meta = await fetchYouTubeMetadata(mediaUrl);
+        const meta = await fetchYouTubeMetadata(url);
         if (!cancelled) {
           setYtMeta(meta || null);
           if (meta?.title && !form.getFieldValue("title")) {
@@ -81,23 +68,69 @@ export default function PostForm({ onCreatePost, loading }) {
       }
     };
 
-    if (isYouTubeUrl) fetchMeta();
-    else setYtMeta(null);
+    if (Array.isArray(mediaUrls)) {
+      const ytUrl = mediaUrls.find(
+        (u) => u && (u.includes("youtube.com") || u.includes("youtu.be"))
+      );
+      if (ytUrl) getMeta(ytUrl);
+      else setYtMeta(null);
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [mediaUrl, isYouTubeUrl, form]);
+  }, [mediaUrls, form]);
 
-  // --- Keep only one media input active ---
+  // --- Preview handling ---
   useEffect(() => {
-    if (mediaFile?.length > 0 && mediaUrl) {
-      form.setFieldsValue({ mediaUrl: "" });
+    let urls = [];
+
+    // Local file previews
+    if (mediaFile?.length > 0) {
+      if (mediaFile[0].originFileObj.type.startsWith("image/")) {
+        urls = mediaFile.map((f) => URL.createObjectURL(f.originFileObj));
+      } else if (thumbnailFile?.[0]?.originFileObj) {
+        urls = [URL.createObjectURL(thumbnailFile[0].originFileObj)];
+      }
     }
-    if (mediaUrl && mediaFile?.length > 0) {
+    // URL previews
+    else if (Array.isArray(mediaUrls) && mediaUrls.length > 0) {
+      const cleanUrls = mediaUrls.map((u) => u?.trim()).filter(Boolean);
+
+      const youtubeUrl = cleanUrls.find(
+        (u) => u.includes("youtube.com") || u.includes("youtu.be")
+      );
+      const imageUrls = cleanUrls.filter(
+        (u) => !u.includes("youtube.com") && !u.includes("youtu.be")
+      );
+
+      if (youtubeUrl && ytMeta?.thumbnail) {
+        urls.push(ytMeta.thumbnail);
+      }
+
+      if (imageUrls.length > 0) {
+        urls = [...urls, ...imageUrls];
+      }
+    }
+
+    setPreviewSrc(urls);
+
+    return () => {
+      urls.forEach((u) => {
+        if (u?.startsWith("blob:")) URL.revokeObjectURL(u);
+      });
+    };
+  }, [mediaFile, mediaUrls, thumbnailFile, ytMeta]);
+
+  // --- Keep only one input active ---
+  useEffect(() => {
+    if (mediaFile?.length > 0 && mediaUrls?.length > 0) {
+      form.setFieldsValue({ mediaUrls: [] });
+    }
+    if (mediaUrls?.length > 0 && mediaFile?.length > 0) {
       form.setFieldsValue({ mediaFile: [] });
     }
-  }, [mediaFile, mediaUrl, form]);
+  }, [mediaFile, mediaUrls, form]);
 
   // --- Submit handler ---
   const handleFinish = async (values) => {
@@ -106,28 +139,44 @@ export default function PostForm({ onCreatePost, loading }) {
       let type = "text";
 
       // --- File upload path ---
-      if (mediaFile?.[0]?.originFileObj) {
-        const file = mediaFile[0].originFileObj;
+      if (mediaFile?.length > 0) {
+        const firstFile = mediaFile[0].originFileObj;
 
-        if (file.type.startsWith("image/")) {
+        if (firstFile.type.startsWith("image/")) {
           setIsUploading(true);
-          const imageUrl = await uploadToFirebase(
-            file,
-            auth.currentUser?.uid,
-            (p) => setUploadProgress(p),
-            "posts"
-          );
-          payload.image = imageUrl;
+          const uploadedUrls = [];
+
+          const total = mediaFile.length;
+          let completed = 0;
+
+          for (let f of mediaFile) {
+            const url = await uploadToFirebase(
+              f.originFileObj,
+              auth.currentUser?.uid,
+              (p) => {
+                const fileProgress = p / 100;
+                const overall = ((completed + fileProgress) / total) * 100;
+                setUploadProgress(overall);
+              },
+              "posts"
+            );
+
+            uploadedUrls.push(url);
+            completed += 1;
+            setUploadProgress((completed / total) * 100);
+          }
+
+          payload.images = uploadedUrls;
           type = "image";
-        } else if (file.type.startsWith("video/")) {
+        } else if (firstFile.type.startsWith("video/")) {
           setIsUploading(true);
           const videoUrl = await uploadToFirebase(
-            file,
+            firstFile,
             auth.currentUser?.uid,
             (p) => setUploadProgress(p),
             "videos"
           );
-          const duration = await getVideoDuration(file);
+          const duration = await getVideoDuration(firstFile);
 
           let thumbnailUrl = "";
           if (thumbnailFile?.[0]?.originFileObj) {
@@ -152,26 +201,36 @@ export default function PostForm({ onCreatePost, loading }) {
       }
 
       // --- URL path ---
-      else if (mediaUrl) {
-        if (isImageUrl) {
-          payload.image = mediaUrl.trim();
-          type = "image";
-        } else if (isVideoUrl) {
+      else if (values.mediaUrls?.length > 0) {
+        const urls = values.mediaUrls.map((u) => u.trim()).filter(Boolean);
+
+        const youtubeUrls = urls.filter(
+          (u) => u.includes("youtube.com") || u.includes("youtu.be")
+        );
+        const imageUrls = urls.filter((u) => !youtubeUrls.includes(u));
+
+        if (youtubeUrls.length > 1) {
+          throw new Error("Only one YouTube video URL is allowed.");
+        }
+
+        if (youtubeUrls.length === 1) {
+          const ytUrl = youtubeUrls[0];
           const meta =
-            isYouTubeUrl &&
-            (ytMeta ||
-              (await fetchYouTubeMetadata(mediaUrl).catch(() => null)));
+            ytMeta || (await fetchYouTubeMetadata(ytUrl).catch(() => null));
 
           payload.video = {
             title: values.title || meta?.title || "",
             category: values.category,
-            url: mediaUrl.trim(),
-            thumbnail: isYouTubeUrl
-              ? meta?.thumbnail || ""
-              : values.thumbnailUrl || "",
+            url: ytUrl,
+            thumbnail: meta?.thumbnail || "",
             duration: meta?.duration || 0,
           };
           type = "video";
+        }
+
+        if (imageUrls.length > 0) {
+          payload.images = imageUrls;
+          if (!type || type === "text") type = "image";
         }
       }
 
@@ -180,6 +239,7 @@ export default function PostForm({ onCreatePost, loading }) {
       await onCreatePost(payload);
       form.resetFields();
       setYtMeta(null);
+      setPreviewSrc(null);
     } catch (err) {
       console.error("❌ Create post error:", err);
       handleError(err, "Failed to publish post");

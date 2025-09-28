@@ -12,6 +12,14 @@ export const createPost = async (req, res) => {
   try {
     const { type, content, category, images, video } = req.body;
 
+    // Prevent mixing YouTube + images
+    if (video && images && images.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Cannot mix YouTube and image URLs in one post",
+      });
+    }
+
     // Video post
     if (type === "video") {
       if (!video || !video.url || !video.title || !content) {
