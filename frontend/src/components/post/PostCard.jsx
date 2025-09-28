@@ -126,7 +126,7 @@ export default function PostCard({
               marginBottom: 8,
               aspectRatio: "16/9",
               display: "grid",
-              gridTemplateColumns: "1fr 1fr",
+              gridTemplateColumns: post.images.length === 1 ? "1fr" : "1fr 1fr",
               gap: "2px",
               borderRadius: "8px",
               overflow: "hidden",
@@ -139,6 +139,7 @@ export default function PostCard({
                   position: "relative",
                   height: "100%",
                   overflow: "hidden",
+                  gridColumn: post.images.length === 1 ? "1 / -1" : "auto",
                 }}
               >
                 <img
