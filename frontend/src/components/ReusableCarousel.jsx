@@ -4,39 +4,7 @@ import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 const { useBreakpoint } = Grid;
 
-const ArrowButton = ({ icon, onClick, position, disabled }) => {
-  const [hovered, setHovered] = useState(false);
-
-  if (disabled) return null;
-
-  return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 40,
-        height: 40,
-        borderRadius: "50%",
-        background: hovered ? "#d9d9d9" : "#e5e5e5",
-        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-        cursor: "pointer",
-        position: "absolute",
-        top: "50%",
-        transform: "translateY(-50%)",
-        zIndex: 2,
-        ...(position === "left"
-          ? { left: 5, marginLeft: 8 }
-          : { right: 5, marginRight: 8 }),
-      }}
-    >
-      {icon}
-    </div>
-  );
-};
+import ArrowButton from "../components/ArrowButton";
 
 export default function ReusableCarousel({
   children,

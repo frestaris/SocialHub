@@ -44,7 +44,6 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
 
   // --- Hooks ---
   const screens = useBreakpoint();
-  const isDesktop = screens.md;
   const isSmall = !screens.sm;
   const navigate = useNavigate();
 
@@ -217,7 +216,6 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
       <PostModals
         editingPost={editingPost}
         deletingPost={deletingPost}
-        isDesktop={isDesktop}
         isUpdating={isUpdatingPost}
         isDeleting={isDeletingPost}
         onUpdate={updatePost}

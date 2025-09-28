@@ -7,7 +7,6 @@ import EditPostForm from "../post/form/EditPostForm";
 export default function PostModals({
   editingPost,
   deletingPost,
-  isDesktop,
   isUpdating,
   isDeleting,
   onUpdate,
@@ -23,10 +22,10 @@ export default function PostModals({
         title="Edit Post"
         onCancel={onCloseEdit}
         footer={null}
-        width={isDesktop ? "70%" : "100%"}
+        width="70%"
         style={{
-          top: isDesktop ? 30 : 5,
-          maxWidth: isDesktop ? 600 : "100%",
+          top: 10,
+          maxWidth: 600,
           padding: "0 16px",
         }}
         destroyOnHidden

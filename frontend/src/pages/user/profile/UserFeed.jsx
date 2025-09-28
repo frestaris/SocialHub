@@ -28,6 +28,7 @@ const { useBreakpoint } = Grid;
 export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
+  const isMedium = !screens.md; // between md and lg
 
   // --- Local state ---
   const [expandedPostId, setExpandedPostId] = useState(null); // track expanded text
@@ -172,20 +173,58 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
               )}
 
               {/* Image Post */}
-              {item.type === "image" && item.image && (
-                <div style={{ flex: isMobile ? "0 0 100%" : "0 0 50%" }}>
-                  <Link to={`/post/${item._id}`}>
-                    <img
-                      src={item.image}
-                      alt="Post image"
-                      style={{
-                        width: "100%",
-                        borderRadius: 8,
-                        height: isMobile ? "auto" : "180px",
-                        objectFit: isMobile ? "contain" : "cover",
-                      }}
-                    />
-                  </Link>
+              {item.type === "image" && item.images?.length > 0 && (
+                <div
+                  style={{
+                    flex: isMobile ? "0 0 100%" : "0 0 50%",
+                    display: "grid",
+                    gap: "4px",
+                    gridTemplateColumns:
+                      isMobile || isMedium
+                        ? "1fr" // stacked column
+                        : item.images.length === 1
+                        ? "1fr"
+                        : "1fr 1fr", // side by side for large screens
+                  }}
+                >
+                  {item.images.slice(0, 2).map((img, idx) => (
+                    <div key={idx} style={{ position: "relative" }}>
+                      <Link to={`/post/${item._id}`}>
+                        <img
+                          src={img}
+                          alt={`Post attachment ${idx + 1}`}
+                          style={{
+                            width: "100%",
+                            height: isMobile ? "auto" : "180px",
+                            objectFit: isMobile ? "contain" : "cover",
+                            borderRadius: 8,
+                            cursor: "pointer",
+                            display: "block",
+                          }}
+                        />
+                      </Link>
+
+                      {/* Overlay on the second image if there are more */}
+                      {idx === 1 && item.images.length > 2 && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            inset: 0,
+                            background: "rgba(0,0,0,0.5)",
+                            color: "#fff",
+                            fontSize: 20,
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: "8px",
+                          }}
+                        >
+                          +{item.images.length - 2}
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
               )}
 

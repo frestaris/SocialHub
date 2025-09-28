@@ -114,7 +114,6 @@ export default function HotNow() {
       <PostModals
         editingPost={editingPost}
         deletingPost={deletingPost}
-        isDesktop={screens.md}
         isUpdating={isUpdatingPost}
         isDeleting={isDeletingPost}
         onUpdate={updatePost}

@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 
 // --- Libraries ---
-import { Typography, Avatar, Button } from "antd";
+import { Typography, Avatar, Button, Grid, Modal } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 
 // --- Utils ---
@@ -19,9 +19,17 @@ import FollowButton from "../../components/FollowButton";
 import PostActions from "../../components/post/PostActions";
 
 const { Text, Paragraph, Title } = Typography;
+const { useBreakpoint } = Grid;
+import ArrowButton from "../../components/ArrowButton";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 export default function PostInfo({ post }) {
   const [expanded, setExpanded] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const screens = useBreakpoint();
+  const isSmall = !screens.sm; // <768px
 
   // --- Redux state ---
   const currentUser = useSelector((state) => state.auth.user);
@@ -34,27 +42,162 @@ export default function PostInfo({ post }) {
     return currentUser.following?.some((f) => f._id === post.userId._id);
   }, [currentUser, post]);
 
+  const openGallery = (idx) => {
+    setCurrentIndex(idx);
+    setGalleryOpen(true);
+  };
+
+  const nextImage = () => {
+    setCurrentIndex((prev) => (prev + 1) % post.images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentIndex(
+      (prev) => (prev - 1 + post.images.length) % post.images.length
+    );
+  };
+
   return (
     <div style={{ marginBottom: "20px" }}>
-      {/* Media (video or image) */}
+      {/* Media (video or images) */}
       {post.type === "video" && post.video?.url && (
         <VideoPlayer src={post.video.url} title={post.video?.title} />
       )}
-      {post.image && (
-        <div style={{ marginTop: "16px" }}>
-          <img
-            src={post.image}
-            alt="Post attachment"
-            style={{
-              marginBottom: "12px",
-              width: "100%",
-              borderRadius: "8px",
-              objectFit: "cover",
-              maxHeight: "400px",
-              display: "block",
-            }}
-          />
+
+      {post.images?.length > 0 && (
+        <div
+          style={{
+            marginTop: "16px",
+            marginBottom: "16px",
+
+            display: "grid",
+            gap: "4px",
+            gridTemplateColumns: isSmall
+              ? "1fr"
+              : post.images.length === 1
+              ? "1fr"
+              : post.images.length === 2
+              ? "1fr 1fr"
+              : post.images.length === 3
+              ? "1fr 1fr"
+              : "1fr 1fr",
+            gridTemplateRows:
+              !isSmall && post.images.length === 3 ? "auto auto" : "auto",
+          }}
+        >
+          {post.images.slice(0, 4).map((img, idx) => (
+            <div
+              key={idx}
+              style={{
+                position: "relative",
+                gridColumn:
+                  !isSmall && post.images.length === 3 && idx === 2
+                    ? "span 2"
+                    : "auto", // last image spans full width if 3
+              }}
+            >
+              <img
+                src={img}
+                alt={`Post attachment ${idx + 1}`}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  maxHeight: isSmall
+                    ? "240px"
+                    : post.images.length === 1
+                    ? "400px"
+                    : post.images.length === 2
+                    ? "300px"
+                    : "200px",
+                }}
+                onClick={() => openGallery(idx)}
+              />
+              {idx === 3 && post.images.length > 4 && (
+                <div
+                  onClick={() => openGallery(idx)}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    background: "rgba(0,0,0,0.5)",
+                    color: "#fff",
+                    fontSize: 20,
+                    fontWeight: "bold",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                  }}
+                >
+                  +{post.images.length - 4}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
+      )}
+
+      {/* Gallery Modal */}
+      {galleryOpen && (
+        <Modal
+          open={galleryOpen}
+          onCancel={() => setGalleryOpen(false)}
+          footer={null}
+          centered
+          width="80%"
+          styles={{ textAlign: "center", padding: 0 }}
+        >
+          <div style={{ position: "relative" }}>
+            <img
+              src={post.images[currentIndex]}
+              alt={`Image ${currentIndex + 1}`}
+              style={{
+                width: "100%",
+                maxHeight: "80vh",
+                objectFit: "contain",
+                borderRadius: "8px",
+              }}
+            />
+
+            {/* Prev arrow only if not first */}
+            {currentIndex > 0 && (
+              <ArrowButton
+                icon={<LeftOutlined style={{ fontSize: 20 }} />}
+                onClick={prevImage}
+                position="left"
+              />
+            )}
+
+            {currentIndex < post.images.length - 1 && (
+              <ArrowButton
+                icon={<RightOutlined style={{ fontSize: 20 }} />}
+                onClick={nextImage}
+                position="right"
+              />
+            )}
+
+            {/* Counter in center bottom */}
+            <div
+              style={{
+                position: "absolute",
+                bottom: "12px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: "rgba(0,0,0,0.6)",
+                color: "#fff",
+                padding: "4px 10px",
+                borderRadius: "12px",
+                fontSize: 14,
+                fontWeight: 500,
+              }}
+            >
+              {currentIndex + 1} / {post.images.length}
+            </div>
+          </div>
+        </Modal>
       )}
 
       {/* User header */}
