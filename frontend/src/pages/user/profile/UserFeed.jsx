@@ -79,6 +79,9 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
         status="404"
         title="No Posts Yet"
         subTitle="This user hasn’t shared any posts or videos."
+        style={{
+          overflowX: "hidden",
+        }}
       />
     );
   }

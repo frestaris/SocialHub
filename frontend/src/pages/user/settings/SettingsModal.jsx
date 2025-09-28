@@ -29,6 +29,7 @@ import ProfileInfoForm from "./ProfileInfoForm";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../../utils/handleMessage";
+import SocialLink from "./SocialLink";
 
 export default function SettingsModal({ open, onClose, user }) {
   const [form] = Form.useForm();
@@ -40,6 +41,9 @@ export default function SettingsModal({ open, onClose, user }) {
   const [confirmEmail, setConfirmEmail] = useState("");
   const [isChanged, setIsChanged] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
+  const [linkedProviders, setLinkedProviders] = useState(
+    auth.currentUser?.providerData.map((p) => p.providerId) || []
+  );
 
   // --- Redux hooks ---
   const [updateUser] = useUpdateUserMutation();
@@ -59,6 +63,14 @@ export default function SettingsModal({ open, onClose, user }) {
     }),
     [user]
   );
+  // Whenever modal opens → refresh providers from Firebase
+  useEffect(() => {
+    if (open && auth.currentUser) {
+      setLinkedProviders(
+        auth.currentUser.providerData.map((p) => p.providerId)
+      );
+    }
+  }, [open]);
 
   // Detect if user has password set (email/password provider)
   useEffect(() => {
@@ -101,6 +113,10 @@ export default function SettingsModal({ open, onClose, user }) {
       }
 
       await linkWithPopup(auth.currentUser, provider);
+      setLinkedProviders(
+        auth.currentUser.providerData.map((p) => p.providerId)
+      );
+
       handleSuccess(`Successfully linked ${provider.providerId}`);
     } catch (err) {
       if (err.code === "auth/credential-already-in-use") {
@@ -195,23 +211,27 @@ export default function SettingsModal({ open, onClose, user }) {
         >
           <ProfileInfoForm hasPassword={hasPassword} />
 
-          <Divider>Linked Accounts</Divider>
+          <Divider>Link Socials</Divider>
 
           <Space direction="vertical" style={{ width: "100%" }}>
-            <Button
+            <SocialLink
+              providerId="google.com"
+              label="Google"
               icon={<GoogleOutlined />}
-              block
-              onClick={() => handleLinkProvider(googleProvider)}
-            >
-              Link Google
-            </Button>
-            <Button
+              color="#DB4437"
+              provider={googleProvider}
+              linkedProviders={linkedProviders}
+              handleLinkProvider={handleLinkProvider}
+            />
+            <SocialLink
+              providerId="github.com"
+              label="GitHub"
               icon={<GithubOutlined />}
-              block
-              onClick={() => handleLinkProvider(githubProvider)}
-            >
-              Link GitHub
-            </Button>
+              color="#181717"
+              provider={githubProvider}
+              linkedProviders={linkedProviders}
+              handleLinkProvider={handleLinkProvider}
+            />
           </Space>
 
           {/* Footer actions */}
