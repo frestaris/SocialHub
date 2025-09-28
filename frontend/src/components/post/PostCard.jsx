@@ -118,26 +118,63 @@ export default function PostCard({
         </Link>
       )}
 
-      {post.image && (
+      {post.images?.length > 0 && (
         <Link to={`/post/${post._id}`}>
           <div
             style={{
               position: "relative",
               marginBottom: 8,
               aspectRatio: "16/9",
-              overflow: "hidden",
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "2px",
               borderRadius: "8px",
+              overflow: "hidden",
             }}
           >
-            <img
-              src={post.image}
-              alt="Post attachment"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
-            />
+            {post.images.slice(0, 2).map((img, idx) => (
+              <div
+                key={idx}
+                style={{
+                  position: "relative",
+                  height: "100%",
+                  overflow: "hidden",
+                }}
+              >
+                <img
+                  src={img}
+                  alt={`Post attachment ${idx + 1}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+
+                {/* If this is the last visible image and there are more */}
+                {idx === 1 && post.images.length > 2 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      background: "rgba(0,0,0,0.5)",
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      color: "#fff",
+                      fontSize: 20,
+                      fontWeight: 600,
+                    }}
+                  >
+                    +{post.images.length - 2}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         </Link>
       )}

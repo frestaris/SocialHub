@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { useCreatePostMutation } from "../../redux/post/postApi";
 
 // --- Components ---
-import PostForm from "./PostForm";
+import PostForm from "../post/form/PostForm";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";

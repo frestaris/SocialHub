@@ -10,7 +10,7 @@ import User from "../models/userSchema.js";
  */
 export const createPost = async (req, res) => {
   try {
-    const { type, content, category, image, video } = req.body;
+    const { type, content, category, images, video } = req.body;
 
     // Video post
     if (type === "video") {
@@ -48,7 +48,7 @@ export const createPost = async (req, res) => {
       type, // trust frontend-provided type
       content,
       category,
-      image: image || null,
+      images: images && Array.isArray(images) ? images : [],
     });
 
     const populated = await Post.findById(newPost._id).populate(
@@ -101,6 +101,7 @@ export const getPosts = async (req, res) => {
         { category: { $regex: search_query, $options: "i" } },
         { "video.title": { $regex: search_query, $options: "i" } },
         { userId: { $in: userIds } },
+        { images: { $elemMatch: { $regex: search_query, $options: "i" } } }, // ✅ search inside images array
       ];
     }
 
@@ -216,7 +217,7 @@ export const getPostsByUser = async (req, res) => {
  */
 export const updatePost = async (req, res) => {
   try {
-    const { content, category, image, video } = req.body;
+    const { content, category, images, video } = req.body;
 
     let post = await Post.findById(req.params.id);
     if (!post) {
@@ -240,18 +241,20 @@ export const updatePost = async (req, res) => {
       changed = true;
     }
 
-    // Image
-    if (image !== undefined && image !== post.image) {
-      post.image = image;
-      post.type = image ? "image" : "text";
-      post.video = null;
-      changed = true;
+    // Images (array)
+    if (images !== undefined) {
+      if (JSON.stringify(images) !== JSON.stringify(post.images)) {
+        post.images = Array.isArray(images) ? images : [];
+        post.type = post.images.length > 0 ? "image" : "text";
+        post.video = null;
+        changed = true;
+      }
     }
 
     // Video
     if (video) {
       post.type = "video";
-      post.image = null;
+      post.images = [];
       post.video = {
         title: video.title || post.video?.title,
         url: video.url || post.video?.url,

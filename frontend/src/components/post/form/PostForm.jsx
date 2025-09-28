@@ -1,24 +1,21 @@
-import { useState, useEffect, useMemo } from "react";
-
-// --- Ant Design components ---
-import { Form, Input, Button, Select, Upload as AntUpload, Switch } from "antd";
-
-// --- Ant Design icons ---
-import { UploadOutlined, LinkOutlined } from "@ant-design/icons";
+import { useState, useEffect } from "react";
+import { Form } from "antd";
 
 // --- Firebase ---
-import { auth } from "../../firebase";
-import { uploadToFirebase } from "../../utils/uploadToFirebase";
+import { auth } from "../../../firebase";
+import { uploadToFirebase } from "../../../utils/uploadToFirebase";
 
 // --- Utils ---
-import { getVideoDuration } from "../../utils/getVideoDuration";
-import { fetchYouTubeMetadata } from "../../utils/fetchYouTubeMetadata";
-import { handleError } from "../../utils/handleMessage";
+import { getVideoDuration } from "../../../utils/getVideoDuration";
+import { fetchYouTubeMetadata } from "../../../utils/fetchYouTubeMetadata";
+import { handleError } from "../../../utils/handleMessage";
 
-// --- Constants ---
-import { categories } from "../../utils/categories";
-
-const { TextArea } = Input;
+// --- Reusable Components ---
+import PostContent from "./PostContent";
+import MediaInput from "./MediaInput";
+import VideoFields from "./VideoFields";
+import PreviewBox from "./PreviewBox";
+import SubmitButton from "./SubmitButton";
 
 export default function PostForm({ onCreatePost, loading }) {
   const [form] = Form.useForm();
@@ -62,7 +59,6 @@ export default function PostForm({ onCreatePost, loading }) {
     }
 
     setPreviewSrc(url);
-
     return () => {
       if (url?.startsWith("blob:")) URL.revokeObjectURL(url);
     };
@@ -193,141 +189,20 @@ export default function PostForm({ onCreatePost, loading }) {
     }
   };
 
-  // --- Button text ---
-  const buttonLabel = useMemo(() => {
-    if (isUploading) {
-      return uploadProgress < 100
-        ? `Uploading... ${Math.round(uploadProgress)}%`
-        : "Finalizing...";
-    }
-    if (loading) return "Publishing...";
-    return "Publish";
-  }, [isUploading, uploadProgress, loading]);
-
   return (
     <Form form={form} layout="vertical" onFinish={handleFinish}>
-      {/* Content */}
-      <Form.Item
-        label="Create a Post"
-        name="content"
-        rules={[{ required: true, message: "Content is required" }]}
-      >
-        <TextArea rows={3} placeholder="What's on your mind?" />
-      </Form.Item>
-
-      {/* Category */}
-      <Form.Item
-        label="Category"
-        name="category"
-        rules={[{ required: true, message: "Please select a category" }]}
-      >
-        <Select placeholder="Select category">
-          {categories.map((cat) => (
-            <Select.Option key={cat.key} value={cat.key}>
-              {cat.label}
-            </Select.Option>
-          ))}
-        </Select>
-      </Form.Item>
-
-      {/* Media toggle */}
-      <Form.Item label="Media">
-        <div style={{ marginBottom: 12 }}>
-          <Switch
-            checked={useUpload}
-            onChange={setUseUpload}
-            checkedChildren="Upload"
-            unCheckedChildren="URL"
-          />
-        </div>
-
-        {!useUpload ? (
-          <Form.Item name="mediaUrl">
-            <Input
-              prefix={<LinkOutlined />}
-              placeholder="Paste image / video URL"
-            />
-          </Form.Item>
-        ) : (
-          <Form.Item
-            name="mediaFile"
-            valuePropName="fileList"
-            getValueFromEvent={(e) => e?.fileList}
-          >
-            <AntUpload
-              accept="image/*,video/*"
-              maxCount={1}
-              beforeUpload={() => false}
-            >
-              <Button icon={<UploadOutlined />}>Upload Image/Video</Button>
-            </AntUpload>
-          </Form.Item>
-        )}
-      </Form.Item>
-
-      {/* Extra video fields */}
+      <PostContent label="Create a Post" />
+      <MediaInput useUpload={useUpload} setUseUpload={setUseUpload} />
       {(isVideoFile || isVideoUrl) && (
-        <>
-          <Form.Item
-            label="Video Title"
-            name="title"
-            rules={[{ required: true, message: "Title is required" }]}
-          >
-            <Input placeholder="Enter video title" />
-          </Form.Item>
-
-          {!isYouTubeUrl && useUpload && (
-            <Form.Item
-              label="Upload Thumbnail"
-              name="thumbnail"
-              valuePropName="fileList"
-              getValueFromEvent={(e) => e?.fileList}
-            >
-              <AntUpload
-                accept="image/*"
-                listType="picture"
-                maxCount={1}
-                beforeUpload={() => false}
-              >
-                <Button icon={<UploadOutlined />}>Upload Thumbnail</Button>
-              </AntUpload>
-            </Form.Item>
-          )}
-        </>
+        <VideoFields isYouTubeUrl={isYouTubeUrl} useUpload={useUpload} />
       )}
-
-      {/* Preview */}
-      {previewSrc && (
-        <div
-          style={{
-            position: "relative",
-            marginBottom: 8,
-            aspectRatio: "16/9",
-            overflow: "hidden",
-            borderRadius: "8px",
-          }}
-        >
-          <img
-            src={previewSrc}
-            alt="Preview"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-            }}
-          />
-        </div>
-      )}
-
-      {/* Submit */}
-      <Button
-        type="primary"
-        htmlType="submit"
-        block
-        loading={isUploading || loading}
-      >
-        {buttonLabel}
-      </Button>
+      <PreviewBox previewSrc={previewSrc} />
+      <SubmitButton
+        isUploading={isUploading}
+        uploadProgress={uploadProgress}
+        loading={loading}
+        isEdit={false}
+      />
     </Form>
   );
 }

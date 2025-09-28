@@ -2,7 +2,7 @@
 import { Modal } from "antd";
 
 // --- Components ---
-import EditPostForm from "./EditPostForm";
+import EditPostForm from "../post/form/EditPostForm";
 
 export default function PostModals({
   editingPost,

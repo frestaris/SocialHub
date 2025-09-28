@@ -13,7 +13,7 @@ const postSchema = new mongoose.Schema(
     // shared
     content: { type: String },
     category: { type: String },
-    image: { type: String, default: null },
+    images: [{ type: String, default: null }],
     views: { type: Number, default: 0 },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     likesCount: { type: Number, default: 0 },
