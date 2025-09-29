@@ -5,7 +5,7 @@ import { Typography, Avatar, Button, Grid, Modal } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 
 // --- Utils ---
-import moment from "moment";
+import moment from "../../utils/momentShort";
 
 // --- Routing ---
 import { Link } from "react-router-dom";

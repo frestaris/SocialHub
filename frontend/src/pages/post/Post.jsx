@@ -14,7 +14,7 @@ import { Divider, Spin, Result, Button } from "antd";
 
 // --- Components ---
 import PostInfo from "./PostInfo";
-import CommentsSection from "./CommentsSection";
+import CommentsSection from "../../components/post/comments/CommentsSection";
 
 export default function Post() {
   const { id } = useParams();

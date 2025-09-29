@@ -3,7 +3,7 @@ import { Card, Typography, Button, Grid, Spin, Result } from "antd";
 
 // --- React ---
 import { useState } from "react";
-import moment from "moment";
+import moment from "../../../utils/momentShort";
 
 // --- Routing ---
 import { Link } from "react-router-dom";

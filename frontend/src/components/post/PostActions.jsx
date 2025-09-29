@@ -16,7 +16,7 @@ import { useToggleLikePostMutation } from "../../redux/post/postApi";
 
 // Local components & utils
 import CategoryBadge from "../CategoryBadge";
-import CommentsSection from "../../pages/post/CommentsSection";
+import CommentsSection from "../../components/post/comments/CommentsSection";
 import {
   clearNotifications,
   handleError,
