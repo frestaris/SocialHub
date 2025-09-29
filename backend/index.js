@@ -8,6 +8,7 @@ import authRoutes from "./src/routes/authRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import postRoutes from "./src/routes/postRoutes.js";
 import commentRoutes from "./src/routes/commentRoutes.js";
+import replyRoutes from "./src/routes/replyRoutes.js";
 
 const app = express();
 dotenv.config();
@@ -24,6 +25,7 @@ app.use("/auth", authRoutes);
 app.use("/users", userRoutes);
 app.use("/posts", postRoutes);
 app.use("/comments", commentRoutes);
+app.use("/replies", replyRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;

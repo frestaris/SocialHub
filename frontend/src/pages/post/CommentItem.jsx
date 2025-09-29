@@ -1,4 +1,4 @@
-import { Avatar, Button, List, Typography } from "antd";
+import { Avatar, List, Typography } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import moment from "moment";
@@ -17,11 +17,15 @@ const { Paragraph, Text } = Typography;
 export default function CommentItem({
   item,
   isOwner,
+  currentUser,
   expanded,
   onToggleExpanded,
   onEdit,
   onDelete,
+  onReply,
   deleting,
+  showReplyButton = false,
+  children,
 }) {
   return (
     <List.Item>
@@ -33,39 +37,14 @@ export default function CommentItem({
           />
         }
         title={
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                minWidth: 0,
-              }}
-            >
-              <Link
-                to={`/profile/${item.userId?._id}`}
-                style={{
-                  maxWidth: 120,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  display: "inline-block",
-                }}
-              >
-                <Text style={{ color: "#1677ff" }} strong>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <Link to={`/profile/${item.userId?._id}`}>
+                <Text strong style={{ color: "#1677ff" }}>
                   {item.userId?.username}
                 </Text>
               </Link>
-              <Text
-                type="secondary"
-                style={{ fontSize: 12, whiteSpace: "nowrap" }}
-              >
+              <Text type="secondary" style={{ fontSize: 12 }}>
                 {moment(item.createdAt).fromNow()}
                 {item.edited && <span style={{ marginLeft: 6 }}>(edited)</span>}
               </Text>
@@ -74,7 +53,7 @@ export default function CommentItem({
             {isOwner && (
               <PostDropdown
                 item={item}
-                onEdit={() => onEdit(item)}
+                onEdit={() => onEdit?.(item)}
                 onDelete={() => onDelete(item._id)}
                 size="small"
                 loading={deleting}
@@ -96,14 +75,18 @@ export default function CommentItem({
               </Paragraph>
             </div>
 
-            {item.content.length > 120 && (
-              <Button
-                type="link"
-                style={{ padding: 0, fontSize: 12 }}
-                onClick={onToggleExpanded}
-              >
+            {item.content?.length > 120 && (
+              <a style={{ fontSize: 12 }} onClick={onToggleExpanded}>
                 {expanded ? "Show Less" : "Show More"}
-              </Button>
+              </a>
+            )}
+
+            {children}
+
+            {currentUser && showReplyButton && (
+              <a style={{ fontSize: 12 }} onClick={() => onReply?.(item)}>
+                Reply
+              </a>
             )}
           </>
         }

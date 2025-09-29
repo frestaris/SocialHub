@@ -41,7 +41,10 @@ export const createComment = async (req, res) => {
       .populate("userId", "username avatar")
       .populate({
         path: "comments",
-        populate: { path: "userId", select: "username avatar" },
+        populate: [
+          { path: "userId", select: "username avatar" },
+          { path: "replies.userId", select: "username avatar" },
+        ],
       });
 
     // ✅ Return both new comment and updated post
@@ -70,6 +73,7 @@ export const getComments = async (req, res) => {
 
     const comments = await Comment.find(filter)
       .populate("userId", "username avatar")
+      .populate("replies.userId", "username avatar")
       .sort({ createdAt: -1 });
 
     res.json({ success: true, comments });

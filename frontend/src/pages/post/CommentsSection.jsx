@@ -8,22 +8,21 @@ import {
   useDeleteCommentMutation,
 } from "../../redux/comment/commentApi";
 import {
+  useCreateReplyMutation,
+  useUpdateReplyMutation,
+  useDeleteReplyMutation,
+} from "../../redux/reply/replyApi";
+import {
   handleError,
   handleSuccess,
   handleWarning,
 } from "../../utils/handleMessage";
 import CommentItem from "./CommentItem";
 
-/**
- * CommentsSection:
- * - Lists comments for a post (query)
- * - Allows create, edit, delete (mutations)
- * - Supports expand/collapse and pagination (Show More)
- */
 export default function CommentsSection({ postId }) {
   // --- Local state ---
   const [content, setContent] = useState("");
-  const [editingComment, setEditingComment] = useState(null);
+  const [editing, setEditing] = useState(null); // can be comment OR reply
   const [visibleCount, setVisibleCount] = useState(3);
   const [expanded, setExpanded] = useState({});
   const [deletingId, setDeletingId] = useState(null);
@@ -37,13 +36,14 @@ export default function CommentsSection({ postId }) {
   const [createComment, { isLoading: isPosting }] = useCreateCommentMutation();
   const [updateComment, { isLoading: isUpdating }] = useUpdateCommentMutation();
   const [deleteComment] = useDeleteCommentMutation();
+  const [createReply] = useCreateReplyMutation();
+  const [updateReply] = useUpdateReplyMutation();
+  const [deleteReply] = useDeleteReplyMutation();
 
   const textareaRef = useRef(null);
   const comments = data?.comments || [];
 
-  // --- Derived ---
-  const isUnchanged =
-    editingComment && content.trim() === editingComment.content.trim();
+  const isUnchanged = editing && content.trim() === editing.content?.trim();
 
   // --- Handlers ---
   const toggleExpanded = (id) =>
@@ -55,23 +55,33 @@ export default function CommentsSection({ postId }) {
 
     const trimmed = content.trim();
 
-    // --- Case 2: editing and empty ---
-    if (editingComment && !trimmed) {
+    // Editing + empty → ask delete
+    if (editing && !trimmed) {
       Modal.confirm({
-        title: "Delete Comment?",
-        content: "The comment is empty. Do you want to delete it instead?",
+        title: "Delete?",
+        content: "Content is empty. Do you want to delete instead?",
         okText: "Yes, delete",
         okType: "danger",
         cancelText: "Cancel",
         onOk: async () => {
           try {
-            setDeletingId(editingComment._id);
-            await deleteComment({ id: editingComment._id, postId }).unwrap();
-            handleSuccess("Comment deleted!");
-            setEditingComment(null);
+            setDeletingId(editing._id);
+            if (editing.parentId) {
+              // reply
+              await deleteReply({
+                commentId: editing.parentId,
+                replyId: editing._id,
+                postId,
+              }).unwrap();
+            } else {
+              // comment
+              await deleteComment({ id: editing._id, postId }).unwrap();
+            }
+            handleSuccess("Deleted!");
+            setEditing(null);
             setContent("");
           } catch (err) {
-            handleError(err, "Failed to delete comment");
+            handleError(err, "Failed to delete");
           } finally {
             setDeletingId(null);
           }
@@ -80,46 +90,69 @@ export default function CommentsSection({ postId }) {
       return;
     }
 
-    // --- Case 1: creating and empty ---
-    if (!editingComment && !trimmed) {
+    if (!editing && !trimmed) {
       setError(true);
-      handleError({ message: "Comment cannot be empty." }, "Empty Comment");
+      handleError({ message: "Content cannot be empty." }, "Empty");
       return;
     }
 
-    // --- Normal update/create ---
+    // Normal create/update
     try {
-      if (editingComment) {
-        await updateComment({
-          id: editingComment._id,
-          content: trimmed,
-        }).unwrap();
-        handleSuccess("Comment updated!");
-        setEditingComment(null);
+      if (editing) {
+        if (editing.parentId) {
+          if (editing._id) {
+            // ✅ update reply
+            await updateReply({
+              commentId: editing.parentId,
+              replyId: editing._id,
+              content: trimmed,
+              postId,
+            }).unwrap();
+            handleSuccess("Reply updated!");
+          } else {
+            // ✅ create new reply
+            await createReply({
+              commentId: editing.parentId,
+              postId,
+              content: trimmed,
+            }).unwrap();
+            handleSuccess("Reply added!");
+          }
+        } else {
+          if (editing._id) {
+            // ✅ update comment
+            await updateComment({
+              id: editing._id,
+              content: trimmed,
+              postId,
+            }).unwrap();
+            handleSuccess("Comment updated!");
+          }
+        }
+        setEditing(null);
       } else {
+        // ✅ create comment
         await createComment({ postId, content: trimmed }).unwrap();
         handleSuccess("Comment added!");
       }
       setContent("");
     } catch (err) {
-      handleError(err, "Failed to save comment");
+      handleError(err, "Save failed");
     }
   };
 
-  // --- Delete comment ---
   const handleDelete = async (commentId) => {
     try {
       setDeletingId(commentId);
       await deleteComment({ id: commentId, postId }).unwrap();
-      handleSuccess("Comment Deleted");
+      handleSuccess("Comment deleted");
     } catch (err) {
-      handleError(err, "Delete Failed");
+      handleError(err, "Delete failed");
     } finally {
       setDeletingId(null);
     }
   };
 
-  // --- Render ---
   if (isLoading) return <Spin />;
 
   return (
@@ -128,20 +161,72 @@ export default function CommentsSection({ postId }) {
         dataSource={comments.slice(0, visibleCount)}
         locale={{ emptyText: <Empty description="No comments yet" /> }}
         renderItem={(item) => (
-          <CommentItem
-            key={item._id}
-            item={item}
-            isOwner={currentUser?._id === item.userId?._id}
-            expanded={expanded[item._id]}
-            onToggleExpanded={() => toggleExpanded(item._id)}
-            onEdit={(c) => {
-              setEditingComment(c);
-              setContent(c.content);
-              textareaRef.current?.focus();
-            }}
-            onDelete={(id) => handleDelete(id, postId)}
-            deleting={deletingId === item._id}
-          />
+          <div key={item._id} style={{ marginBottom: 12 }}>
+            {/* Top-level comment */}
+            <CommentItem
+              item={item}
+              currentUser={currentUser}
+              isOwner={currentUser?._id === item.userId?._id}
+              expanded={expanded[item._id]}
+              onToggleExpanded={() => toggleExpanded(item._id)}
+              onEdit={(c) => {
+                setEditing(c);
+                setContent(c.content);
+                textareaRef.current?.focus();
+              }}
+              onDelete={(id) => handleDelete(id, postId)}
+              deleting={deletingId === item._id}
+            />
+
+            {/* Reply button always under the parent comment */}
+            {currentUser && (
+              <div style={{ paddingLeft: 56, marginTop: 4 }}>
+                <Button
+                  type="link"
+                  size="small"
+                  onClick={() => {
+                    setEditing({ parentId: item._id });
+                    setContent("");
+                    textareaRef.current?.focus();
+                  }}
+                >
+                  Reply
+                </Button>
+              </div>
+            )}
+
+            {/* Replies container */}
+            {item.replies?.length > 0 && (
+              <div style={{ paddingLeft: 56, marginTop: 4 }}>
+                <List
+                  dataSource={item.replies}
+                  renderItem={(reply) => (
+                    <CommentItem
+                      key={reply._id}
+                      item={reply}
+                      currentUser={currentUser}
+                      isOwner={currentUser?._id === reply.userId?._id}
+                      expanded={expanded[reply._id]}
+                      onToggleExpanded={() => toggleExpanded(reply._id)}
+                      onEdit={(r) => {
+                        setEditing({ ...r, parentId: item._id });
+                        setContent(r.content);
+                        textareaRef.current?.focus();
+                      }}
+                      onDelete={(id) =>
+                        deleteReply({
+                          commentId: item._id,
+                          replyId: id,
+                          postId,
+                        })
+                      }
+                      deleting={deletingId === reply._id}
+                    />
+                  )}
+                />
+              </div>
+            )}
+          </div>
         )}
       />
 
@@ -163,7 +248,13 @@ export default function CommentsSection({ postId }) {
           setError(false);
         }}
         placeholder={
-          editingComment ? "Edit your comment..." : "Write a comment..."
+          editing
+            ? editing.parentId
+              ? editing._id
+                ? "Edit your reply..."
+                : "Write a reply..."
+              : "Edit your comment..."
+            : "Write a comment..."
         }
         autoSize={{ minRows: 2, maxRows: 4 }}
         status={error ? "error" : ""}
@@ -171,10 +262,10 @@ export default function CommentsSection({ postId }) {
       />
 
       <div style={{ marginTop: 8, textAlign: "right" }}>
-        {editingComment && (
+        {editing && (
           <Button
             onClick={() => {
-              setEditingComment(null);
+              setEditing(null);
               setContent("");
             }}
             style={{ marginRight: 8 }}
@@ -188,7 +279,7 @@ export default function CommentsSection({ postId }) {
           loading={isPosting || isUpdating}
           disabled={isUnchanged}
         >
-          {editingComment ? "Update" : "Comment"}
+          {editing ? (editing._id ? "Update" : "Reply") : "Comment"}
         </Button>
       </div>
     </div>

@@ -154,7 +154,10 @@ export const getPosts = async (req, res) => {
       .populate("userId", "username avatar")
       .populate({
         path: "comments",
-        populate: { path: "userId", select: "username avatar" },
+        populate: [
+          { path: "userId", select: "username avatar" },
+          { path: "replies.userId", select: "username avatar" },
+        ],
       })
       .sort(sortOption)
       .skip(skipNum)
@@ -179,7 +182,10 @@ export const getPostById = async (req, res) => {
       .populate("userId", "username avatar")
       .populate({
         path: "comments",
-        populate: { path: "userId", select: "username avatar" },
+        populate: [
+          { path: "userId", select: "username avatar" },
+          { path: "replies.userId", select: "username avatar" }, // 👈 add this
+        ],
       });
 
     if (!post) return res.status(404).json({ error: "Post not found" });
