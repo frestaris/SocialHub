@@ -89,7 +89,7 @@ export const getPosts = async (req, res) => {
       sort = "newest",
     } = req.query;
 
-    const filter = {};
+    const filter = { hidden: { $ne: true } };
 
     // Filter by category
     if (category) {
@@ -178,22 +178,30 @@ export const getPosts = async (req, res) => {
  */
 export const getPostById = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id)
-      .populate("userId", "username avatar")
-      .populate({
-        path: "comments",
-        populate: [
-          { path: "userId", select: "username avatar" },
-          { path: "replies.userId", select: "username avatar" }, // 👈 add this
-        ],
-      });
+    const post = await Post.findById(req.params.id).populate(
+      "userId",
+      "username avatar"
+    );
 
-    if (!post) return res.status(404).json({ error: "Post not found" });
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
 
-    res.json({ success: true, post });
+    if (post.hidden) {
+      const isOwner =
+        req.user && post.userId._id.toString() === req.user._id.toString();
+
+      if (!isOwner) {
+        return res
+          .status(404)
+          .json({ message: "Post not found or has been hidden" });
+      }
+    }
+
+    res.json({ post });
   } catch (err) {
-    console.error("Get post error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error("❌ Error fetching post by id:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -415,6 +423,38 @@ export const toggleLikePost = async (req, res) => {
     res.json({ success: true, post: updated });
   } catch (err) {
     console.error("Toggle like error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+};
+
+/**
+ * TOGGLE HIDE POST
+ * -------------------
+ * - Hides the user post.
+ */
+export const toggleHidePost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ success: false, error: "Post not found" });
+    }
+
+    // Only owner can hide
+    if (post.userId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ success: false, error: "Not authorized" });
+    }
+
+    post.hidden = !post.hidden;
+    await post.save();
+
+    const updated = await Post.findById(post._id).populate(
+      "userId",
+      "username avatar"
+    );
+
+    res.json({ success: true, post: updated });
+  } catch (err) {
+    console.error("Toggle hide error:", err);
     res.status(500).json({ success: false, error: "Server error" });
   }
 };

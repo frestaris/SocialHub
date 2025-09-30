@@ -9,6 +9,7 @@ import {
   getUserFeed,
   incrementPostViews,
   toggleLikePost,
+  toggleHidePost,
 } from "../controllers/postController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -26,5 +27,6 @@ router.post("/", protect, createPost);
 router.put("/:id", protect, updatePost);
 router.delete("/:id", protect, deletePost);
 router.patch("/:id/like", protect, toggleLikePost);
+router.patch("/:id/hide", protect, toggleHidePost);
 
 export default router;

@@ -9,6 +9,7 @@ import {
   useGetPostsQuery,
   useUpdatePostMutation,
   useDeletePostMutation,
+  useToggleHidePostMutation,
 } from "../../redux/post/postApi";
 
 // --- Libraries ---
@@ -38,6 +39,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
+  const [hidingPostId, setHidingPostId] = useState(null);
 
   // --- Redux state ---
   const currentUser = useSelector((state) => state.auth.user);
@@ -50,6 +52,8 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
   // --- Mutations ---
   const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
   const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
+  const [toggleHidePost, { isLoading: isTogglingHide }] =
+    useToggleHidePostMutation();
 
   // --- Fetch posts ---
   const { data, isLoading, isFetching, isError } = useGetPostsQuery(
@@ -95,6 +99,18 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
     } catch (err) {
       console.error("❌ Error deleting post:", err);
       handleError(err, "Delete post");
+    }
+  };
+
+  // --- Toggle hide post ---
+  const handleToggleHide = async (post) => {
+    setHidingPostId(post._id);
+    try {
+      await toggleHidePost(post._id).unwrap();
+    } catch (err) {
+      console.error("❌ Hide/show failed:", err);
+    } finally {
+      setHidingPostId(null);
     }
   };
 
@@ -158,16 +174,20 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
     );
   }
 
+  const visiblePosts = posts.filter(
+    (p) => !p.hidden || p.userId?._id === currentUser?._id
+  );
+
   // --- Group posts into chunks for injecting components ---
   const chunkSize = 12;
   const chunks = Array.from(
-    { length: Math.ceil(posts.length / chunkSize) },
-    (_, i) => posts.slice(i * chunkSize, i * chunkSize + chunkSize)
+    { length: Math.ceil(visiblePosts.length / chunkSize) },
+    (_, i) => visiblePosts.slice(i * chunkSize, i * chunkSize + chunkSize)
   );
 
   const injectedComponents = [
-    <HotNow key="hot-now" />,
     <TopCreators key="top-creators" />,
+    <HotNow key="hot-now" />,
   ];
 
   return (
@@ -189,6 +209,8 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
                     currentUser={currentUser}
                     onEdit={setEditingPost}
                     onDelete={setDeletingPost}
+                    onHide={handleToggleHide}
+                    isTogglingHide={hidingPostId === post._id && isTogglingHide}
                   />
                 </div>
               </div>

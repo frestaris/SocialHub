@@ -14,6 +14,7 @@ export default function PostCard({
   currentUser,
   onEdit,
   onDelete,
+  onHide,
 }) {
   return (
     <Card
@@ -70,10 +71,28 @@ export default function PostCard({
             item={post}
             onEdit={onEdit}
             onDelete={onDelete}
+            onHide={onHide}
             size="large"
           />
         )}
       </div>
+      {post.hidden && currentUser?._id === post.userId?._id && (
+        <div
+          style={{
+            background: "#fffbe6",
+            border: "1px solid #ffe58f",
+            color: "#ad8b00",
+            fontSize: 12,
+            fontWeight: 500,
+            padding: "2px 6px",
+            borderRadius: 6,
+            marginBottom: 8,
+            display: "inline-block",
+          }}
+        >
+          Hidden (only you can see this)
+        </div>
+      )}
 
       {/* ---------- Media (video thumbnail or image) ---------- */}
       {post.type === "video" && post.video && (

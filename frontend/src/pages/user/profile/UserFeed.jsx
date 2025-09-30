@@ -1,5 +1,6 @@
 // --- Ant Design ---
-import { Card, Typography, Button, Grid, Spin, Result } from "antd";
+import { Card, Typography, Button, Grid, Spin, Result, Tooltip } from "antd";
+import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 
 // --- React ---
 import { useState } from "react";
@@ -12,6 +13,7 @@ import { Link } from "react-router-dom";
 import {
   useUpdatePostMutation,
   useDeletePostMutation,
+  useToggleHidePostMutation,
 } from "../../../redux/post/postApi";
 
 // --- Components ---
@@ -34,10 +36,12 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
   const [expandedPostId, setExpandedPostId] = useState(null); // track expanded text
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
+  const [hidingPostId, setHidingPostId] = useState(null);
 
   // --- Mutations ---
   const [updatePost, { isLoading: isUpdatingPost }] = useUpdatePostMutation();
   const [deletePost, { isLoading: isDeletingPost }] = useDeletePostMutation();
+  const [toggleHidePost] = useToggleHidePostMutation();
 
   const handleDeleteConfirm = async () => {
     try {
@@ -53,6 +57,18 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
     } catch (err) {
       console.error("❌ Error deleting post:", err);
       handleError(err, "Failed to delete post");
+    }
+  };
+
+  const handleToggleHide = async (post) => {
+    setHidingPostId(post._id);
+    try {
+      await toggleHidePost(post._id).unwrap();
+    } catch (err) {
+      console.error("❌ Hide/show failed:", err);
+      handleError(err, "Failed to hide post");
+    } finally {
+      setHidingPostId(null);
     }
   };
 
@@ -104,13 +120,39 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
               {item.edited && <span style={{ marginLeft: 6 }}>(edited)</span>}
             </Text>
 
+            {/* Dropdown and visibility */}
             {currentUserId === (item.userId?._id || item.creatorId?._id) && (
-              <PostDropdown
-                item={item}
-                onEdit={setEditingPost}
-                onDelete={setDeletingPost}
-                size="large"
-              />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Tooltip
+                  title={item.hidden ? "Hidden from feed" : "Visible to others"}
+                  placement="top"
+                >
+                  <div style={{ display: "inline-flex", alignItems: "center" }}>
+                    {hidingPostId === item._id ? (
+                      <Spin size="small" />
+                    ) : item.hidden ? (
+                      <EyeInvisibleOutlined
+                        style={{ fontSize: 18, cursor: "pointer" }}
+                        onClick={() => handleToggleHide(item)}
+                      />
+                    ) : (
+                      <EyeOutlined
+                        style={{ fontSize: 18, cursor: "pointer" }}
+                        onClick={() => handleToggleHide(item)}
+                      />
+                    )}
+                  </div>
+                </Tooltip>
+
+                <PostDropdown
+                  item={item}
+                  onEdit={setEditingPost}
+                  onDelete={setDeletingPost}
+                  onHide={handleToggleHide}
+                  size="large"
+                  showHideOption={false}
+                />
+              </div>
             )}
           </div>
 

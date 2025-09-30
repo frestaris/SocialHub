@@ -379,6 +379,78 @@ export const postApi = createApi({
         }
       },
     }),
+
+    // ---- TOGGLE HIDE POST ----
+    toggleHidePost: builder.mutation({
+      query: (id) => ({
+        url: `/${id}/hide`,
+        method: "PATCH",
+      }),
+      async onQueryStarted(id, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data } = await queryFulfilled;
+          const state = getState();
+          const queries = state.postApi.queries;
+
+          // Update all cached getPosts queries
+          Object.entries(queries).forEach(([cacheKey, entry]) => {
+            if (cacheKey.startsWith("getPosts") && entry.originalArgs) {
+              dispatch(
+                postApi.util.updateQueryData(
+                  "getPosts",
+                  entry.originalArgs,
+                  (draft) => {
+                    const idx = draft.posts?.findIndex((p) => p._id === id);
+                    if (idx !== -1) draft.posts[idx] = data.post;
+                  }
+                )
+              );
+            }
+          });
+
+          // Update getUserFeed queries
+          Object.entries(queries).forEach(([cacheKey, entry]) => {
+            if (cacheKey.startsWith("getUserFeed") && entry.originalArgs) {
+              dispatch(
+                postApi.util.updateQueryData(
+                  "getUserFeed",
+                  entry.originalArgs,
+                  (draft) => {
+                    const idx = draft.feed?.findIndex((f) => f._id === id);
+                    if (idx !== -1) draft.feed[idx] = data.post;
+                  }
+                )
+              );
+            }
+          });
+
+          // Update getPostsByUser queries too
+          Object.entries(queries).forEach(([cacheKey, entry]) => {
+            if (cacheKey.startsWith("getPostsByUser") && entry.originalArgs) {
+              dispatch(
+                postApi.util.updateQueryData(
+                  "getPostsByUser",
+                  entry.originalArgs,
+                  (draft) => {
+                    const idx = draft.posts?.findIndex((p) => p._id === id);
+                    if (idx !== -1) draft.posts[idx] = data.post;
+                  }
+                )
+              );
+            }
+          });
+
+          // Update single post cache
+          dispatch(
+            postApi.util.updateQueryData("getPostById", id, (draft) => {
+              draft.post = data.post;
+            })
+          );
+        } catch (err) {
+          console.error("❌ toggleHidePost cache update failed:", err);
+        }
+      },
+    }),
   }),
 });
 
@@ -392,4 +464,5 @@ export const {
   useDeletePostMutation,
   useIncrementPostViewsMutation,
   useToggleLikePostMutation,
+  useToggleHidePostMutation,
 } = postApi;

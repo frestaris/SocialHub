@@ -13,8 +13,9 @@ import Upload from "../../../components/post/Upload";
 import FollowButton from "../../../components/FollowButton";
 import CoverEdit from "./CoverEdit";
 import AvatarEdit from "./AvatarEdit";
+import moment from "../../../utils/momentShort";
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 export default function ProfileInfo({ user }) {
   // --- Redux state ---
@@ -174,14 +175,16 @@ export default function ProfileInfo({ user }) {
           <Title level={3} style={{ marginTop: 8 }}>
             {user?.username}
           </Title>
-
+          <Text type="secondary">
+            Member since {moment(user?.createdAt).format("MMM YYYY")}
+          </Text>
           {/* --- Bio with expand/collapse --- */}
           {bio && (
             <div style={{ marginTop: 24, textAlign: "left" }}>
               <div
                 ref={bioRef}
                 style={{
-                  maxHeight: expanded ? bioRef.current?.scrollHeight : 60,
+                  maxHeight: expanded ? bioRef.current?.scrollHeight : 25,
                   overflow: "hidden",
                   transition: "max-height 0.5s ease",
                 }}
