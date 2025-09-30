@@ -17,15 +17,6 @@
   border-radius: 0 0 0 12px;
 }
 
-.comment-replies.expanded::after {
-  content: "";
-  position: absolute;
-  top: -40px;
-  left: -28px;
-  height: calc(100% - 54px + 40px);
-  border-left: 2px solid #e5e5e5;
-}
-
 /* reply wrappers */
 .comment-replies.expanded .reply-wrapper {
   position: relative;
@@ -44,6 +35,17 @@
   border-radius: 0 0 0 12px;
 }
 
-.comment-replies.expanded .reply-wrapper:last-child {
-  margin-bottom: 0;
+/* vertical line segment */
+.comment-replies.expanded .reply-wrapper::after {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: -10px;
+  bottom: -10px;
+  border-left: 2px solid #e5e5e5;
+}
+
+/* don’t draw vertical on last reply */
+.comment-replies.expanded .reply-wrapper:last-child::after {
+  content: none;
 }
