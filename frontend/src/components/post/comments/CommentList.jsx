@@ -2,6 +2,7 @@ import { List, Button } from "antd";
 import CommentItem from "./CommentItem";
 import ReplyForm from "./ReplyForm";
 import CommentForm from "./CommentForm";
+import "./CommentList.css";
 
 export default function CommentList({
   comments,
@@ -43,7 +44,7 @@ export default function CommentList({
             allowReply
           />
 
-          {/* ✅ Inline edit form for this top-level comment */}
+          {/* ✅ Inline edit form */}
           {editing && editing._id === item._id && !editing.parentId && (
             <CommentForm
               value={content}
@@ -56,7 +57,7 @@ export default function CommentList({
             />
           )}
 
-          {/* Reply form for new reply */}
+          {/* Reply form */}
           {replyingTo === item._id && !editing?.parentId && (
             <ReplyForm
               value={replyContent[item._id] || ""}
@@ -68,14 +69,12 @@ export default function CommentList({
             />
           )}
 
-          {/* Replies toggle */}
+          {/* Replies block with custom thread line */}
           {item.replies?.length > 0 && (
             <div
-              style={{
-                paddingLeft: 28,
-                marginTop: 4,
-                borderLeft: "2px solid #e5e5e5",
-              }}
+              className={`comment-replies ${
+                expanded[`replies-${item._id}`] ? "expanded" : "collapsed"
+              }`}
             >
               {!expanded[`replies-${item._id}`] ? (
                 <Button
@@ -97,8 +96,7 @@ export default function CommentList({
                   </Button>
 
                   {[...item.replies].reverse().map((reply) => (
-                    <div key={reply._id} style={{ marginBottom: 8 }}>
-                      {/* Each reply */}
+                    <div key={reply._id} className="reply-wrapper">
                       <CommentItem
                         item={reply}
                         currentUser={currentUser}

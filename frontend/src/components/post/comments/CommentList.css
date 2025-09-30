@@ -1,0 +1,49 @@
+/* Replies container */
+.comment-replies {
+  position: relative;
+  margin-left: 40px;
+}
+
+/* collapsed: elbow from parent avatar -> Show replies button */
+.comment-replies.collapsed::before {
+  content: "";
+  position: absolute;
+  top: -20px;
+  left: -28px;
+  width: 28px;
+  height: 35px;
+  border-left: 2px solid #e5e5e5;
+  border-bottom: 2px solid #e5e5e5;
+  border-radius: 0 0 0 12px;
+}
+
+.comment-replies.expanded::after {
+  content: "";
+  position: absolute;
+  top: -40px;
+  left: -28px;
+  height: calc(100% - 54px + 40px);
+  border-left: 2px solid #e5e5e5;
+}
+
+/* reply wrappers */
+.comment-replies.expanded .reply-wrapper {
+  position: relative;
+}
+
+/* elbow from thread to reply avatar */
+.comment-replies.expanded .reply-wrapper::before {
+  content: "";
+  position: absolute;
+  top: 0.75em;
+  left: -28px;
+  width: 28px;
+  height: 20px;
+  border-left: 2px solid #e5e5e5;
+  border-bottom: 2px solid #e5e5e5;
+  border-radius: 0 0 0 12px;
+}
+
+.comment-replies.expanded .reply-wrapper:last-child {
+  margin-bottom: 0;
+}

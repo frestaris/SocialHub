@@ -37,6 +37,11 @@ export default function PostActions({
   // check if current user has liked the post
   const hasLiked = post.likes?.some((id) => id.toString() === currentUser?._id);
 
+  // total comments + replies
+  const totalComments =
+    (post.comments?.length || 0) +
+    (post.comments?.reduce((acc, c) => acc + (c.replies?.length || 0), 0) || 0);
+
   // ---- Handlers ----
   const handleLikeToggle = async () => {
     if (!currentUser) {
@@ -134,7 +139,7 @@ export default function PostActions({
             }
           >
             <CommentOutlined />
-            <span>{post.comments?.length || 0}</span>
+            <span>{totalComments}</span>
           </div>
         </div>
       </Space>
