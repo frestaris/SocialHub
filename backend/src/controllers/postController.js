@@ -22,8 +22,10 @@ export const createPost = async (req, res) => {
       });
     }
 
-    // Video post
+    let newPost;
+
     if (type === "video") {
+      // Validate video fields
       if (!video || !video.url || !video.title || !content) {
         return res.status(400).json({
           success: false,
@@ -31,11 +33,11 @@ export const createPost = async (req, res) => {
         });
       }
 
-      const newPost = await Post.create({
+      newPost = await Post.create({
         userId: req.user._id,
         type: "video",
         category: video.category || category || "",
-        content, // always used as description
+        content,
         video: {
           title: video.title,
           url: video.url,
@@ -43,48 +45,46 @@ export const createPost = async (req, res) => {
           duration: video.duration || 0,
         },
       });
-
-      const populated = await Post.findById(newPost._id).populate(
-        "userId",
-        "username avatar"
-      );
-
-      // Notify followers (if any)
-      if (populated.userId.followers?.length > 0) {
-        for (const followerId of populated.userId.followers) {
-          const notif = await Notification.create({
-            userId: followerId, // recipient = follower
-            type: "new_post",
-            fromUser: req.user._id, // actor = post owner
-            postId: newPost._id,
-          });
-
-          const populatedNotif = await notif.populate(
-            "fromUser",
-            "username avatar"
-          );
-          io.to(followerId.toString()).emit("notification", populatedNotif);
-        }
-      }
-
-      return res.status(201).json({ success: true, post: populated });
+    } else {
+      // Text or Image post
+      newPost = await Post.create({
+        userId: req.user._id,
+        type,
+        content,
+        category,
+        images: images && Array.isArray(images) ? images : [],
+      });
     }
 
-    // Text or Image post
-    const newPost = await Post.create({
-      userId: req.user._id,
-      type, // trust frontend-provided type
-      content,
-      category,
-      images: images && Array.isArray(images) ? images : [],
-    });
+    // Fetch author with followers
+    const author = await User.findById(req.user._id).select(
+      "followers username avatar"
+    );
 
     const populated = await Post.findById(newPost._id).populate(
       "userId",
       "username avatar"
     );
 
-    res.status(201).json({ success: true, post: populated });
+    // Notify followers
+    if (author.followers?.length > 0) {
+      for (const followerId of author.followers) {
+        const notif = await Notification.create({
+          userId: followerId, // recipient = follower
+          type: "new_post",
+          fromUser: req.user._id, // actor = post owner
+          postId: newPost._id,
+        });
+
+        const populatedNotif = await notif.populate(
+          "fromUser",
+          "username avatar"
+        );
+        io.to(followerId.toString()).emit("notification", populatedNotif);
+      }
+    }
+
+    return res.status(201).json({ success: true, post: populated });
   } catch (err) {
     console.error("Create post error:", err);
     res.status(500).json({ success: false, error: "Server error" });
@@ -198,27 +198,28 @@ export const getPosts = async (req, res) => {
  */
 export const getPostById = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id).populate(
-      "userId",
-      "username avatar"
-    );
+    const post = await Post.findById(req.params.id)
+      .populate("userId", "username avatar")
+      .populate({
+        path: "comments",
+        populate: [
+          { path: "userId", select: "username avatar" },
+          { path: "replies.userId", select: "username avatar" },
+        ],
+      });
 
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
+    if (!post) return res.status(404).json({ message: "Post not found" });
 
     if (post.hidden) {
       const isOwner =
         req.user && post.userId._id.toString() === req.user._id.toString();
-
-      if (!isOwner) {
+      if (!isOwner)
         return res
           .status(404)
           .json({ message: "Post not found or has been hidden" });
-      }
     }
 
-    res.json({ post });
+    res.json({ success: true, post });
   } catch (err) {
     console.error("❌ Error fetching post by id:", err);
     res.status(500).json({ message: "Server error" });
@@ -433,26 +434,21 @@ export const toggleLikePost = async (req, res) => {
       "userId",
       "username avatar"
     );
-    if (!post) {
+    if (!post)
       return res.status(404).json({ success: false, error: "Post not found" });
-    }
 
     const userId = req.user._id.toString();
     let liked = false;
 
     if (post.likes.some((id) => id.toString() === userId)) {
-      // Unlike
       post.likes = post.likes.filter((id) => id.toString() !== userId);
     } else {
-      // Like
       post.likes.push(userId);
       liked = true;
     }
-
     post.likesCount = post.likes.length;
     await post.save();
 
-    // Notify post owner if liked and not self-like
     if (liked && post.userId._id.toString() !== userId) {
       const notif = await Notification.create({
         userId: post.userId._id,
@@ -460,7 +456,6 @@ export const toggleLikePost = async (req, res) => {
         fromUser: req.user._id,
         postId: post._id,
       });
-
       const populatedNotif = await notif.populate(
         "fromUser",
         "username avatar"
@@ -468,7 +463,18 @@ export const toggleLikePost = async (req, res) => {
       io.to(post.userId._id.toString()).emit("notification", populatedNotif);
     }
 
-    res.json({ success: true, post });
+    // ✅ return fully populated post
+    const populated = await Post.findById(post._id)
+      .populate("userId", "username avatar")
+      .populate({
+        path: "comments",
+        populate: [
+          { path: "userId", select: "username avatar" },
+          { path: "replies.userId", select: "username avatar" },
+        ],
+      });
+
+    res.json({ success: true, post: populated });
   } catch (err) {
     console.error("Toggle like error:", err);
     res.status(500).json({ success: false, error: "Server error" });

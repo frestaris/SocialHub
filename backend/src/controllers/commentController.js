@@ -55,7 +55,7 @@ export const createComment = async (req, res) => {
         userId: updatedPost.userId._id, // recipient = post owner
         type: "comment",
         fromUser: req.user._id, // actor = commenter
-        postId,
+        postId: updatedPost._id,
         commentId: comment._id,
       });
 

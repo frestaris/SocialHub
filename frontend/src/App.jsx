@@ -5,6 +5,9 @@ import { Suspense, lazy } from "react";
 import Navigation from "./components/Navigation";
 import NotFound from "./components/NotFound";
 
+// 👇 Import the hook
+import useNotificationsSocket from "./utils/useNotificationsSocket";
+
 const { Content } = Layout;
 
 // Lazy-loaded pages (heavier ones)
@@ -19,6 +22,9 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 
 export default function App() {
+  // 👇 Hook runs once globally and listens for notifications
+  useNotificationsSocket();
+
   return (
     <Router>
       <Layout style={{ minHeight: "100vh" }}>

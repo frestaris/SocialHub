@@ -66,35 +66,47 @@ export const commentApi = createApi({
       async onQueryStarted({ postId }, { dispatch, queryFulfilled, getState }) {
         try {
           const { data } = await queryFulfilled;
-          const state = getState();
-          const queries = state.postApi.queries;
+          // 1) Update the comments list cache with the full new comment
+          dispatch(
+            commentApi.util.updateQueryData(
+              "getCommentsByPost",
+              postId,
+              (draft) => {
+                draft.comments.unshift(data.comment);
+              }
+            )
+          );
 
-          if (postId) {
-            // Update getCommentsByPost cache
-            dispatch(
-              commentApi.util.updateQueryData(
-                "getCommentsByPost",
-                postId,
-                (draft) => {
-                  draft.comments.unshift(data.comment);
-                }
-              )
-            );
+          // 2) Replace the single post cache with the fully populated post
+          dispatch(
+            postApi.util.updateQueryData("getPostById", postId, (draft) => {
+              draft.post = data.post;
+            })
+          );
 
-            // Update getPostById cache
-            dispatch(
-              postApi.util.updateQueryData("getPostById", postId, (draft) => {
-                if (!draft.post.comments) draft.post.comments = [];
-                draft.post.comments.push(data.comment._id);
-              })
-            );
-
-            // Update all cached getPosts + getUserFeed queries
-            updateFeedCaches(postApi, dispatch, queries, postId, (post) => {
-              if (!post.comments) post.comments = [];
-              post.comments.push(data.comment._id);
-            });
-          }
+          // 3) Replace the post inside any feed/getPosts caches
+          const queries = getState().postApi.queries;
+          Object.entries(queries).forEach(([cacheKey, entry]) => {
+            if (
+              (cacheKey.startsWith("getPosts") ||
+                cacheKey.startsWith("getUserFeed") ||
+                cacheKey.startsWith("getPostsByUser")) &&
+              entry.originalArgs
+            ) {
+              dispatch(
+                postApi.util.updateQueryData(
+                  cacheKey.split("(")[0],
+                  entry.originalArgs,
+                  (draft) => {
+                    const collection = draft.posts || draft.feed;
+                    if (!collection) return;
+                    const idx = collection.findIndex((p) => p._id === postId);
+                    if (idx !== -1) collection[idx] = data.post;
+                  }
+                )
+              );
+            }
+          });
         } catch (err) {
           console.error("Create comment cache update failed:", err);
         }

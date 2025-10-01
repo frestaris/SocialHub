@@ -5,6 +5,7 @@ import { userApi } from "./user/userApi";
 import { postApi } from "./post/postApi";
 import { commentApi } from "./comment/commentApi";
 import { replyApi } from "./reply/replyApi";
+import { notificationApi } from "./notification/notificationApi";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     [postApi.reducerPath]: postApi.reducer,
     [commentApi.reducerPath]: commentApi.reducer,
     [replyApi.reducerPath]: replyApi.reducer,
+    [notificationApi.reducerPath]: notificationApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(
@@ -21,6 +23,7 @@ export const store = configureStore({
       userApi.middleware,
       postApi.middleware,
       commentApi.middleware,
-      replyApi.middleware
+      replyApi.middleware,
+      notificationApi.middleware
     ),
 });

@@ -14,6 +14,7 @@ const notificationSchema = new mongoose.Schema(
         "like",
         "comment",
         "reply",
+        "reply_on_post",
         "view_milestone",
         "follow",
       ],

@@ -17,13 +17,17 @@ export const createReply = async (req, res) => {
         .json({ success: false, error: "commentId and content are required" });
     }
 
-    const comment = await Comment.findById(commentId);
+    const comment = await Comment.findById(commentId).populate({
+      path: "postId",
+      populate: { path: "userId", select: "_id username avatar" },
+    });
     if (!comment) {
       return res
         .status(404)
         .json({ success: false, error: "Parent comment not found" });
     }
 
+    // Add reply
     comment.replies.push({ userId: req.user._id, content });
     await comment.save();
 
@@ -32,13 +36,13 @@ export const createReply = async (req, res) => {
       "username avatar"
     );
 
-    // Notify comment owner (if not replying to self)
+    // Notify comment owner
     if (comment.userId.toString() !== req.user._id.toString()) {
       const notif = await Notification.create({
-        userId: comment.userId, // recipient = comment owner
+        userId: comment.userId,
         type: "reply",
-        fromUser: req.user._id, // actor = replier
-        postId: comment.postId, // context for linking back
+        fromUser: req.user._id,
+        postId: comment.postId._id,
         commentId: comment._id,
       });
 
@@ -47,6 +51,29 @@ export const createReply = async (req, res) => {
         "username avatar"
       );
       io.to(comment.userId.toString()).emit("notification", populatedNotif);
+    }
+
+    // Notify post owner (if not same as replier & not same as comment owner)
+    if (
+      comment.postId.userId._id.toString() !== req.user._id.toString() &&
+      comment.postId.userId._id.toString() !== comment.userId.toString()
+    ) {
+      const notif = await Notification.create({
+        userId: comment.postId.userId._id,
+        type: "reply_on_post",
+        fromUser: req.user._id,
+        postId: comment.postId._id,
+        commentId: comment._id,
+      });
+
+      const populatedNotif = await notif.populate(
+        "fromUser",
+        "username avatar"
+      );
+      io.to(comment.postId.userId._id.toString()).emit(
+        "notification",
+        populatedNotif
+      );
     }
 
     res.status(201).json({

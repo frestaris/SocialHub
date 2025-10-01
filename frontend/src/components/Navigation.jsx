@@ -29,6 +29,7 @@ import { logout } from "../redux/auth/authSlice";
 import SettingsModal from "../pages/user/settings/SettingsModal";
 import Upload from "./post/Upload";
 import SearchBar from "./SearchBar";
+import NotificationsDropdown from "./NotificationsDropdown";
 import useSearchHandler from "../hooks/useSearchHandler";
 
 const { Header } = Layout;
@@ -138,29 +139,30 @@ export default function Navigation() {
             />
 
             {currentUser ? (
-              <>
+              <Space size="middle" align="center">
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => setUploadOpen(true)}
-                  style={{ marginRight: "16px" }}
                 >
                   Post
                 </Button>
 
+                <NotificationsDropdown />
+
                 <Dropdown menu={avatarMenu} placement="bottomRight">
-                  <Space style={{ cursor: "pointer" }}>
-                    <Avatar
-                      src={
-                        currentUser?.avatar
-                          ? `${currentUser.avatar}?t=${currentUser._id}`
-                          : null
-                      }
-                      icon={!currentUser?.avatar && <UserOutlined />}
-                    />
-                  </Space>
+                  <Avatar
+                    src={
+                      currentUser?.avatar
+                        ? `${currentUser.avatar}?t=${currentUser._id}`
+                        : null
+                    }
+                    icon={!currentUser?.avatar && <UserOutlined />}
+                    size={36} // 👈 force consistent size
+                    style={{ cursor: "pointer" }}
+                  />
                 </Dropdown>
-              </>
+              </Space>
             ) : (
               <Button type="primary" onClick={() => handleNavigate("/login")}>
                 Become a Creator
