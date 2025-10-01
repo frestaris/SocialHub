@@ -68,6 +68,7 @@ export default function CommentItem({
                 onDelete={() => onDelete(item._id)}
                 size="small"
                 loading={deleting}
+                showHideOption={false}
               />
             )}
           </div>

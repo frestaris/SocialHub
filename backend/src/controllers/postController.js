@@ -375,6 +375,13 @@ export const getUserFeed = async (req, res) => {
 
     const posts = await Post.find({ userId: req.params.userId })
       .populate("userId", "username avatar")
+      .populate({
+        path: "comments",
+        populate: [
+          { path: "userId", select: "username avatar" },
+          { path: "replies.userId", select: "username avatar" },
+        ],
+      })
       .sort(sortOption);
 
     res.json({ success: true, feed: posts });
