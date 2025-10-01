@@ -4,8 +4,6 @@ import { fetchYouTubeMetadata } from "./fetchYouTubeMetadata";
 import { auth } from "../firebase";
 import { handleError } from "./handleMessage";
 
-const MAX_ITEMS = 5;
-
 /**
  * Build a normalized post payload before sending to backend
  * Handles:
@@ -13,6 +11,9 @@ const MAX_ITEMS = 5;
  * - Remote URLs (images, YouTube)
  * - Type detection ("text", "image", "video")
  */
+
+const MAX_ITEMS = 5;
+const IMG_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"]; // tweak as you like
 
 export async function buildPostPayload(values, options, postId = null) {
   const {
@@ -33,10 +34,7 @@ export async function buildPostPayload(values, options, postId = null) {
 
   let type = "text"; // default post type
 
-  /**
-   * --- CASE 1: File uploads ---
-   * Handle image(s) or video uploaded from local device
-   */
+  // ---- CASE 1: Local file uploads ----
   if (mediaFile?.length > 0) {
     // enforce max uploads
     if (mediaFile.length > MAX_ITEMS) {
@@ -44,7 +42,7 @@ export async function buildPostPayload(values, options, postId = null) {
         `You can only upload up to ${MAX_ITEMS} files.`,
         "Upload limit reached"
       );
-      return null; // stop building payload
+      return null;
     }
 
     const firstFile = mediaFile[0].originFileObj;
@@ -58,8 +56,18 @@ export async function buildPostPayload(values, options, postId = null) {
       let completed = 0;
 
       for (let f of mediaFile) {
+        const fileObj = f.originFileObj;
+
+        // Fast-fail 4 MB guard (uploadToFirebase also checks)
+        if (fileObj.size > 4 * 1024 * 1024) {
+          handleError({
+            message: `Each image must be ≤ 4 MB. "${fileObj.name}" is too large.`,
+          });
+          return null;
+        }
+
         const url = await uploadToFirebase(
-          f.originFileObj,
+          fileObj,
           auth.currentUser?.uid,
           (p) => {
             if (setUploadProgress) {
@@ -69,8 +77,11 @@ export async function buildPostPayload(values, options, postId = null) {
               setUploadProgress(overall);
             }
           },
-          "posts"
+          "posts",
+          false,
+          { maxMB: 4, allowedTypes: IMG_TYPES }
         );
+
         uploadedUrls.push(url);
         completed += 1;
         setUploadProgress?.((completed / total) * 100);
@@ -82,6 +93,13 @@ export async function buildPostPayload(values, options, postId = null) {
 
     // --- Video upload ---
     else if (firstFile.type.startsWith("video/")) {
+      if (firstFile.size > 4 * 1024 * 1024) {
+        handleError({
+          message: "Videos must be ≤ 4 MB or use a YouTube link instead.",
+        });
+        return null;
+      }
+
       setIsUploading?.(true);
 
       // Upload video file
@@ -89,7 +107,9 @@ export async function buildPostPayload(values, options, postId = null) {
         firstFile,
         auth.currentUser?.uid,
         (p) => setUploadProgress?.(p),
-        "videos"
+        "videos",
+        false,
+        { maxMB: 4 }
       );
 
       // Extract duration client-side
@@ -98,12 +118,18 @@ export async function buildPostPayload(values, options, postId = null) {
       // Upload thumbnail if provided
       let thumbnailUrl = "";
       if (thumbnailFile?.[0]?.originFileObj) {
+        const thumbObj = thumbnailFile[0].originFileObj;
+        if (thumbObj.size > 4 * 1024 * 1024) {
+          handleError({ message: "Thumbnail must be ≤ 4 MB." });
+          return null;
+        }
         thumbnailUrl = await uploadToFirebase(
-          thumbnailFile[0].originFileObj,
+          thumbObj,
           auth.currentUser?.uid,
           null,
           "videos",
-          true
+          true,
+          { maxMB: 4, allowedTypes: IMG_TYPES }
         );
       }
 
@@ -148,7 +174,6 @@ export async function buildPostPayload(values, options, postId = null) {
       const ytUrl = youtubeUrls[0];
       const meta =
         ytMeta || (await fetchYouTubeMetadata(ytUrl).catch(() => null));
-
       payload.video = {
         title: values.title || meta?.title || "",
         category: values.category,
