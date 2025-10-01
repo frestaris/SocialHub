@@ -1,27 +1,13 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { baseURL } from "../../utils/baseURL";
-import { auth } from "../../firebase";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import { setUser } from "../auth/authSlice";
+import authorizedBaseQuery from "../utils/authorizedBaseQuery";
 
 // User API slice (RTK Query)
 // Handles profile fetching, updates, following/unfollowing, and deletion
 
 export const userApi = createApi({
   reducerPath: "userApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${baseURL}/users`,
-    prepareHeaders: async (headers) => {
-      const user = auth.currentUser;
-      if (user) {
-        const token = await user.getIdToken(true); // force refresh token
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      headers.set("Content-Type", "application/json");
-      return headers;
-    },
-    credentials: "include",
-  }),
-
+  baseQuery: authorizedBaseQuery("/users"),
   endpoints: (builder) => ({
     // ---- GET CURRENT LOGGED-IN USER ----
     getCurrentUser: builder.query({

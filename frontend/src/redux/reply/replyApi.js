@@ -1,22 +1,11 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { baseURL } from "../../utils/baseURL";
-import { auth } from "../../firebase";
+import { createApi } from "@reduxjs/toolkit/query/react";
 import { commentApi } from "../comment/commentApi";
+import authorizedBaseQuery from "../utils/authorizedBaseQuery";
 
 export const replyApi = createApi({
   reducerPath: "replyApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${baseURL}/replies`,
-    prepareHeaders: async (headers) => {
-      const user = auth.currentUser;
-      if (user) {
-        const token = await user.getIdToken();
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      headers.set("Content-Type", "application/json");
-      return headers;
-    },
-  }),
+  baseQuery: authorizedBaseQuery("/replies"),
+
   tagTypes: ["Reply"],
 
   endpoints: (builder) => ({

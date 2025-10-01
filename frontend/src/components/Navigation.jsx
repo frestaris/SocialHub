@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-// Ant Design
+// --- Ant Design ---
 import {
   Layout,
   Menu,
@@ -20,53 +20,53 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 
-// Routing & Redux
+// --- Routing & Redux ---
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/auth/authSlice";
 
-// Local components/hooks
+// --- Local components/hooks ---
 import SettingsModal from "../pages/user/settings/SettingsModal";
 import Upload from "./post/Upload";
 import SearchBar from "./SearchBar";
-import NotificationsDropdown from "./NotificationsDropdown";
+import NotificationsDropdown from "./notification/NotificationsDropdown";
+import NotificationsDrawer from "./notification/NotificationsDrawer";
 import useSearchHandler from "../hooks/useSearchHandler";
 
 const { Header } = Layout;
 const { useBreakpoint } = Grid;
 
 export default function Navigation() {
-  // Local UI state
+  // --- Local UI state ---
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
-  // Responsive breakpoints
+  // --- Responsive breakpoints ---
   const screens = useBreakpoint();
 
-  // Router + Redux
+  // --- Router + Redux ---
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Global state
+  // --- Global state ---
   const currentUser = useSelector((state) => state.auth.user);
 
-  // Custom hooks
+  // --- Custom hooks ---
   const { inputValue, setInputValue, handleSearch } = useSearchHandler();
 
-  // ---- Helpers ----
+  // --- Helpers ---
   const handleLogout = () => {
     dispatch(logout());
     navigate("/explore");
   };
 
-  // Navigate + close drawer (mobile)
   const handleNavigate = (path, close = true) => {
     navigate(path);
     if (close) setDrawerOpen(false);
   };
 
-  // Dropdown menu (desktop avatar)
+  // --- Avatar dropdown menu ---
   const avatarMenu = {
     items: [
       {
@@ -115,7 +115,7 @@ export default function Navigation() {
           Social Hub
         </div>
 
-        {/* SearchBar (only on desktop) */}
+        {/* SearchBar (desktop only) */}
         {screens.sm && (
           <div style={{ flex: 1, maxWidth: 500, margin: "0 16px" }}>
             <SearchBar
@@ -148,6 +148,7 @@ export default function Navigation() {
                   Post
                 </Button>
 
+                {/* --- Desktop notifications --- */}
                 <NotificationsDropdown />
 
                 <Dropdown menu={avatarMenu} placement="bottomRight">
@@ -158,7 +159,7 @@ export default function Navigation() {
                         : null
                     }
                     icon={!currentUser?.avatar && <UserOutlined />}
-                    size={36} // 👈 force consistent size
+                    size={36}
                     style={{ cursor: "pointer" }}
                   />
                 </Dropdown>
@@ -178,7 +179,7 @@ export default function Navigation() {
         )}
       </Header>
 
-      {/* Drawer (mobile) */}
+      {/* Drawer (mobile main menu) */}
       <Drawer
         title="CreatorHub"
         placement="right"
@@ -228,6 +229,11 @@ export default function Navigation() {
               >
                 Post
               </Button>
+
+              {/* --- Mobile notifications --- */}
+              <div style={{ margin: "12px 0" }}>
+                <NotificationsDrawer />
+              </div>
 
               <Button
                 block

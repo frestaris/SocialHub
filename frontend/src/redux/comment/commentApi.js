@@ -1,7 +1,7 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { baseURL } from "../../utils/baseURL";
-import { auth } from "../../firebase";
+import { createApi } from "@reduxjs/toolkit/query/react";
+
 import { postApi } from "../post/postApi";
+import authorizedBaseQuery from "../utils/authorizedBaseQuery";
 
 function updateFeedCaches(postApi, dispatch, queries, postId, updater) {
   Object.entries(queries).forEach(([cacheKey, entry]) => {
@@ -34,18 +34,7 @@ function updateFeedCaches(postApi, dispatch, queries, postId, updater) {
 // Handles fetching, creating, updating, and deleting comments
 export const commentApi = createApi({
   reducerPath: "commentApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${baseURL}/comments`,
-    prepareHeaders: async (headers) => {
-      const user = auth.currentUser;
-      if (user) {
-        const token = await user.getIdToken();
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      headers.set("Content-Type", "application/json");
-      return headers;
-    },
-  }),
+  baseQuery: authorizedBaseQuery("/comments"),
   tagTypes: ["Comment"],
   endpoints: (builder) => ({
     // ---- GET COMMENTS ----

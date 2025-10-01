@@ -1,24 +1,13 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { baseURL } from "../../utils/baseURL";
-import { auth } from "../../firebase";
+import { createApi } from "@reduxjs/toolkit/query/react";
+
+import authorizedBaseQuery from "../utils/authorizedBaseQuery";
 
 // Post API slice (RTK Query)
 // Handles CRUD operations for posts, user feeds, views, and likes
 
 export const postApi = createApi({
   reducerPath: "postApi",
-  baseQuery: fetchBaseQuery({
-    baseUrl: `${baseURL}/posts`,
-    prepareHeaders: async (headers) => {
-      const user = auth.currentUser;
-      if (user) {
-        const token = await user.getIdToken();
-        headers.set("Authorization", `Bearer ${token}`);
-      }
-      headers.set("Content-Type", "application/json");
-      return headers;
-    },
-  }),
+  baseQuery: authorizedBaseQuery("/posts"),
   tagTypes: ["Post", "Feed"],
 
   endpoints: (builder) => ({
