@@ -1,6 +1,8 @@
 import User from "../models/userSchema.js";
 import Post from "../models/postSchema.js";
 import Comment from "../models/commentSchema.js";
+import Notification from "../models/notificationSchema.js";
+import { io } from "../../index.js";
 import { firebaseAdmin } from "../config/firebaseAdmin.js";
 
 /**
@@ -228,17 +230,32 @@ export const toggleFollow = async (req, res) => {
     );
 
     if (isFollowing) {
-      // ✅ Unfollow
+      // Unfollow
       await Promise.all([
         User.findByIdAndUpdate(id, { $pull: { followers: currentUserId } }),
         User.findByIdAndUpdate(currentUserId, { $pull: { following: id } }),
       ]);
     } else {
-      // ✅ Follow
+      // Follow
       await Promise.all([
         User.findByIdAndUpdate(id, { $addToSet: { followers: currentUserId } }),
         User.findByIdAndUpdate(currentUserId, { $addToSet: { following: id } }),
       ]);
+
+      // Create & emit notification
+      if (id.toString() !== currentUserId.toString()) {
+        const notif = await Notification.create({
+          userId: id, // recipient = the one being followed
+          type: "follow",
+          fromUser: currentUserId, // actor = follower
+        });
+
+        const populatedNotif = await notif.populate(
+          "fromUser",
+          "username avatar"
+        );
+        io.to(id.toString()).emit("notification", populatedNotif);
+      }
     }
 
     // Re-fetch both users with followers/following populated

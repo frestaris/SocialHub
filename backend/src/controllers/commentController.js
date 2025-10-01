@@ -1,5 +1,7 @@
 import Comment from "../models/commentSchema.js";
 import Post from "../models/postSchema.js";
+import Notification from "../models/notificationSchema.js";
+import { io } from "../../index.js";
 
 /**
  * Create a new comment
@@ -24,19 +26,19 @@ export const createComment = async (req, res) => {
         .json({ success: false, error: "postId is required" });
     }
 
-    // 1️⃣ Create comment
+    // Create comment
     const comment = await Comment.create({
       content,
       userId: req.user._id,
       postId,
     });
 
-    // 2️⃣ Link comment ID to Post.comments
+    // Link comment ID to Post.comments
     await Post.findByIdAndUpdate(postId, {
       $push: { comments: comment._id },
     });
 
-    // 3️⃣ Repopulate the Post with fresh data
+    // Repopulate the Post with fresh data
     const updatedPost = await Post.findById(postId)
       .populate("userId", "username avatar")
       .populate({
@@ -47,7 +49,30 @@ export const createComment = async (req, res) => {
         ],
       });
 
-    // ✅ Return both new comment and updated post
+    // Create & emit notification (if commenter is not post owner)
+    if (updatedPost.userId._id.toString() !== req.user._id.toString()) {
+      const notif = await Notification.create({
+        userId: updatedPost.userId._id, // recipient = post owner
+        type: "comment",
+        fromUser: req.user._id, // actor = commenter
+        postId,
+        commentId: comment._id,
+      });
+
+      // Populate sender info for UI
+      const populatedNotif = await notif.populate(
+        "fromUser",
+        "username avatar"
+      );
+
+      // Emit via socket to post owner’s room
+      io.to(updatedPost.userId._id.toString()).emit(
+        "notification",
+        populatedNotif
+      );
+    }
+
+    // Return both new comment and updated post
     res.status(201).json({
       success: true,
       comment: await comment.populate("userId", "username avatar"),

@@ -1,4 +1,6 @@
 import Comment from "../models/commentSchema.js";
+import Notification from "../models/notificationSchema.js";
+import { io } from "../../index.js";
 
 /**
  * Create a reply (level-1 only)
@@ -29,6 +31,23 @@ export const createReply = async (req, res) => {
       "replies.userId",
       "username avatar"
     );
+
+    // Notify comment owner (if not replying to self)
+    if (comment.userId.toString() !== req.user._id.toString()) {
+      const notif = await Notification.create({
+        userId: comment.userId, // recipient = comment owner
+        type: "reply",
+        fromUser: req.user._id, // actor = replier
+        postId: comment.postId, // context for linking back
+        commentId: comment._id,
+      });
+
+      const populatedNotif = await notif.populate(
+        "fromUser",
+        "username avatar"
+      );
+      io.to(comment.userId.toString()).emit("notification", populatedNotif);
+    }
 
     res.status(201).json({
       success: true,

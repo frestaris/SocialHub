@@ -1,5 +1,7 @@
 import Post from "../models/postSchema.js";
 import User from "../models/userSchema.js";
+import Notification from "../models/notificationSchema.js";
+import { io } from "../../index.js";
 
 /**
  * CREATE POST
@@ -46,6 +48,24 @@ export const createPost = async (req, res) => {
         "userId",
         "username avatar"
       );
+
+      // Notify followers (if any)
+      if (populated.userId.followers?.length > 0) {
+        for (const followerId of populated.userId.followers) {
+          const notif = await Notification.create({
+            userId: followerId, // recipient = follower
+            type: "new_post",
+            fromUser: req.user._id, // actor = post owner
+            postId: newPost._id,
+          });
+
+          const populatedNotif = await notif.populate(
+            "fromUser",
+            "username avatar"
+          );
+          io.to(followerId.toString()).emit("notification", populatedNotif);
+        }
+      }
 
       return res.status(201).json({ success: true, post: populated });
     }
@@ -368,6 +388,8 @@ export const getUserFeed = async (req, res) => {
  * -----------------------
  * - Adds +1 to post.views.
  */
+const MILESTONES = [10, 50, 100, 500, 1000, 5000, 10000];
+
 export const incrementPostViews = async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(
@@ -378,6 +400,18 @@ export const incrementPostViews = async (req, res) => {
 
     if (!post) {
       return res.status(404).json({ success: false, error: "Post not found" });
+    }
+
+    // Check milestone
+    if (MILESTONES.includes(post.views)) {
+      const notif = await Notification.create({
+        userId: post.userId._id,
+        type: "view_milestone",
+        fromUser: null,
+        postId: post._id,
+        value: post.views,
+      });
+      io.to(post.userId._id.toString()).emit("notification", notif);
     }
 
     res.json({ success: true, views: post.views });
@@ -395,32 +429,46 @@ export const incrementPostViews = async (req, res) => {
  */
 export const toggleLikePost = async (req, res) => {
   try {
-    const post = await Post.findById(req.params.id);
+    const post = await Post.findById(req.params.id).populate(
+      "userId",
+      "username avatar"
+    );
     if (!post) {
       return res.status(404).json({ success: false, error: "Post not found" });
     }
 
     const userId = req.user._id.toString();
+    let liked = false;
 
-    // If user already liked → unlike
     if (post.likes.some((id) => id.toString() === userId)) {
+      // Unlike
       post.likes = post.likes.filter((id) => id.toString() !== userId);
     } else {
-      // Otherwise → like
+      // Like
       post.likes.push(userId);
+      liked = true;
     }
 
-    // Keep count in sync
     post.likesCount = post.likes.length;
-
     await post.save();
 
-    const updated = await Post.findById(post._id).populate(
-      "userId",
-      "username avatar"
-    );
+    // Notify post owner if liked and not self-like
+    if (liked && post.userId._id.toString() !== userId) {
+      const notif = await Notification.create({
+        userId: post.userId._id,
+        type: "like",
+        fromUser: req.user._id,
+        postId: post._id,
+      });
 
-    res.json({ success: true, post: updated });
+      const populatedNotif = await notif.populate(
+        "fromUser",
+        "username avatar"
+      );
+      io.to(post.userId._id.toString()).emit("notification", populatedNotif);
+    }
+
+    res.json({ success: true, post });
   } catch (err) {
     console.error("Toggle like error:", err);
     res.status(500).json({ success: false, error: "Server error" });
