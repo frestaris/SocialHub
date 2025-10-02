@@ -1,5 +1,5 @@
 import { Avatar, Button, List, Typography } from "antd";
-import { UserOutlined } from "@ant-design/icons";
+import { UserOutlined, LikeOutlined, LikeFilled } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import moment from "../../../utils/momentShort";
 import PostDropdown from "../../../components/post/PostDropdown";
@@ -15,11 +15,29 @@ export default function CommentItem({
   onEdit,
   onDelete,
   onReplyClick,
+  onLikeComment,
+  onLikeReply,
   deleting,
   children,
   allowReply,
   isReply = false,
+  parentId,
 }) {
+  // Check if user already liked this comment/reply
+  const hasLiked =
+    currentUser &&
+    item.likes?.some(
+      (u) => u.toString?.() === currentUser._id || u._id === currentUser._id
+    );
+
+  const handleLikeToggle = () => {
+    if (isReply) {
+      onLikeReply?.(parentId, item);
+    } else {
+      onLikeComment?.(item);
+    }
+  };
+
   return (
     <List.Item
       style={{
@@ -43,7 +61,7 @@ export default function CommentItem({
                   strong
                   style={{
                     color: "#1677ff",
-                    fontSize: isReply ? 13 : 14, // 👈 shrink name
+                    fontSize: isReply ? 13 : 14,
                   }}
                 >
                   {item.userId?.username}
@@ -52,7 +70,7 @@ export default function CommentItem({
               <Text
                 type="secondary"
                 style={{
-                  fontSize: isReply ? 11 : 12, // 👈 shrink timestamp
+                  fontSize: isReply ? 11 : 12,
                   whiteSpace: "nowrap",
                 }}
               >
@@ -86,7 +104,7 @@ export default function CommentItem({
                 type="secondary"
                 style={{
                   marginBottom: 0,
-                  fontSize: isReply ? 13 : 14, // 👈 shrink body text
+                  fontSize: isReply ? 13 : 14,
                   lineHeight: isReply ? "18px" : "20px",
                 }}
               >
@@ -102,6 +120,7 @@ export default function CommentItem({
                 marginTop: 4,
               }}
             >
+              {/* Show more/less */}
               {item.content?.length > 120 && (
                 <Button
                   type="link"
@@ -112,6 +131,7 @@ export default function CommentItem({
                 </Button>
               )}
 
+              {/* Reply button (only for top-level comments) */}
               {currentUser && allowReply && !isReply && (
                 <a
                   style={{
@@ -123,6 +143,24 @@ export default function CommentItem({
                 >
                   Reply
                 </a>
+              )}
+
+              {/* Like button for comments & replies */}
+              {currentUser && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    cursor: "pointer",
+                    color: hasLiked ? "#1677ff" : "#555",
+                    fontWeight: hasLiked ? 600 : 400,
+                  }}
+                  onClick={handleLikeToggle}
+                >
+                  {hasLiked ? <LikeFilled /> : <LikeOutlined />}
+                  <span>{item.likesCount || 0}</span>
+                </div>
               )}
             </div>
 

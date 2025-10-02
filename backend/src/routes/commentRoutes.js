@@ -3,6 +3,7 @@ import {
   createComment,
   deleteComment,
   getComments,
+  toggleLikeComment,
   updateComment,
 } from "../controllers/commentController.js";
 import { protect } from "../middleware/authMiddleware.js";
@@ -16,5 +17,5 @@ router.get("/post/:postId", getComments);
 router.post("/", protect, createComment);
 router.put("/:id", protect, updateComment);
 router.delete("/:id", protect, deleteComment);
-
+router.patch("/:id/like", protect, toggleLikeComment);
 export default router;

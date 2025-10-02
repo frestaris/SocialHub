@@ -191,3 +191,47 @@ export const deleteComment = async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
+
+// Toggle like/unlike on a comment
+export const toggleLikeComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Find the comment by id
+    const comment = await Comment.findById(id);
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    const userId = req.user._id.toString();
+
+    // Ensure likes array exists
+    if (!comment.likes) comment.likes = [];
+
+    // 2. Check if the user already liked the comment
+    if (comment.likes.some((u) => u.toString() === userId)) {
+      // If yes → remove the like (unlike)
+      comment.likes = comment.likes.filter((u) => u.toString() !== userId);
+    } else {
+      // If no → add the like
+      comment.likes.push(userId);
+    }
+
+    // 3. Update likesCount for quick access
+    comment.likesCount = comment.likes.length;
+
+    // Save changes
+    await comment.save();
+
+    // 4. Re-fetch and populate user fields before sending response
+    const populated = await Comment.findById(id)
+      .populate("userId", "username avatar")
+      .populate("replies.userId", "username avatar");
+
+    // Return updated comment with user details
+    res.json({ success: true, comment: populated });
+  } catch (err) {
+    console.error("toggleLikeComment error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};

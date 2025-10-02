@@ -105,6 +105,33 @@ export const replyApi = createApi({
         }
       },
     }),
+    //  ---- TOGGLE LIKE REPLY----
+    toggleLikeReply: builder.mutation({
+      query: ({ commentId, replyId }) => ({
+        url: `/${commentId}/${replyId}/like`,
+        method: "PATCH",
+      }),
+      async onQueryStarted(
+        { commentId, postId },
+        { dispatch, queryFulfilled }
+      ) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(
+            commentApi.util.updateQueryData(
+              "getCommentsByPost",
+              postId,
+              (draft) => {
+                const parent = draft.comments.find((c) => c._id === commentId);
+                if (parent) parent.replies = data.replies;
+              }
+            )
+          );
+        } catch (err) {
+          console.error("Like reply cache update failed:", err);
+        }
+      },
+    }),
   }),
 });
 
@@ -112,4 +139,5 @@ export const {
   useCreateReplyMutation,
   useUpdateReplyMutation,
   useDeleteReplyMutation,
+  useToggleLikeReplyMutation,
 } = replyApi;

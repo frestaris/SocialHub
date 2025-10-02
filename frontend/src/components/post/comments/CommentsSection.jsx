@@ -6,11 +6,13 @@ import {
   useCreateCommentMutation,
   useUpdateCommentMutation,
   useDeleteCommentMutation,
+  useToggleLikeCommentMutation,
 } from "../../../redux/comment/commentApi";
 import {
   useCreateReplyMutation,
   useUpdateReplyMutation,
   useDeleteReplyMutation,
+  useToggleLikeReplyMutation,
 } from "../../../redux/reply/replyApi";
 import {
   handleError,
@@ -40,6 +42,8 @@ export default function CommentsSection({ postId }) {
   const [createReply] = useCreateReplyMutation();
   const [updateReply] = useUpdateReplyMutation();
   const [deleteReply] = useDeleteReplyMutation();
+  const [toggleLikeComment] = useToggleLikeCommentMutation();
+  const [toggleLikeReply] = useToggleLikeReplyMutation();
 
   const comments = data?.comments || [];
 
@@ -132,6 +136,16 @@ export default function CommentsSection({ postId }) {
     }
   };
 
+  // --- Handle toggle like comment
+  const handleLikeComment = (comment) => {
+    toggleLikeComment({ id: comment._id, postId });
+  };
+
+  // --- Handle toggle like reply
+
+  const handleLikeReply = (commentId, reply) => {
+    toggleLikeReply({ commentId, replyId: reply._id, postId });
+  };
   if (isLoading) return <Spin />;
 
   return (
@@ -179,6 +193,8 @@ export default function CommentsSection({ postId }) {
         }}
         isUpdating={isUpdating}
         isUnchanged={isUnchanged}
+        onLikeComment={handleLikeComment}
+        onLikeReply={handleLikeReply}
       />{" "}
       {comments.length > visibleCount && (
         <Button

@@ -180,6 +180,31 @@ export const commentApi = createApi({
         }
       },
     }),
+
+    //  ---- TOGGLE LIKE COMMENT ----
+    toggleLikeComment: builder.mutation({
+      query: ({ id }) => ({
+        url: `/${id}/like`,
+        method: "PATCH",
+      }),
+      async onQueryStarted({ id, postId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(
+            commentApi.util.updateQueryData(
+              "getCommentsByPost",
+              postId,
+              (draft) => {
+                const idx = draft.comments.findIndex((c) => c._id === id);
+                if (idx !== -1) draft.comments[idx] = data.comment;
+              }
+            )
+          );
+        } catch (err) {
+          console.error("Like comment cache update failed:", err);
+        }
+      },
+    }),
   }),
 });
 
@@ -188,4 +213,5 @@ export const {
   useCreateCommentMutation,
   useUpdateCommentMutation,
   useDeleteCommentMutation,
+  useToggleLikeCommentMutation,
 } = commentApi;

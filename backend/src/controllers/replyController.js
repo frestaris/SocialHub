@@ -165,3 +165,53 @@ export const deleteReply = async (req, res) => {
     res.status(500).json({ success: false, error: "Server error" });
   }
 };
+
+// Toggle like/unlike on a reply
+export const toggleLikeReply = async (req, res) => {
+  try {
+    const { commentId, replyId } = req.params;
+
+    // 1. Find the parent comment
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    // 2. Find the reply inside the comment
+    const reply = comment.replies.id(replyId);
+    if (!reply) {
+      return res.status(404).json({ error: "Reply not found" });
+    }
+
+    const userId = req.user._id.toString();
+
+    // Ensure likes array exists
+    if (!reply.likes) reply.likes = [];
+
+    // 3. Check if the user already liked this reply
+    if (reply.likes.some((u) => u.toString() === userId)) {
+      // If yes → remove like
+      reply.likes = reply.likes.filter((u) => u.toString() !== userId);
+    } else {
+      // If no → add like
+      reply.likes.push(userId);
+    }
+
+    // 4. Update likesCount
+    reply.likesCount = reply.likes.length;
+
+    // Save parent comment (since replies are subdocs)
+    await comment.save();
+
+    // 5. Re-fetch and populate user fields before sending response
+    const populated = await Comment.findById(commentId)
+      .populate("userId", "username avatar")
+      .populate("replies.userId", "username avatar");
+
+    // Return updated replies array
+    res.json({ success: true, replies: populated.replies });
+  } catch (err) {
+    console.error("toggleLikeReply error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};

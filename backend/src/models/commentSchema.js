@@ -7,12 +7,10 @@ const replySchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    content: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    content: { type: String, required: true, trim: true },
     edited: { type: Boolean, default: false },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    likesCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
@@ -36,6 +34,8 @@ const commentSchema = new mongoose.Schema(
     },
     replies: [replySchema],
     edited: { type: Boolean, default: false },
+    likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    likesCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

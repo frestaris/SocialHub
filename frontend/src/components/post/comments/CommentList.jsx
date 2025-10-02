@@ -25,6 +25,8 @@ export default function CommentList({
   onCommentCancel,
   isUpdating,
   isUnchanged,
+  onLikeComment,
+  onLikeReply,
 }) {
   return (
     <List
@@ -42,6 +44,8 @@ export default function CommentList({
             onReplyClick={onReplyClick}
             deleting={deletingId === item._id}
             allowReply
+            onLikeComment={onLikeComment}
+            onLikeReply={onLikeReply}
           />
 
           {/* ✅ Inline edit form */}
@@ -97,6 +101,7 @@ export default function CommentList({
 
                   {[...item.replies].reverse().map((reply) => (
                     <div key={reply._id} className="reply-wrapper">
+                      {/* REPLY COMPONENT */}
                       <CommentItem
                         item={reply}
                         currentUser={currentUser}
@@ -108,6 +113,9 @@ export default function CommentList({
                         deleting={deletingId === reply._id}
                         allowReply={false}
                         isReply
+                        onLikeComment={onLikeComment}
+                        onLikeReply={onLikeReply}
+                        parentId={item._id}
                       />
 
                       {/* Reply form for editing THIS reply */}
