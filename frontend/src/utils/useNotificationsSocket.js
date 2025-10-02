@@ -1,38 +1,73 @@
 import { useEffect } from "react";
 import { io } from "socket.io-client";
 import { useDispatch, useSelector } from "react-redux";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "../firebase";
 import { notificationApi } from "../redux/notification/notificationApi";
 
+/**
+ * useNotificationsSocket
+ * -------------------------
+ * - Custom hook that connects to the backend socket server
+ * - Authenticates with Firebase ID token
+ * - Listens for "notification" events
+ * - Updates Redux RTK Query cache in real time
+ */
 export default function useNotificationsSocket() {
-  const user = useSelector((s) => s.auth.user);
+  const user = useSelector((s) => s.auth.user); // logged-in Mongo user
   const dispatch = useDispatch();
 
   useEffect(() => {
+    // if no Mongo user in Redux, don’t connect
     if (!user?._id) return;
 
-    const baseURL = import.meta.env.VITE_API_BASE_URL;
-    const socket = io(baseURL, { withCredentials: true });
+    let socketInstance;
 
-    socket.on("connect", () => {
-      // Join after connection established
-      socket.emit("join", user._id);
-    });
+    const init = async () => {
+      // 1️⃣ Ensure Firebase user is ready
+      let firebaseUser = auth.currentUser;
+      if (!firebaseUser) {
+        await new Promise((resolve) => {
+          const unsub = onAuthStateChanged(auth, (u) => {
+            if (u) {
+              firebaseUser = u;
+              unsub();
+              resolve();
+            }
+          });
+        });
+      }
 
-    socket.on("notification", (notif) => {
-      dispatch(
-        notificationApi.util.updateQueryData(
-          "getNotifications",
-          undefined,
-          (draft) => {
-            if (!draft.notifications) draft.notifications = [];
-            draft.notifications.unshift(notif);
-          }
-        )
-      );
-    });
+      // 2️⃣ Get fresh Firebase ID token
+      const token = await firebaseUser.getIdToken();
 
+      // 3️⃣ Connect to backend socket with token in handshake.auth
+      const baseURL = import.meta.env.VITE_API_BASE_URL;
+      socketInstance = io(baseURL, { auth: { token } });
+
+      // 4️⃣ Listen for incoming notifications
+      socketInstance.on("notification", (notif) => {
+        dispatch(
+          notificationApi.util.updateQueryData(
+            "getNotifications",
+            undefined,
+            (draft) => {
+              // prepend new notification to the cache
+              draft.notifications = [
+                { ...notif, isRead: notif.isRead ?? false },
+                ...(draft.notifications || []),
+              ];
+            }
+          )
+        );
+      });
+    };
+
+    init();
+
+    // 5️⃣ Cleanup on unmount or user change
     return () => {
-      socket.disconnect();
+      socketInstance?.disconnect();
     };
   }, [user?._id, dispatch]);
 }

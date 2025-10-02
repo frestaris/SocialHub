@@ -1,11 +1,12 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
-import http from "http"; // 👈 import http
-import { Server } from "socket.io"; // 👈 import socket.io
+import http from "http";
+import { Server } from "socket.io";
 import { connectDB } from "./src/config/db.js";
+import { socketAuth } from "./src/middleware/socketAuth.js";
 
-// Import routes
+// Routes
 import authRoutes from "./src/routes/authRoutes.js";
 import userRoutes from "./src/routes/userRoutes.js";
 import postRoutes from "./src/routes/postRoutes.js";
@@ -36,21 +37,22 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // frontend URL
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
     credentials: true,
   },
 });
 
+io.use(socketAuth);
+
 // Handle connections
 io.on("connection", (socket) => {
-  console.log("🔌 New client connected:", socket.id);
-
-  socket.on("join", (userId) => {
-    if (!userId) return;
-    socket.join(userId.toString());
-    console.log(`✅ User ${userId} joined their room`);
-  });
+  console.log(
+    "🔌 New client connected:",
+    socket.id,
+    "userId:",
+    socket.user?._id
+  );
 
   socket.on("disconnect", () => {
     console.log("❌ Client disconnected:", socket.id);
