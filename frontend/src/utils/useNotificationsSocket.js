@@ -19,7 +19,6 @@ export default function useNotificationsSocket() {
     });
 
     socket.on("notification", (notif) => {
-      console.log("📩 Notification received:", notif);
       dispatch(
         notificationApi.util.updateQueryData(
           "getNotifications",

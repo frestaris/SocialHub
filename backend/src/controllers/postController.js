@@ -459,7 +459,7 @@ export const toggleLikePost = async (req, res) => {
     if (liked && post.userId._id.toString() !== userId) {
       const notif = await Notification.create({
         userId: post.userId._id,
-        type: "like",
+        type: "like_post",
         fromUser: req.user._id,
         postId: post._id,
       });

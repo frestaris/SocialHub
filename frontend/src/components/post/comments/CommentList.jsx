@@ -27,12 +27,17 @@ export default function CommentList({
   isUnchanged,
   onLikeComment,
   onLikeReply,
+  commentRefs,
 }) {
   return (
     <List
       dataSource={comments}
       renderItem={(item) => (
-        <div key={item._id} style={{ marginBottom: 12 }}>
+        <div
+          key={item._id}
+          ref={(el) => (commentRefs.current[item._id] = el)}
+          style={{ marginBottom: 12 }}
+        >
           <CommentItem
             item={item}
             currentUser={currentUser}
@@ -100,7 +105,11 @@ export default function CommentList({
                   </Button>
 
                   {[...item.replies].reverse().map((reply) => (
-                    <div key={reply._id} className="reply-wrapper">
+                    <div
+                      key={reply._id}
+                      ref={(el) => (commentRefs.current[reply._id] = el)}
+                      className="reply-wrapper"
+                    >
                       {/* REPLY COMPONENT */}
                       <CommentItem
                         item={reply}

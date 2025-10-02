@@ -187,6 +187,7 @@ export const toggleLikeReply = async (req, res) => {
 
     // Ensure likes array exists
     if (!reply.likes) reply.likes = [];
+    let liked = false;
 
     // 3. Check if the user already liked this reply
     if (reply.likes.some((u) => u.toString() === userId)) {
@@ -195,6 +196,7 @@ export const toggleLikeReply = async (req, res) => {
     } else {
       // If no → add like
       reply.likes.push(userId);
+      liked = true;
     }
 
     // 4. Update likesCount
@@ -203,7 +205,24 @@ export const toggleLikeReply = async (req, res) => {
     // Save parent comment (since replies are subdocs)
     await comment.save();
 
-    // 5. Re-fetch and populate user fields before sending response
+    // 5. Send notification
+    if (liked && reply.userId._id.toString() !== userId) {
+      const notif = await Notification.create({
+        userId: reply.userId._id,
+        type: "like_reply",
+        fromUser: req.user._id,
+        postId: comment.postId,
+        commentId: comment._id,
+        replyId: reply._id,
+      });
+      const populatedNotif = await notif.populate(
+        "fromUser",
+        "username avatar"
+      );
+      io.to(reply.userId._id.toString()).emit("notification", populatedNotif);
+    }
+
+    // 6. Re-fetch and populate user fields before sending response
     const populated = await Comment.findById(commentId)
       .populate("userId", "username avatar")
       .populate("replies.userId", "username avatar");

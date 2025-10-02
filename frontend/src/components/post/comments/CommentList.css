@@ -49,3 +49,16 @@
 .comment-replies.expanded .reply-wrapper:last-child::after {
   content: none;
 }
+
+.highlighted-comment {
+  animation: highlightFlash 2s ease;
+}
+
+@keyframes highlightFlash {
+  0% {
+    background-color: #fffbcc;
+  }
+  100% {
+    background-color: transparent;
+  }
+}

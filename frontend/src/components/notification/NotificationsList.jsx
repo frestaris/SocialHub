@@ -30,9 +30,19 @@ export default function NotificationsList({
                     <b>{n.fromUser?.username}</b> posted a new post
                   </span>
                 )}
-                {n.type === "like" && (
+                {n.type === "like_post" && (
                   <span>
                     <b>{n.fromUser?.username}</b> liked your post
+                  </span>
+                )}
+                {n.type === "like_comment" && (
+                  <span>
+                    <b>{n.fromUser?.username}</b> liked your comment
+                  </span>
+                )}
+                {n.type === "like_reply" && (
+                  <span>
+                    <b>{n.fromUser?.username}</b> liked your reply
                   </span>
                 )}
                 {n.type === "comment" && (

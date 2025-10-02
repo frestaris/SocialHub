@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, Spin } from "antd";
 import { useSelector } from "react-redux";
 import {
@@ -22,6 +22,7 @@ import {
 
 import CommentList from "./CommentList";
 import CommentForm from "./CommentForm";
+import { useLocation } from "react-router-dom";
 
 export default function CommentsSection({ postId }) {
   const [content, setContent] = useState("");
@@ -45,6 +46,34 @@ export default function CommentsSection({ postId }) {
   const [toggleLikeComment] = useToggleLikeCommentMutation();
   const [toggleLikeReply] = useToggleLikeReplyMutation();
 
+  const location = useLocation();
+  const commentRefs = useRef({});
+  // Parse query params
+  const query = new URLSearchParams(location.search);
+  const highlightedCommentId = query.get("comment");
+  const highlightedReplyId = query.get("reply");
+
+  useEffect(() => {
+    if (highlightedCommentId) {
+      // Expand this comment
+      setExpanded((prev) => ({
+        ...prev,
+        [highlightedCommentId]: true,
+        [`replies-${highlightedCommentId}`]: true,
+      }));
+
+      // Scroll to it after render
+      setTimeout(() => {
+        const el =
+          commentRefs.current[highlightedReplyId || highlightedCommentId];
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("highlighted-comment");
+          setTimeout(() => el.classList.remove("highlighted-comment"), 2000);
+        }
+      }, 300);
+    }
+  }, [highlightedCommentId, highlightedReplyId]);
   const comments = data?.comments || [];
 
   const isUnchanged =
@@ -151,6 +180,7 @@ export default function CommentsSection({ postId }) {
   return (
     <div>
       <CommentList
+        commentRefs={commentRefs}
         comments={comments.slice(0, visibleCount)}
         expanded={expanded}
         toggleExpanded={toggleExpanded}

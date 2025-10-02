@@ -19,19 +19,37 @@ export default function NotificationsDropdown() {
   const [open, setOpen] = useState(false);
 
   const handleClick = (n) => {
+    // Guard against missing postId
+    if (!n.postId && n.type !== "follow") {
+      console.warn("Notification missing postId", n);
+      return;
+    }
     switch (n.type) {
       case "new_post":
-      case "like":
+      case "like_post":
       case "comment":
       case "view_milestone":
+        // Post-related notification
         navigate(`/post/${n.postId}`);
         break;
+
+      case "like_comment":
       case "reply":
       case "reply_on_post":
+        // Goes to post + highlights comment
         navigate(`/post/${n.postId}?comment=${n.commentId}`);
         break;
+
+      case "like_reply":
+        // Goes to post + highlights reply (use commentId + replyId if needed)
+        navigate(`/post/${n.postId}?comment=${n.commentId}&reply=${n.replyId}`);
+        break;
+
       case "follow":
         navigate(`/profile/${n.fromUser._id}`);
+        break;
+
+      default:
         break;
     }
 

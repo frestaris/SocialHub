@@ -207,6 +207,7 @@ export const toggleLikeComment = async (req, res) => {
 
     // Ensure likes array exists
     if (!comment.likes) comment.likes = [];
+    let liked = false;
 
     // 2. Check if the user already liked the comment
     if (comment.likes.some((u) => u.toString() === userId)) {
@@ -215,6 +216,7 @@ export const toggleLikeComment = async (req, res) => {
     } else {
       // If no → add the like
       comment.likes.push(userId);
+      liked = true;
     }
 
     // 3. Update likesCount for quick access
@@ -223,7 +225,23 @@ export const toggleLikeComment = async (req, res) => {
     // Save changes
     await comment.save();
 
-    // 4. Re-fetch and populate user fields before sending response
+    // 4. Send notification
+    if (liked && comment.userId._id.toString() !== userId) {
+      const notif = await Notification.create({
+        userId: comment.userId._id,
+        type: "like_comment",
+        fromUser: req.user._id,
+        postId: comment.postId,
+        commentId: comment._id,
+      });
+      const populatedNotif = await notif.populate(
+        "fromUser",
+        "username avatar"
+      );
+      io.to(comment.userId._id.toString()).emit("notification", populatedNotif);
+    }
+
+    // 5. Re-fetch and populate user fields before sending response
     const populated = await Comment.findById(id)
       .populate("userId", "username avatar")
       .populate("replies.userId", "username avatar");
