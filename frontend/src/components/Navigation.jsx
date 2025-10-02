@@ -153,11 +153,7 @@ export default function Navigation() {
 
                 <Dropdown menu={avatarMenu} placement="bottomRight">
                   <Avatar
-                    src={
-                      currentUser?.avatar
-                        ? `${currentUser.avatar}?t=${currentUser._id}`
-                        : null
-                    }
+                    src={currentUser?.avatar || null}
                     icon={!currentUser?.avatar && <UserOutlined />}
                     size={36}
                     style={{ cursor: "pointer" }}

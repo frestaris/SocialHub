@@ -46,9 +46,9 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("🔌 New client connected:", socket.id);
 
-  // Join room by userId (we’ll emit userId from frontend after login)
   socket.on("join", (userId) => {
-    socket.join(userId);
+    if (!userId) return;
+    socket.join(userId.toString());
     console.log(`✅ User ${userId} joined their room`);
   });
 
