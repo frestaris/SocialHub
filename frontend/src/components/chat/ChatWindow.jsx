@@ -5,6 +5,7 @@ import { useGetMessagesQuery, chatApi } from "../../redux/chat/chatApi";
 import useChatSocket from "../../utils/useChatSocket";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
+import MessageItem from "./MessageItem";
 
 export default function ChatWindow({ conversation, onClose, offset = 0 }) {
   const currentUser = useSelector((s) => s.auth.user);
@@ -13,9 +14,7 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
 
   const { data: messages = [], isLoading } = useGetMessagesQuery(
     conversationId,
-    {
-      skip: !conversationId,
-    }
+    { skip: !conversationId }
   );
 
   const [input, setInput] = useState("");
@@ -55,7 +54,7 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
 
   useEffect(() => {
     if (conversationId) markAsRead(conversationId);
-  }, [conversationId]);
+  }, [conversationId, markAsRead]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -66,6 +65,8 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
       content: input,
       readBy: [currentUser._id],
       pending: true,
+      createdAt: new Date().toISOString(),
+      isMine: true,
     };
     dispatch(
       chatApi.util.updateQueryData("getMessages", conversationId, (draft) => {
@@ -208,31 +209,15 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
               <List
                 dataSource={messages}
                 renderItem={(msg) => (
-                  <List.Item key={msg._id}>
-                    <List.Item.Meta
-                      avatar={
-                        <Avatar
-                          src={msg.sender?.avatar}
-                          icon={<UserOutlined />}
-                          size={28}
-                        />
-                      }
-                      title={msg.sender?.username}
-                      description={
-                        <div
-                          style={{
-                            wordWrap: "break-word",
-                            overflowWrap: "break-word",
-                            whiteSpace: "pre-wrap",
-                          }}
-                        >
-                          {msg.pending
-                            ? msg.content + " (sending...)"
-                            : msg.content}
-                        </div>
-                      }
-                    />
-                  </List.Item>
+                  <MessageItem
+                    key={msg._id}
+                    msg={{
+                      ...msg,
+                      isMine:
+                        msg.sender?._id?.toString() ===
+                        currentUser._id?.toString(),
+                    }}
+                  />
                 )}
               />
             )}
