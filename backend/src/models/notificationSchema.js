@@ -49,5 +49,10 @@ const notificationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+// Auto-delete notification after 30 days
+notificationSchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 60 * 60 * 24 * 30 }
+);
 
 export default mongoose.model("Notification", notificationSchema);

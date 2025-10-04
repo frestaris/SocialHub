@@ -47,21 +47,12 @@ io.use(socketAuth);
 
 // Handle connections
 io.on("connection", (socket) => {
-  console.log(
-    "🔌 New client connected:",
-    socket.id,
-    "userId:",
-    socket.user?._id
-  );
-
-  socket.on("disconnect", () => {
-    console.log("❌ Client disconnected:", socket.id);
-  });
+  socket.on("disconnect", () => {});
 });
 
 // --- Start server ---
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
 // Export io so controllers can use it
 export { io };
