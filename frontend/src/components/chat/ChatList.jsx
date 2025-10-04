@@ -1,6 +1,9 @@
-import { List, Avatar, Spin } from "antd";
+import { List, Avatar, Spin, Badge } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { useGetConversationsQuery } from "../../redux/chat/chatApi";
+import { useDispatch, useSelector } from "react-redux";
+import { setUnreadCounts } from "../../redux/chat/chatSlice";
+import { useEffect } from "react";
 
 export default function ChatList({ onSelectConversation, enabled }) {
   const { data, isLoading } = useGetConversationsQuery(undefined, {
@@ -8,6 +11,19 @@ export default function ChatList({ onSelectConversation, enabled }) {
   });
   const conversations = data?.conversations || [];
 
+  // 👀 Grab unread counts from chatSlice
+  const unreadCounts = useSelector((s) => s.chat.unread);
+  const dispatch = useDispatch();
+  // ✅ When conversations load, hydrate unread counts from backend
+  useEffect(() => {
+    if (conversations.length > 0) {
+      const initialUnread = {};
+      conversations.forEach((c) => {
+        initialUnread[c._id] = c.unreadCount || 0;
+      });
+      dispatch(setUnreadCounts(initialUnread));
+    }
+  }, [conversations, dispatch]);
   const listContainerStyle = {
     padding: "5px",
     boxSizing: "border-box",
@@ -28,6 +44,10 @@ export default function ChatList({ onSelectConversation, enabled }) {
   };
 
   const hoverStyle = { background: "#f5f5f5" };
+  console.log(
+    "Unread state",
+    useSelector((s) => s.chat.unread)
+  );
 
   return (
     <div style={listContainerStyle}>
@@ -43,6 +63,8 @@ export default function ChatList({ onSelectConversation, enabled }) {
             const name = otherUsers.map((p) => p.username).join(", ");
             const lastMsg = conv.lastMessage?.content || "No messages yet";
 
+            const unread = unreadCounts[conv._id] || 0;
+
             return (
               <div
                 key={conv._id}
@@ -55,16 +77,18 @@ export default function ChatList({ onSelectConversation, enabled }) {
                 }
                 onClick={() => onSelectConversation?.(conv)}
               >
-                <Avatar
-                  src={otherUsers[0]?.avatar}
-                  icon={<UserOutlined />}
-                  size={40}
-                  style={{
-                    flexShrink: 0,
-                    minWidth: 40,
-                    marginTop: 2,
-                  }}
-                />
+                <Badge count={unread} size="small" offset={[-4, 4]}>
+                  <Avatar
+                    src={otherUsers[0]?.avatar}
+                    icon={<UserOutlined />}
+                    size={40}
+                    style={{
+                      flexShrink: 0,
+                      minWidth: 40,
+                      marginTop: 2,
+                    }}
+                  />
+                </Badge>
 
                 <div
                   style={{

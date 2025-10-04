@@ -4,17 +4,22 @@ import {
   startConversation,
   getConversations,
   getMessages,
+  sendMessage,
+  markMessagesAsRead,
+  deleteMessage,
+  deleteConversation,
 } from "../controllers/conversationController.js";
 
 const router = express.Router();
 
-// Start new chat
-router.post("/", protect, startConversation);
+router.use(protect);
 
-// List all conversations for logged-in user
-router.get("/", protect, getConversations);
-
-// Get messages in a conversation
-router.get("/:id/messages", protect, getMessages);
+router.post("/", startConversation);
+router.get("/", getConversations);
+router.get("/:id/messages", getMessages);
+router.post("/:id/messages", sendMessage);
+router.patch("/:id/read", markMessagesAsRead);
+router.delete("/:id", deleteConversation);
+router.delete("/message/:messageId", deleteMessage);
 
 export default router;

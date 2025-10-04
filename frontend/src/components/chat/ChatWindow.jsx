@@ -6,6 +6,7 @@ import useChatSocket from "../../utils/useChatSocket";
 import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import MessageItem from "./MessageItem";
+import { clearUnread } from "../../redux/chat/chatSlice";
 
 export default function ChatWindow({ conversation, onClose, offset = 0 }) {
   const currentUser = useSelector((s) => s.auth.user);
@@ -20,7 +21,7 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
 
-  const { sendMessage } = useChatSocket();
+  const { sendMessage, markAsRead } = useChatSocket();
 
   const messagesEndRef = useRef(null);
 
@@ -30,6 +31,13 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (conversationId) {
+      dispatch(clearUnread(conversationId));
+      markAsRead(conversationId);
+    }
+  }, [conversationId, dispatch, markAsRead]);
 
   const handleSend = () => {
     if (!input.trim()) return;
