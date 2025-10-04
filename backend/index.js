@@ -13,6 +13,7 @@ import postRoutes from "./src/routes/postRoutes.js";
 import commentRoutes from "./src/routes/commentRoutes.js";
 import replyRoutes from "./src/routes/replyRoutes.js";
 import notificationRoutes from "./src/routes/notificationRoutes.js";
+import conversationRoutes from "./src/routes/conversationRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -31,6 +32,7 @@ app.use("/posts", postRoutes);
 app.use("/comments", commentRoutes);
 app.use("/replies", replyRoutes);
 app.use("/notifications", notificationRoutes);
+app.use("/conversations", conversationRoutes);
 
 // --- Setup server with Socket.IO ---
 const server = http.createServer(app);
@@ -47,6 +49,9 @@ io.use(socketAuth);
 
 // Handle connections
 io.on("connection", (socket) => {
+  import("./src/middleware/chatSocket.js").then(({ default: chatSocket }) => {
+    chatSocket(io, socket);
+  });
   socket.on("disconnect", () => {});
 });
 

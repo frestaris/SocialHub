@@ -4,9 +4,11 @@ import { Suspense, lazy } from "react";
 
 import Navigation from "./components/Navigation";
 import NotFound from "./components/NotFound";
+import ChatDock from "./components/chat/ChatDock";
 
 import useNotificationsSocket from "./utils/useNotificationsSocket";
 import useAuthTokenRefresh from "./utils/useAuthTokenRefresh";
+import { useSelector } from "react-redux";
 
 const { Content } = Layout;
 
@@ -22,6 +24,7 @@ const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 
 export default function App() {
+  const user = useSelector((s) => s.auth.user);
   useNotificationsSocket();
   useAuthTokenRefresh();
   return (
@@ -29,7 +32,6 @@ export default function App() {
       <Layout style={{ minHeight: "100vh" }}>
         {/* Global navigation bar (always visible) */}
         <Navigation />
-
         {/* Suspense ensures fallback while lazy routes load */}
         <Content>
           <Suspense
@@ -70,6 +72,7 @@ export default function App() {
             </Routes>
           </Suspense>
         </Content>
+        {user?._id && <ChatDock />}
       </Layout>
     </Router>
   );
