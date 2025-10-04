@@ -11,7 +11,6 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
   const currentUser = useSelector((s) => s.auth.user);
   const conversationId = conversation?._id;
   const dispatch = useDispatch();
-  const lastSeenMessageRef = useRef(null);
 
   const { data: messages = [], isLoading } = useGetMessagesQuery(
     conversationId,
@@ -20,50 +19,17 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
 
   const [input, setInput] = useState("");
   const [minimized, setMinimized] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
 
-  const { sendMessage, startTyping, stopTyping, markAsRead } = useChatSocket();
+  const { sendMessage } = useChatSocket();
 
   const messagesEndRef = useRef(null);
-  const scrollToBottom = (smooth = true) => {
-    messagesEndRef.current?.scrollIntoView({
-      behavior: smooth ? "smooth" : "auto",
-    });
-  };
 
+  // Auto-scroll to bottom when messages update
   useEffect(() => {
-    if (messages.length > 0) scrollToBottom(true);
-  }, [messages]);
-
-  useEffect(() => {
-    const socket = window.chatSocket;
-    const handleTyping = ({ userId, conversationId: cId }) => {
-      if (cId === conversationId && userId !== currentUser._id)
-        setIsTyping(true);
-    };
-    const handleStopTyping = ({ userId, conversationId: cId }) => {
-      if (cId === conversationId && userId !== currentUser._id)
-        setIsTyping(false);
-    };
-    socket?.on("typing", handleTyping);
-    socket?.on("stop_typing", handleStopTyping);
-    return () => {
-      socket?.off("typing", handleTyping);
-      socket?.off("stop_typing", handleStopTyping);
-    };
-  }, [conversationId, currentUser._id]);
-
-  useEffect(() => {
-    if (!conversationId || messages.length === 0) return;
-
-    const lastMsg = messages[messages.length - 1];
-
-    // Only mark if there's a new message we haven't seen yet
-    if (lastMsg && lastMsg._id !== lastSeenMessageRef.current) {
-      markAsRead(conversationId);
-      lastSeenMessageRef.current = lastMsg._id;
+    if (messages.length > 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [conversationId, messages, markAsRead]);
+  }, [messages]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -77,21 +43,15 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
       createdAt: new Date().toISOString(),
       isMine: true,
     };
+
     dispatch(
       chatApi.util.updateQueryData("getMessages", conversationId, (draft) => {
         draft.push(optimisticMsg);
       })
     );
+
     sendMessage(conversationId, input);
     setInput("");
-    stopTyping(conversationId);
-  };
-
-  const handleInputChange = (e) => {
-    const value = e.target.value;
-    setInput(value);
-    if (value.trim()) startTyping(conversationId);
-    else stopTyping(conversationId);
   };
 
   const otherUser =
@@ -108,8 +68,8 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
     height: minimized ? 48 : 420,
     background: "#fff",
     border: "1px solid #ddd",
-    borderRadius: "12px 12px 0 0", // more modern rounded corners
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)", // deeper shadow
+    borderRadius: "12px 12px 0 0",
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
     display: "flex",
     flexDirection: "column",
     zIndex: 2100,
@@ -118,7 +78,6 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
     overflow: "hidden",
   };
 
-  // Mobile override
   if (window.innerWidth < 768) {
     baseWindowStyle.right = 0;
     baseWindowStyle.left = 0;
@@ -142,7 +101,7 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
     flex: 1,
     overflowY: "auto",
     padding: "12px 12px 0",
-    background: "#fafafa", // subtle background for contrast
+    background: "#fafafa",
     wordWrap: "break-word",
     overflowWrap: "break-word",
   };
@@ -156,18 +115,12 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
     background: "#fff",
   };
 
-  // Better textarea styling
   const inputStyle = {
     borderRadius: 20,
     resize: "none",
     padding: "8px 12px",
     fontSize: 14,
   };
-  useEffect(() => {
-    if (conversationId && window.chatSocket) {
-      window.chatSocket.emit("join_conversations", [conversationId]);
-    }
-  }, [conversationId]);
 
   return (
     <div style={baseWindowStyle}>
@@ -248,17 +201,11 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
 
           {/* Footer */}
           <div style={footerStyle}>
-            {isTyping && (
-              <div style={{ fontSize: 12, color: "#888", marginBottom: 4 }}>
-                {otherUser?.username} is typing...
-              </div>
-            )}
             <Input.TextArea
               rows={1}
               style={inputStyle}
               value={input}
-              onChange={handleInputChange}
-              onBlur={() => stopTyping(conversationId)}
+              onChange={(e) => setInput(e.target.value)}
               onPressEnter={(e) => {
                 e.preventDefault();
                 handleSend();

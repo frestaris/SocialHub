@@ -24,29 +24,4 @@ export default function chatSocket(io, socket) {
     const populated = await msg.populate("sender", "username avatar");
     io.to(conversationId.toString()).emit("new_message", populated);
   });
-
-  socket.on("typing", ({ conversationId }) => {
-    socket
-      .to(conversationId.toString())
-      .emit("typing", { userId, conversationId });
-  });
-
-  socket.on("stop_typing", ({ conversationId }) => {
-    socket
-      .to(conversationId.toString())
-      .emit("stop_typing", { userId, conversationId });
-  });
-
-  socket.on("mark_as_read", async ({ conversationId }) => {
-    await Message.updateMany(
-      { conversationId, readBy: { $ne: userId } },
-      { $push: { readBy: userId } }
-    );
-
-    io.to(conversationId.toString()).emit("seen", {
-      conversationId,
-      userId,
-      seenAt: new Date(),
-    });
-  });
 }
