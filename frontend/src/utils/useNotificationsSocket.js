@@ -47,19 +47,20 @@ export default function useNotificationsSocket() {
 
       // 4️⃣ Listen for incoming notifications
       socketInstance.on("notification", (notif) => {
-        dispatch(
-          notificationApi.util.updateQueryData(
-            "getNotifications",
-            undefined,
-            (draft) => {
-              // prepend new notification to the cache
-              draft.notifications = [
-                { ...notif, isRead: notif.isRead ?? false },
-                ...(draft.notifications || []),
-              ];
-            }
-          )
-        );
+        if (notif.userId?.toString() === user._id?.toString()) {
+          dispatch(
+            notificationApi.util.updateQueryData(
+              "getNotifications",
+              undefined,
+              (draft) => {
+                draft.notifications = [
+                  { ...notif, isRead: notif.isRead ?? false },
+                  ...(draft.notifications || []),
+                ];
+              }
+            )
+          );
+        }
       });
     };
 

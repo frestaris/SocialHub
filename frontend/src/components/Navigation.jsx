@@ -162,7 +162,7 @@ export default function Navigation() {
               </Space>
             ) : (
               <Button type="primary" onClick={() => handleNavigate("/login")}>
-                Become a Creator
+                Login
               </Button>
             )}
           </div>
@@ -177,7 +177,7 @@ export default function Navigation() {
 
       {/* Drawer (mobile main menu) */}
       <Drawer
-        title="CreatorHub"
+        title="Social Hub"
         placement="right"
         closable
         onClose={() => setDrawerOpen(false)}
@@ -209,7 +209,7 @@ export default function Navigation() {
               block
               onClick={() => handleNavigate("/login")}
             >
-              Become a Creator
+              Login
             </Button>
           ) : (
             <>

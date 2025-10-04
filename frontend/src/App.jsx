@@ -5,7 +5,6 @@ import { Suspense, lazy } from "react";
 import Navigation from "./components/Navigation";
 import NotFound from "./components/NotFound";
 
-// 👇 Import the hook
 import useNotificationsSocket from "./utils/useNotificationsSocket";
 import useAuthTokenRefresh from "./utils/useAuthTokenRefresh";
 

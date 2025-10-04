@@ -1,7 +1,10 @@
 // --- Ant Design ---
-import { Form, Input } from "antd";
+import { Form, Input, Button } from "antd";
+import { useState } from "react";
 
 export default function ProfileInfoForm({ hasPassword }) {
+  const [showPasswordField, setShowPasswordField] = useState(false);
+
   return (
     <>
       {/* Username */}
@@ -40,25 +43,40 @@ export default function ProfileInfoForm({ hasPassword }) {
           <Input.Password placeholder="Leave empty if you don’t want to set a password yet" />
         </Form.Item>
       ) : (
-        <Form.Item
-          label="New Password"
-          name="newPassword"
-          rules={[
-            {
-              validator: (_, value) => {
-                if (!value) return Promise.resolve();
-                if (value.length < 6) {
-                  return Promise.reject(
-                    new Error("Password must be at least 6 characters")
-                  );
-                }
-                return Promise.resolve();
-              },
-            },
-          ]}
-        >
-          <Input.Password placeholder="Leave empty if you don’t want to change it" />
-        </Form.Item>
+        // User already has a password → toggle with button
+        <>
+          {!showPasswordField ? (
+            <Button
+              type="dashed"
+              shape="round"
+              onClick={() => setShowPasswordField(true)}
+            >
+              Change Password
+            </Button>
+          ) : (
+            <>
+              <Form.Item
+                label="New Password"
+                name="newPassword"
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (!value) return Promise.resolve();
+                      if (value.length < 6) {
+                        return Promise.reject(
+                          new Error("Password must be at least 6 characters")
+                        );
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+              >
+                <Input.Password placeholder="Enter a new password" />
+              </Form.Item>
+            </>
+          )}
+        </>
       )}
     </>
   );
