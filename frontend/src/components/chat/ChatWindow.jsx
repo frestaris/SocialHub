@@ -11,6 +11,7 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
   const currentUser = useSelector((s) => s.auth.user);
   const conversationId = conversation?._id;
   const dispatch = useDispatch();
+  const lastSeenMessageRef = useRef(null);
 
   const { data: messages = [], isLoading } = useGetMessagesQuery(
     conversationId,
@@ -53,8 +54,16 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
   }, [conversationId, currentUser._id]);
 
   useEffect(() => {
-    if (conversationId) markAsRead(conversationId);
-  }, [conversationId, markAsRead]);
+    if (!conversationId || messages.length === 0) return;
+
+    const lastMsg = messages[messages.length - 1];
+
+    // Only mark if there's a new message we haven't seen yet
+    if (lastMsg && lastMsg._id !== lastSeenMessageRef.current) {
+      markAsRead(conversationId);
+      lastSeenMessageRef.current = lastMsg._id;
+    }
+  }, [conversationId, messages, markAsRead]);
 
   const handleSend = () => {
     if (!input.trim()) return;
@@ -90,64 +99,75 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
       (p) => p._id.toString() !== currentUser?._id?.toString()
     ) || null;
 
-  const lastMsg = messages[messages.length - 1];
-
   // Inline styles
   const baseWindowStyle = {
     position: "fixed",
     bottom: 0,
     right: 300 + offset,
-    width: 280,
-    height: minimized ? 48 : 380,
+    width: 320,
+    height: minimized ? 48 : 420,
     background: "#fff",
     border: "1px solid #ddd",
-    borderRadius: "8px 8px 0 0",
-    boxShadow: "0 -2px 8px rgba(0, 0, 0, 0.15)",
+    borderRadius: "12px 12px 0 0", // more modern rounded corners
+    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)", // deeper shadow
     display: "flex",
     flexDirection: "column",
     zIndex: 2100,
     transition: "all 0.25s ease",
     animation: "slideUp 0.25s ease",
+    overflow: "hidden",
   };
 
-  // Override for mobile full-screen
+  // Mobile override
   if (window.innerWidth < 768) {
     baseWindowStyle.right = 0;
     baseWindowStyle.left = 0;
     baseWindowStyle.width = "100%";
-    baseWindowStyle.height = minimized ? 48 : "82vh";
+    baseWindowStyle.height = minimized ? 48 : "85vh";
   }
 
   const headerStyle = {
-    height: 48,
-    borderBottom: "1px solid #eee",
-    padding: "0 8px",
-    borderRadius: "8px 8px 0 0",
-    boxShadow: "0 -2px 8px rgba(0, 0, 0, 0.15)",
+    height: 56,
+    padding: "0 12px",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    fontWeight: 600,
-    background: "#fff",
-    cursor: "pointer",
+    background: "#fdfdfd",
+    borderBottom: "1px solid #eee",
+    borderRadius: "12px 12px 0 0",
+    boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
   };
 
   const bodyStyle = {
     flex: 1,
     overflowY: "auto",
-    padding: 8,
+    padding: "12px 12px 0",
+    background: "#fafafa", // subtle background for contrast
     wordWrap: "break-word",
     overflowWrap: "break-word",
-    whiteSpace: "pre-wrap",
   };
 
   const footerStyle = {
     borderTop: "1px solid #eee",
-    padding: 6,
+    padding: "8px",
     display: "flex",
-    gap: 6,
+    gap: 8,
     alignItems: "center",
+    background: "#fff",
   };
+
+  // Better textarea styling
+  const inputStyle = {
+    borderRadius: 20,
+    resize: "none",
+    padding: "8px 12px",
+    fontSize: 14,
+  };
+  useEffect(() => {
+    if (conversationId && window.chatSocket) {
+      window.chatSocket.emit("join_conversations", [conversationId]);
+    }
+  }, [conversationId]);
 
   return (
     <div style={baseWindowStyle}>
@@ -216,30 +236,15 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
                       isMine:
                         msg.sender?._id?.toString() ===
                         currentUser._id?.toString(),
+                      otherUserId: otherUser?._id,
                     }}
                   />
                 )}
+                split={false}
               />
             )}
             <div ref={messagesEndRef} />
           </div>
-
-          {/* Seen indicator */}
-          {lastMsg && lastMsg.sender?._id === currentUser._id && (
-            <div
-              style={{
-                textAlign: "right",
-                fontSize: 12,
-                color: "#888",
-                marginRight: 8,
-                marginTop: -6,
-              }}
-            >
-              {lastMsg.readBy?.map(String).includes(otherUser?._id?.toString())
-                ? "Seen"
-                : "Delivered"}
-            </div>
-          )}
 
           {/* Footer */}
           <div style={footerStyle}>
@@ -249,7 +254,8 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
               </div>
             )}
             <Input.TextArea
-              rows={2}
+              rows={1}
+              style={inputStyle}
               value={input}
               onChange={handleInputChange}
               onBlur={() => stopTyping(conversationId)}
@@ -259,7 +265,7 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
               }}
               placeholder="Write a message..."
             />
-            <Button type="primary" onClick={handleSend}>
+            <Button type="primary" shape="round" onClick={handleSend}>
               Send
             </Button>
           </div>
