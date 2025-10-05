@@ -22,6 +22,11 @@ const chatSlice = createSlice({
     setActiveConversation: (state, action) => {
       state.activeConversationId = action.payload;
     },
+    setTyping: (state, action) => {
+      const { conversationId, userId, isTyping } = action.payload;
+      if (!state.typing) state.typing = {};
+      state.typing[conversationId] = isTyping ? userId : null;
+    },
   },
 });
 
@@ -30,6 +35,7 @@ export const {
   incrementUnread,
   clearUnread,
   setActiveConversation,
+  setTyping,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

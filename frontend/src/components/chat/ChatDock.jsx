@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow";
 import ChatButton from "./ChatButton";
-import { Modal, List, message, Avatar, Drawer } from "antd";
-import { UserOutlined } from "@ant-design/icons";
+import { Modal, List, message, Avatar, Drawer, Button } from "antd";
+import { PlusOutlined, UserOutlined } from "@ant-design/icons";
 import { useStartConversationMutation } from "../../redux/chat/chatApi";
 import { chatSocketHelpers } from "../../utils/useChatSocket";
 import { setActiveConversation } from "../../redux/chat/chatSlice";
@@ -180,9 +180,34 @@ export default function ChatDock() {
       )}
 
       {/* Mobile Drawer for ChatList */}
+      {/* ✅ Mobile Drawer for ChatList — with “New Chat” icon on the right */}
       {isMobile && (
         <Drawer
-          title="Messages"
+          title={
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <span style={{ fontWeight: 600 }}>Messages</span>
+
+              {/* ➕ new chat icon (opens modal) */}
+              <Button
+                type="text"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  setIsModalOpen(true);
+                }}
+                style={{
+                  color: "#1677ff",
+                  fontSize: 20,
+                }}
+              />
+            </div>
+          }
           placement="bottom"
           height="60%"
           open={openList}

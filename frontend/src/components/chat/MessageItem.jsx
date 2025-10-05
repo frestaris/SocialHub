@@ -24,47 +24,58 @@ export default function MessageItem({ msg }) {
         />
       )}
 
-      <div style={{ maxWidth: "75%", textAlign: "left" }}>
-        {!isMine && (
-          <div
-            style={{
-              fontWeight: 600,
-              fontSize: 13,
-              color: "#222",
-              marginBottom: 2,
-            }}
-          >
-            {msg.sender?.username || "Unknown"}
-          </div>
-        )}
-
+      <div style={{ maxWidth: "75%", textAlign: "left", position: "relative" }}>
         <div
           style={{
             display: "inline-block",
-            background: isMine ? "#e6f0ff" : "#f5f5f5",
+            background: isMine ? "#e6f0ff" : "#e9e9e9",
             color: "#000",
             padding: "6px 10px",
             borderRadius: 8,
             wordBreak: "break-word",
             whiteSpace: "pre-wrap",
+            position: "relative",
           }}
         >
+          {/* pointy tail */}
+          <span
+            style={{
+              position: "absolute",
+              width: 0,
+              height: 0,
+              border: "10px solid transparent",
+              ...(isMine
+                ? {
+                    bottom: 0,
+                    right: -5,
+                    borderLeftColor: "#e6f0ff",
+                    borderRight: 0,
+                    borderTop: 0,
+                  }
+                : {
+                    top: 0,
+                    left: -5,
+                    borderBottomColor: "#e9e9e9",
+                    borderTop: 0,
+                  }),
+            }}
+          ></span>
+
           {msg.content}
 
-          {/* Timestamp + ticks */}
-          <div
+          {/* Timestamp */}
+          <span
             style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              gap: 4,
-              marginTop: 4,
+              marginLeft: 6,
+              color: "#777",
+              fontSize: 10,
+              alignSelf: "flex-end",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
             }}
           >
-            <small style={{ color: "#888", fontSize: 11 }}>
-              {msg.createdAt ? moment(msg.createdAt).fromNow() : "just now"}
-            </small>
-          </div>
+            {msg.createdAt ? moment(msg.createdAt).format("h:mm A") : ""}
+          </span>
         </div>
       </div>
     </List.Item>

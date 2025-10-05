@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import MessageItem from "./MessageItem";
 import { clearUnread, setActiveConversation } from "../../redux/chat/chatSlice";
+import moment from "moment";
 
 export default function ChatWindow({ conversation, onClose, offset = 0 }) {
   const currentUser = useSelector((s) => s.auth.user);
@@ -20,17 +21,25 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
   );
 
   const [input, setInput] = useState("");
+  const typingTimeoutRef = useRef(null);
   const [minimized, setMinimized] = useState(false);
 
-  const { sendMessage, markAsRead } = chatSocketHelpers;
+  const { sendMessage, markAsRead, startTyping, stopTyping } =
+    chatSocketHelpers;
+  const typingUserId = useSelector((s) => s.chat.typing?.[conversationId]);
+  const isTyping = typingUserId && typingUserId !== currentUser._id;
+
   const messagesEndRef = useRef(null);
 
   // Auto-scroll when messages update
   useEffect(() => {
+    if (!messagesEndRef.current) return;
+    const container = messagesEndRef.current.parentNode;
+    // ✅ Scroll instantly on mount (no animation)
     if (messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      container.scrollTop = container.scrollHeight;
     }
-  }, [messages]);
+  }, [messages.length]);
 
   // Maintain active conversation state
   useEffect(() => {
@@ -79,6 +88,30 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
     setInput("");
   };
 
+  // Typing style
+  const dotStyle = {
+    width: "6px",
+    height: "6px",
+    borderRadius: "50%",
+    backgroundColor: "#9ca3af",
+    animation: "typingBounce 1.4s infinite ease-in-out both",
+  };
+
+  useEffect(() => {
+    // inject animation only once
+    if (!document.getElementById("typingBounceKeyframes")) {
+      const style = document.createElement("style");
+      style.id = "typingBounceKeyframes";
+      style.textContent = `
+      @keyframes typingBounce {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+        40% { transform: scale(1.0); opacity: 1; }
+      }
+    `;
+      document.head.appendChild(style);
+    }
+  }, []);
+
   const otherUser =
     conversation?.participants?.find(
       (p) => p._id.toString() !== currentUser?._id?.toString()
@@ -107,13 +140,14 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
     baseWindowStyle.right = 0;
     baseWindowStyle.left = 0;
     baseWindowStyle.width = "100%";
-    baseWindowStyle.height = minimized ? 48 : "85vh";
+    baseWindowStyle.height = minimized ? 48 : "82vh";
   }
 
   return (
     <div style={baseWindowStyle}>
       {/* Header */}
       <div
+        onClick={() => setMinimized((prev) => !prev)}
         style={{
           height: 56,
           padding: "0 12px",
@@ -124,7 +158,11 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
           borderBottom: "1px solid #eee",
           borderRadius: "12px 12px 0 0",
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+          cursor: "pointer",
+          transition: "background 0.2s",
         }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = "#f8f8f8")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "#fdfdfd")}
       >
         {otherUser ? (
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -161,13 +199,19 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
             type="text"
             size="small"
             icon={<MinusOutlined />}
-            onClick={() => setMinimized(!minimized)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMinimized((prev) => !prev);
+            }}
           />
           <Button
             type="text"
             size="small"
             icon={<CloseOutlined />}
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
           />
         </div>
       </div>
@@ -179,7 +223,7 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
             style={{
               flex: 1,
               overflowY: "auto",
-              padding: "12px 12px 0",
+              padding: "12px 12px 48px",
               background: "#fafafa",
               wordWrap: "break-word",
               overflowWrap: "break-word",
@@ -190,21 +234,117 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
             ) : (
               <List
                 dataSource={messages}
-                renderItem={(msg) => (
-                  <MessageItem
-                    key={msg._id}
-                    msg={{
-                      ...msg,
-                      isMine:
-                        msg.sender?._id?.toString() ===
-                        currentUser._id?.toString(),
-                      otherUserId: otherUser?._id,
-                    }}
-                  />
-                )}
+                renderItem={(msg, index) => {
+                  const prevMsg = messages[index - 1];
+                  const currentDate = moment(msg.createdAt).format(
+                    "YYYY-MM-DD"
+                  );
+                  const prevDate = prevMsg
+                    ? moment(prevMsg.createdAt).format("YYYY-MM-DD")
+                    : null;
+                  const showDivider = currentDate !== prevDate;
+
+                  return (
+                    <>
+                      {showDivider && (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            margin: "12px 0",
+                            color: "#888",
+                            fontSize: 12,
+                          }}
+                        >
+                          <div
+                            style={{
+                              flex: 1,
+                              height: 1,
+                              background: "#e0e0e0",
+                            }}
+                          />
+                          <div
+                            title={moment(msg.createdAt).format("MMMM D, YYYY")}
+                            style={{
+                              background: "#f5f5f5",
+                              padding: "4px 12px",
+                              borderRadius: 20,
+                              margin: "0 10px",
+                              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                              border: "1px solid #e0e0e0",
+                              userSelect: "none",
+                            }}
+                          >
+                            {(() => {
+                              const date = moment(msg.createdAt);
+                              if (date.isSame(moment(), "day")) return "Today";
+                              if (
+                                date.isSame(moment().subtract(1, "day"), "day")
+                              )
+                                return "Yesterday";
+                              return date.format("dddd");
+                            })()}
+                          </div>
+                          <div
+                            style={{
+                              flex: 1,
+                              height: 1,
+                              background: "#e0e0e0",
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      <MessageItem
+                        key={msg._id}
+                        msg={{
+                          ...msg,
+                          isMine:
+                            msg.sender?._id?.toString() ===
+                            currentUser._id?.toString(),
+                          otherUserId: otherUser?._id,
+                        }}
+                      />
+                    </>
+                  );
+                }}
                 split={false}
               />
             )}
+            {isTyping && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  marginTop: 4,
+                  marginBottom: 4,
+                }}
+              >
+                <Avatar
+                  src={otherUser?.avatar || null}
+                  size="small"
+                  icon={!otherUser?.avatar && <UserOutlined />}
+                />
+                <div
+                  style={{
+                    background: "#f2f3f5",
+                    borderRadius: "18px",
+                    padding: "6px 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+                  }}
+                >
+                  <div style={dotStyle}></div>
+                  <div style={{ ...dotStyle, animationDelay: "0.2s" }}></div>
+                  <div style={{ ...dotStyle, animationDelay: "0.4s" }}></div>
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
           </div>
 
@@ -228,10 +368,18 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
                 fontSize: 14,
               }}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => {
+                setInput(e.target.value);
+                startTyping(conversationId);
+                clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = setTimeout(() => {
+                  stopTyping(conversationId);
+                }, 1500); // stop typing after 1.5s of inactivity
+              }}
               onPressEnter={(e) => {
                 e.preventDefault();
                 handleSend();
+                stopTyping(conversationId);
               }}
               placeholder="Write a message..."
             />

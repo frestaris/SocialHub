@@ -4,7 +4,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebase";
 import { chatApi } from "../redux/chat/chatApi";
-import { incrementUnread, clearUnread } from "../redux/chat/chatSlice";
+import {
+  incrementUnread,
+  clearUnread,
+  setTyping,
+} from "../redux/chat/chatSlice";
 
 // ✅ Keep a global singleton socket
 let globalSocket = null;
@@ -186,11 +190,14 @@ export default function useChatSocket() {
         .off("typing")
         .on("typing", ({ conversationId, userId }) => {
           console.log("✍️ typing:", { conversationId, userId });
+          dispatch(setTyping({ conversationId, userId, isTyping: true }));
         });
+
       socketInstance
         .off("stop_typing")
         .on("stop_typing", ({ conversationId, userId }) => {
           console.log("🛑 stop_typing:", { conversationId, userId });
+          dispatch(setTyping({ conversationId, userId, isTyping: false }));
         });
     };
 
