@@ -100,8 +100,20 @@ export default function useChatSocket() {
         // Update message list cache
         dispatch(
           chatApi.util.updateQueryData("getMessages", convId, (draft = []) => {
-            const exists = draft.some((m) => m._id === msg._id);
-            if (!exists) draft.push(msg);
+            const optimisticIdx = draft.findIndex(
+              (m) =>
+                m.pending &&
+                m.sender?._id === msg.sender._id &&
+                m.content === msg.content
+            );
+
+            if (optimisticIdx !== -1) {
+              // 🟢 Replace the optimistic message with the confirmed one
+              draft[optimisticIdx] = msg;
+            } else if (!draft.some((m) => m._id === msg._id)) {
+              // 🟢 If it’s a new message from someone else, just push it
+              draft.push(msg);
+            }
           })
         );
 
