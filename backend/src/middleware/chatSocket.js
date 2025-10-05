@@ -1,33 +1,92 @@
+// src/socket/chatSocket.js
 import Conversation from "../models/converstationSchema.js";
 import Message from "../models/messageSchema.js";
 
+/**
+ * chatSocket(io, socket)
+ * -------------------------
+ * Handles all realtime chat events.
+ * - join_conversations (with membership check)
+ * - send_message (secure + ack)
+ * - mark_as_read (seen receipts)
+ * - typing / stop_typing (safe)
+ */
 export default function chatSocket(io, socket) {
   const userId = socket.user?._id;
+  const username = socket.user?.username || "UnknownUser";
+
+  if (!userId) {
+    console.warn("⚠️ Socket connected without valid user");
+    return;
+  }
+
+  console.log(`✅ Chat socket connected for ${username} (${userId})`);
 
   /**
-   * Join all conversation rooms that the user participates in
+   * Helper: ensure user participates in conversation
    */
-  socket.on("join_conversations", (conversationIds) => {
-    conversationIds.forEach((cId) => socket.join(cId.toString()));
+  async function ensureMember(conversationId) {
+    const conv = await Conversation.findById(conversationId).select(
+      "participants"
+    );
+    if (!conv) return false;
+    return conv.participants.some((p) => p.toString() === userId.toString());
+  }
+
+  /**
+   * JOIN CONVERSATION ROOMS
+   * ---------------------------------
+   * Client emits: socket.emit("join_conversations", [ids])
+   */
+  socket.on("join_conversations", async (conversationIds = [], ack) => {
+    try {
+      const ids = (
+        Array.isArray(conversationIds) ? conversationIds : []
+      ).filter((id) => typeof id === "string");
+
+      if (!ids.length) return ack?.({ ok: true, joined: [] });
+
+      // Verify membership for each conversation
+      const allowed = await Conversation.find({
+        _id: { $in: ids },
+        participants: userId,
+      }).select("_id");
+
+      const joined = [];
+      for (const c of allowed) {
+        socket.join(c._id.toString());
+        joined.push(c._id.toString());
+      }
+
+      console.log(`👥 ${username} joined ${joined.length} rooms`);
+      ack?.({ ok: true, joined });
+    } catch (err) {
+      console.error("join_conversations error:", err);
+      ack?.({ ok: false, error: "Failed to join conversations" });
+    }
   });
 
   /**
-   * Send message (real-time)
-   * -------------------------
-   * - Create message in DB
-   * - Update conversation.lastMessage
-   * - Emit `new_message` event to both participants
-   * - If recipient is offline, unread count will be calculated when they reconnect
+   * SEND MESSAGE (Realtime)
+   * ---------------------------------
+   * socket.emit("send_message", { conversationId, content }, ack)
    */
-  socket.on("send_message", async ({ conversationId, content }) => {
+  socket.on("send_message", async ({ conversationId, content }, ack) => {
     try {
-      if (!content || !conversationId) return;
+      if (!conversationId || !content?.trim()) {
+        return ack?.({ ok: false, error: "Invalid message data" });
+      }
+
+      const isMember = await ensureMember(conversationId);
+      if (!isMember) {
+        return ack?.({ ok: false, error: "Not authorized for this chat" });
+      }
 
       // 1️⃣ Create message
       const msg = await Message.create({
         conversationId,
         sender: userId,
-        content,
+        content: content.trim(),
         readBy: [userId],
       });
 
@@ -38,13 +97,14 @@ export default function chatSocket(io, socket) {
         { new: true }
       ).populate("participants", "_id username avatar");
 
-      // 3️⃣ Populate sender for UI
+      // 3️⃣ Populate sender info for frontend
       const populatedMsg = await msg.populate("sender", "username avatar");
 
-      // 4️⃣ Emit new message to both users (joined in the same room)
+      // 4️⃣ Emit to the conversation room (both participants receive)
       io.to(conversationId.toString()).emit("new_message", populatedMsg);
+      console.log(`📡 ${username} → room ${conversationId}: ${content}`);
 
-      // 5️⃣ Optional: If recipient is online in their private room, emit an alert
+      // 5️⃣ Optional: private alert to recipient’s user room
       const recipient = conversation.participants.find(
         (p) => p._id.toString() !== userId.toString()
       );
@@ -55,46 +115,74 @@ export default function chatSocket(io, socket) {
           preview: msg.content.slice(0, 100),
         });
       }
+
+      ack?.({ ok: true, message: populatedMsg });
     } catch (err) {
       console.error("send_message socket error:", err);
+      ack?.({ ok: false, error: "Server error" });
     }
   });
 
   /**
-   * Mark messages as read
-   * -----------------------
-   * - Updates all messages not read by this user
-   * - Notifies the sender that the messages were seen
+   * MARK AS READ (Seen)
+   * ---------------------------------
+   * socket.emit("mark_as_read", { conversationId }, ack)
    */
-  socket.on("mark_as_read", async ({ conversationId }) => {
+  socket.on("mark_as_read", async ({ conversationId }, ack) => {
     try {
+      const isMember = await ensureMember(conversationId);
+      if (!isMember) return ack?.({ ok: false, error: "Not authorized" });
+
       await Message.updateMany(
         { conversationId, readBy: { $ne: userId } },
         { $push: { readBy: userId } }
       );
 
-      io.to(conversationId.toString()).emit("seen", {
-        conversationId,
-        userId,
-        seenAt: new Date(),
-      });
+      const seenData = { conversationId, userId, seenAt: new Date() };
+      io.to(conversationId.toString()).emit("seen", seenData);
+      ack?.({ ok: true });
     } catch (err) {
       console.error("mark_as_read socket error:", err);
+      ack?.({ ok: false, error: "Server error" });
     }
   });
 
   /**
-   * Typing indicators
+   * TYPING INDICATORS
+   * ---------------------------------
    */
-  socket.on("typing", ({ conversationId }) => {
-    socket
-      .to(conversationId.toString())
-      .emit("typing", { userId, conversationId });
+  socket.on("typing", async ({ conversationId }) => {
+    try {
+      const isMember = await ensureMember(conversationId);
+      if (isMember) {
+        socket
+          .to(conversationId.toString())
+          .emit("typing", { userId, conversationId });
+      }
+    } catch (err) {
+      console.error("typing socket error:", err);
+    }
   });
 
-  socket.on("stop_typing", ({ conversationId }) => {
-    socket
-      .to(conversationId.toString())
-      .emit("stop_typing", { userId, conversationId });
+  socket.on("stop_typing", async ({ conversationId }) => {
+    try {
+      const isMember = await ensureMember(conversationId);
+      if (isMember) {
+        socket
+          .to(conversationId.toString())
+          .emit("stop_typing", { userId, conversationId });
+      }
+    } catch (err) {
+      console.error("stop_typing socket error:", err);
+    }
+  });
+
+  /**
+   * OPTIONAL: Emit when a conversation or message is deleted via REST
+   * (You’d call io.to(conversationId).emit(...) from the REST controller)
+   */
+
+  socket.on("disconnect", () => {
+    console.log(`❌ ${username} disconnected from chat`);
   });
 }

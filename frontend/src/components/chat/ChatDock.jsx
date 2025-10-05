@@ -1,4 +1,4 @@
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow";
@@ -6,9 +6,20 @@ import ChatButton from "./ChatButton";
 import { Modal, List, message, Avatar, Drawer } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { useStartConversationMutation } from "../../redux/chat/chatApi";
+import { chatSocketHelpers } from "../../utils/useChatSocket";
+import { setActiveConversation } from "../../redux/chat/chatSlice";
 
 export default function ChatDock() {
   const user = useSelector((s) => s.auth.user);
+  const unreadCounts = useSelector((s) => s.chat.unread);
+  const activeConversationId = useSelector((s) => s.chat.activeConversationId);
+  const dispatch = useDispatch();
+
+  const totalUnread = Object.values(unreadCounts || {}).reduce(
+    (a, b) => a + (b || 0),
+    0
+  );
+
   const [openList, setOpenList] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [chatWindows, setChatWindows] = useState([]);
@@ -16,6 +27,7 @@ export default function ChatDock() {
   const [isMobile, setIsMobile] = useState(false);
 
   const [startConversation] = useStartConversationMutation();
+  const { joinConversation } = chatSocketHelpers;
 
   // Responsive breakpoints
   useEffect(() => {
@@ -36,6 +48,7 @@ export default function ChatDock() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
   // Lock background scroll when a chat is open on mobile
   useEffect(() => {
     if (isMobile && chatWindows.length > 0) {
@@ -43,7 +56,6 @@ export default function ChatDock() {
     } else {
       document.body.style.overflow = "";
     }
-
     return () => {
       document.body.style.overflow = "";
     };
@@ -54,27 +66,53 @@ export default function ChatDock() {
   const toggleList = () => setOpenList((prev) => !prev);
 
   const openChatWindow = (conv) => {
+    console.log("🪟 Opening chat window for:", conv._id);
     if (!chatWindows.find((c) => c._id === conv._id)) {
       setChatWindows((prev) => [...prev, { ...conv }]);
       setOpenList(false);
     }
+    dispatch(setActiveConversation(conv._id));
   };
 
   const closeChatWindow = (id) => {
+    console.log("❌ Closing chat window:", id);
     setChatWindows(chatWindows.filter((c) => c._id !== id));
+    if (activeConversationId === id) {
+      dispatch(setActiveConversation(null));
+    }
   };
 
   const handleStartChat = async (targetUserId) => {
     try {
       const res = await startConversation(targetUserId).unwrap();
-      if (res.success) {
-        openChatWindow({ ...res.conversation, initialMessages: res.messages });
+
+      if (res.success && res.conversation?._id) {
+        console.log("🚀 New conversation created:", res.conversation._id);
+        joinConversation(res.conversation._id);
+
+        openChatWindow({
+          ...res.conversation,
+          initialMessages: res.messages,
+        });
+
         setIsModalOpen(false);
+        message.success(
+          `Chat started with ${
+            res.conversation.participants
+              ?.map((p) => p.username)
+              ?.find((name) => name !== user.username) || "user"
+          }`
+        );
       } else {
         message.error(res.error || "Failed to start chat");
       }
     } catch (err) {
-      message.error(err, "Could not start chat");
+      console.error("❌ Start chat error:", err);
+      message.error(
+        err?.data?.error ||
+          err?.message ||
+          "Something went wrong while starting the chat"
+      );
     }
   };
 
@@ -118,6 +156,7 @@ export default function ChatDock() {
               onNewChat={() => setIsModalOpen(true)}
               onToggleList={toggleList}
               openList={openList}
+              badgeCount={totalUnread}
             />
             <div style={bodyStyle}>
               <ChatList
@@ -136,6 +175,7 @@ export default function ChatDock() {
           onNewChat={() => setIsModalOpen(true)}
           onToggleList={toggleList}
           openList={openList}
+          badgeCount={totalUnread}
         />
       )}
 
@@ -229,7 +269,7 @@ export default function ChatDock() {
           <ChatWindow
             key={conv._id}
             conversation={conv}
-            offset={isMobile ? 0 : i * 300}
+            offset={isMobile ? 0 : i * 330}
             onClose={() => closeChatWindow(conv._id)}
           />
         ))}

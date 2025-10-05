@@ -15,4 +15,6 @@ const conversationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+conversationSchema.index({ participants: 1, updatedAt: -1 });
+
 export default mongoose.model("Conversation", conversationSchema);

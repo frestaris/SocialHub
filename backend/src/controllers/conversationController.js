@@ -1,7 +1,7 @@
 import Conversation from "../models/converstationSchema.js";
 import Message from "../models/messageSchema.js";
 import User from "../models/userSchema.js";
-
+import mongoose from "mongoose";
 /**
  * Start a conversation
  * ----------------------
@@ -20,12 +20,26 @@ export const startConversation = async (req, res) => {
         .json({ success: false, error: "targetUserId is required" });
     }
 
-    // Check follow relationship (you must follow them)
+    if (currentUserId.toString() === targetUserId.toString()) {
+      return res
+        .status(400)
+        .json({ success: false, error: "Cannot start a chat with yourself" });
+    }
+
+    // ✅ Ensure target user actually exists
+    const targetUser = await User.findById(targetUserId);
+    if (!targetUser) {
+      return res
+        .status(404)
+        .json({ success: false, error: "Target user not found" });
+    }
+
+    // ✅ Optional: Ensure you follow the user before chatting
     const currentUser = await User.findById(currentUserId).populate(
       "following"
     );
     const isFollowing = currentUser.following.some(
-      (f) => f._id.toString() === targetUserId
+      (f) => f._id.toString() === targetUserId.toString()
     );
 
     if (!isFollowing) {
@@ -35,27 +49,33 @@ export const startConversation = async (req, res) => {
       });
     }
 
-    // Find or create conversation
+    // ✅ Find existing 1-to-1 conversation only (no groups)
     let conversation = await Conversation.findOne({
-      participants: { $all: [currentUserId, targetUserId] },
-    });
-
-    if (!conversation) {
-      conversation = await Conversation.create({
-        participants: [currentUserId, targetUserId],
-        status: "one_way",
-      });
-    }
-
-    // Populate participants and lastMessage
-    conversation = await Conversation.findById(conversation._id)
+      participants: { $all: [currentUserId, targetUserId], $size: 2 },
+    })
       .populate("participants", "username avatar")
       .populate({
         path: "lastMessage",
         populate: { path: "sender", select: "username avatar" },
       });
 
-    // Fetch existing messages
+    // ✅ If not found, create new
+    if (!conversation) {
+      conversation = await Conversation.create({
+        participants: [currentUserId, targetUserId],
+        status: "one_way",
+      });
+
+      // Re-populate after creation
+      conversation = await Conversation.findById(conversation._id)
+        .populate("participants", "username avatar")
+        .populate({
+          path: "lastMessage",
+          populate: { path: "sender", select: "username avatar" },
+        });
+    }
+
+    // ✅ Fetch existing messages
     const messages = await Message.find({ conversationId: conversation._id })
       .populate("sender", "username avatar")
       .sort({ createdAt: 1 });
@@ -76,7 +96,7 @@ export const getConversations = async (req, res) => {
     const userId = req.user._id;
 
     const conversations = await Conversation.find({
-      participants: userId,
+      participants: new mongoose.Types.ObjectId(userId),
     })
       .populate("participants", "username avatar")
       .populate({

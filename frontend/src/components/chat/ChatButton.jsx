@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Avatar, Button, Space, Tooltip } from "antd";
+import { Avatar, Button, Space, Tooltip, Badge } from "antd";
 import {
   EditOutlined,
   DownOutlined,
   UpOutlined,
   MessageOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 
 export default function ChatButton({
@@ -12,6 +13,7 @@ export default function ChatButton({
   onNewChat,
   onToggleList,
   openList,
+  badgeCount = 0,
 }) {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -58,9 +60,11 @@ export default function ChatButton({
   if (isMobile) {
     return (
       <Tooltip title="Messaging">
-        <div style={floatingStyle} onClick={onToggleList}>
-          <MessageOutlined style={{ color: "#fff", fontSize: 24 }} />
-        </div>
+        <Badge count={badgeCount} size="small" offset={[-4, 4]}>
+          <div style={floatingStyle} onClick={onToggleList}>
+            <MessageOutlined style={{ color: "#fff", fontSize: 24 }} />
+          </div>
+        </Badge>
       </Tooltip>
     );
   }
@@ -76,7 +80,14 @@ export default function ChatButton({
       onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
     >
       <Space align="center" size={8}>
-        <Avatar src={user?.avatar} size={32} />
+        <Badge count={badgeCount} size="small" offset={[2, 0]}>
+          <Avatar
+            src={user?.avatar || null}
+            icon={!user?.avatar && <UserOutlined />}
+            size={32}
+            style={{ cursor: "pointer" }}
+          />
+        </Badge>
         <span style={{ fontWeight: 600, fontSize: 14 }}>Messaging</span>
       </Space>
 

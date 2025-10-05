@@ -6,6 +6,9 @@ import { auth } from "../firebase";
 import { chatApi } from "../redux/chat/chatApi";
 import { incrementUnread, clearUnread } from "../redux/chat/chatSlice";
 
+// ✅ Keep a global singleton socket
+let globalSocket = null;
+
 export default function useChatSocket() {
   const user = useSelector((s) => s.auth.user);
   const activeConversationId = useSelector((s) => s.chat.activeConversationId);
@@ -15,10 +18,25 @@ export default function useChatSocket() {
   useEffect(() => {
     if (!user?._id) return;
 
-    let socketInstance;
+    // 🚫 If already connected for this user, reuse — do not re-init
+    if (globalSocket?.connected && globalSocket.userId === user._id) {
+      console.log(
+        "♻️ useChatSocket: already connected, skipping init",
+        globalSocket.id
+      );
+      socketRef.current = globalSocket;
+      return;
+    }
+
+    // ✅ If there's an old disconnected socket, clean it
+    if (globalSocket && !globalSocket.connected) {
+      console.log("🧹 Cleaning stale global socket before init");
+      globalSocket.off();
+      globalSocket = null;
+    }
 
     const init = async () => {
-      // ✅ Ensure Firebase user is available
+      console.log("💬 useChatSocket useEffect fired", { user: user._id });
       let firebaseUser = auth.currentUser;
       if (!firebaseUser) {
         await new Promise((resolve) => {
@@ -32,152 +50,226 @@ export default function useChatSocket() {
         });
       }
 
-      const token = await firebaseUser.getIdToken();
+      const token = await firebaseUser.getIdToken(true);
       const baseURL = import.meta.env.VITE_API_BASE_URL;
-      socketInstance = io(baseURL, { auth: { token } });
+
+      const socketInstance = io(baseURL, {
+        auth: { token },
+        transports: ["websocket"],
+      });
+
+      globalSocket = socketInstance;
+      globalSocket.userId = user._id;
       socketRef.current = socketInstance;
-      window.chatSocket = socketInstance; // 🔍 optional debugging
+      window.chatSocket = socketInstance; // 🔍 for debugging
 
-      // ✅ Join all user conversations after connecting
-      dispatch(
-        chatApi.endpoints.getConversations.initiate(undefined, {
-          subscribe: false,
-        })
-      )
-        .unwrap()
-        .then((res) => {
-          const ids = (res?.conversations || []).map((c) => c._id);
-          if (ids.length > 0) socketInstance.emit("join_conversations", ids);
-        })
-        .catch(() => {});
+      // 🧠 Connection lifecycle
+      socketInstance.on("connect", () => {
+        console.log("✅ Chat socket connected:", socketInstance.id);
+        // Fetch conversations and join them
+        dispatch(
+          chatApi.endpoints.getConversations.initiate(undefined, {
+            subscribe: false,
+          })
+        )
+          .unwrap()
+          .then((res) => {
+            const ids = (res?.conversations || []).map((c) => c._id);
+            if (ids.length > 0) {
+              socketInstance.emit("join_conversations", ids, (ack) => {
+                console.log("👥 join_conversations ack:", ack);
+              });
+            }
+          })
+          .catch((err) => console.warn("join_conversations error:", err));
+      });
 
-      // ✅ Listen for new messages
+      socketInstance.on("disconnect", (reason) => {
+        console.warn("❌ Chat socket disconnected:", reason);
+      });
+
+      // ==============================
+      // 🔔 Socket Listeners
+      // ==============================
+
+      // 🆕 New message received
       socketInstance.off("new_message").on("new_message", (msg) => {
-        const convIdStr =
-          msg.conversationId?.toString?.() || msg.conversationId;
+        const convId = msg.conversationId?.toString?.() || msg.conversationId;
+        console.log("💬 new_message:", msg);
 
         // Update message list cache
         dispatch(
-          chatApi.util.updateQueryData(
-            "getMessages",
-            convIdStr,
-            (draft = []) => {
-              // 🟢 Check for optimistic message match
-              const optimisticIdx = draft.findIndex(
-                (m) =>
-                  m.pending &&
-                  m.sender?._id === msg.sender._id &&
-                  m.content === msg.content
-              );
-
-              if (optimisticIdx !== -1) {
-                // Replace optimistic one with the real message
-                draft[optimisticIdx] = msg;
-              } else {
-                // Only add if it doesn’t already exist
-                const exists = draft.some((m) => m._id === msg._id);
-                if (!exists) draft.push(msg);
-              }
-            }
-          )
+          chatApi.util.updateQueryData("getMessages", convId, (draft = []) => {
+            const exists = draft.some((m) => m._id === msg._id);
+            if (!exists) draft.push(msg);
+          })
         );
 
-        // Update last message preview in conversations list
+        // Update conversation preview
         dispatch(
           chatApi.util.updateQueryData(
             "getConversations",
             undefined,
             (draft) => {
-              const conv = draft?.conversations?.find(
-                (c) => c._id === convIdStr
-              );
+              const conv = draft?.conversations?.find((c) => c._id === convId);
               if (conv) conv.lastMessage = msg;
             }
           )
         );
 
-        // Increment unread count if it's not from me or the active chat
-        if (msg.sender._id !== user._id && convIdStr !== activeConversationId) {
-          dispatch(incrementUnread(convIdStr));
+        // Increment unread count (only if not mine / not open)
+        if (msg.sender._id !== user._id && convId !== activeConversationId) {
+          dispatch(incrementUnread(convId));
         }
       });
 
-      // ✅ Handle chat alerts (new message notifications)
+      // 🔔 Chat alert (background message notification)
       socketInstance.off("chat_alert").on("chat_alert", (data) => {
-        // Don't show if it’s your own message
         if (data.fromUser._id === user._id) return;
-
-        // Increment unread for that conversation
-        if (data.conversationId !== activeConversationId) {
+        console.log("🔔 chat_alert:", data);
+        if (data.conversationId !== activeConversationId)
           dispatch(incrementUnread(data.conversationId));
-        }
       });
 
-      // ✅ Handle seen updates
-      // ✅ Handle seen updates: update caches so ticks flip immediately
+      // 👀 Seen updates
       socketInstance.off("seen").on("seen", ({ conversationId, userId }) => {
-        const convIdStr = conversationId?.toString?.() || conversationId;
-        const seenUserStr = userId?.toString?.() || userId;
+        console.log("👀 seen event:", { conversationId, userId });
+        const convId = conversationId?.toString?.() || conversationId;
+        const seenUser = userId?.toString?.() || userId;
 
-        // Update messages cache: add seenUser to readBy for all messages
+        // Update messages
         dispatch(
-          chatApi.util.updateQueryData(
-            "getMessages",
-            convIdStr,
-            (draft = []) => {
-              draft.forEach((m) => {
-                if (!Array.isArray(m.readBy)) m.readBy = [];
-                const has = m.readBy.map(String).includes(seenUserStr);
-                if (!has) m.readBy.push(userId);
-              });
-            }
-          )
+          chatApi.util.updateQueryData("getMessages", convId, (draft = []) => {
+            draft.forEach((m) => {
+              if (!Array.isArray(m.readBy)) m.readBy = [];
+              if (!m.readBy.map(String).includes(seenUser))
+                m.readBy.push(userId);
+            });
+          })
         );
 
-        // Update conversations cache: ensure lastMessage.readBy includes seen user
+        // Update last message
         dispatch(
           chatApi.util.updateQueryData(
             "getConversations",
             undefined,
             (draft) => {
-              const conv = draft?.conversations?.find(
-                (c) => c._id === convIdStr
-              );
+              const conv = draft?.conversations?.find((c) => c._id === convId);
               if (conv?.lastMessage) {
                 if (!Array.isArray(conv.lastMessage.readBy))
                   conv.lastMessage.readBy = [];
-                const has = conv.lastMessage.readBy
-                  .map(String)
-                  .includes(seenUserStr);
-                if (!has) conv.lastMessage.readBy.push(userId);
+                if (!conv.lastMessage.readBy.map(String).includes(seenUser))
+                  conv.lastMessage.readBy.push(userId);
               }
             }
           )
         );
 
-        // If *I* am the one who just marked as read, clear the local unread badge too
-        if (seenUserStr === (user?._id?.toString?.() || user?._id)) {
-          dispatch(clearUnread(convIdStr));
-        }
+        // If I’m the one marking as read → clear local unread
+        if (seenUser === user._id.toString()) dispatch(clearUnread(convId));
       });
+
+      // ✍️ Typing indicators
+      socketInstance
+        .off("typing")
+        .on("typing", ({ conversationId, userId }) => {
+          console.log("✍️ typing:", { conversationId, userId });
+        });
+      socketInstance
+        .off("stop_typing")
+        .on("stop_typing", ({ conversationId, userId }) => {
+          console.log("🛑 stop_typing:", { conversationId, userId });
+        });
     };
 
     init();
 
+    // ⚠️ Do NOT destroy the socket on component re-render.
+    // Only disconnect when the user logs out.
     return () => {
-      socketInstance?.disconnect();
-      socketRef.current = null;
+      if (!user?._id && socketRef.current) {
+        console.log("👋 User logged out → closing socket");
+        socketRef.current.off();
+        socketRef.current.disconnect();
+        socketRef.current = null;
+        globalSocket = null;
+      } else {
+        console.log("♻️ Skipping socket cleanup (still same user)");
+      }
     };
   }, [user?._id, dispatch, activeConversationId]);
 
-  // ✅ Emitters
+  // ==============================
+  // EMITTERS
+  // ==============================
   const sendMessage = (conversationId, content) => {
-    socketRef.current?.emit("send_message", { conversationId, content });
+    if (!socketRef.current) return;
+    console.log("📤 Sending message:", { conversationId, content });
+    socketRef.current.emit(
+      "send_message",
+      { conversationId, content },
+      (ack) => {
+        console.log("📨 send_message ack:", ack);
+      }
+    );
   };
 
   const markAsRead = (conversationId) => {
-    socketRef.current?.emit("mark_as_read", { conversationId });
+    if (!socketRef.current) return;
+    console.log("👁️ markAsRead:", conversationId);
+    socketRef.current.emit("mark_as_read", { conversationId }, (ack) => {
+      console.log("👁️ mark_as_read ack:", ack);
+    });
   };
 
-  return { sendMessage, markAsRead };
+  const startTyping = (conversationId) => {
+    socketRef.current?.emit("typing", { conversationId });
+  };
+
+  const stopTyping = (conversationId) => {
+    socketRef.current?.emit("stop_typing", { conversationId });
+  };
+
+  const joinConversation = (conversationId) => {
+    if (!socketRef.current) return;
+    console.log("👥 join_conversation:", conversationId);
+    socketRef.current.emit("join_conversations", [conversationId], (ack) => {
+      console.log("👥 join_conversations ack:", ack);
+    });
+  };
+
+  return {
+    sendMessage,
+    markAsRead,
+    startTyping,
+    stopTyping,
+    joinConversation,
+  };
 }
+// Keep global helpers so you don’t mount the hook in per-window components
+export const chatSocketHelpers = {
+  sendMessage: (conversationId, content) => {
+    console.log("📤 Sending message:", { conversationId, content });
+    globalSocket?.emit("send_message", { conversationId, content }, (ack) =>
+      console.log("📨 send_message ack:", ack)
+    );
+  },
+  markAsRead: (conversationId) => {
+    console.log("👁️ markAsRead:", conversationId);
+    globalSocket?.emit("mark_as_read", { conversationId }, (ack) =>
+      console.log("👁️ mark_as_read ack:", ack)
+    );
+  },
+  startTyping: (conversationId) => {
+    globalSocket?.emit("typing", { conversationId });
+  },
+  stopTyping: (conversationId) => {
+    globalSocket?.emit("stop_typing", { conversationId });
+  },
+  joinConversation: (conversationId) => {
+    console.log("👥 join_conversation:", conversationId);
+    globalSocket?.emit("join_conversations", [conversationId], (ack) =>
+      console.log("👥 join_conversations ack:", ack)
+    );
+  },
+};

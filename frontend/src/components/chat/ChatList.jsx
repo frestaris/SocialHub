@@ -44,10 +44,6 @@ export default function ChatList({ onSelectConversation, enabled }) {
   };
 
   const hoverStyle = { background: "#f5f5f5" };
-  console.log(
-    "Unread state",
-    useSelector((s) => s.chat.unread)
-  );
 
   return (
     <div style={listContainerStyle}>

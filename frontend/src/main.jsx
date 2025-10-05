@@ -8,11 +8,11 @@ import "./index.css";
 import "antd/dist/reset.css";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <StyleProvider hashPriority="high">
-      <Provider store={store}>
-        <App />
-      </Provider>
-    </StyleProvider>
-  </StrictMode>
+  // <StrictMode>
+  <StyleProvider hashPriority="high">
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </StyleProvider>
+  // </StrictMode>
 );

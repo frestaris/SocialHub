@@ -9,6 +9,7 @@ import ChatDock from "./components/chat/ChatDock";
 import useNotificationsSocket from "./utils/useNotificationsSocket";
 import useAuthTokenRefresh from "./utils/useAuthTokenRefresh";
 import { useSelector } from "react-redux";
+import useChatSocket from "./utils/useChatSocket";
 
 const { Content } = Layout;
 
@@ -26,6 +27,7 @@ const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 export default function App() {
   const user = useSelector((s) => s.auth.user);
   useNotificationsSocket();
+  useChatSocket();
   useAuthTokenRefresh();
   return (
     <Router>
