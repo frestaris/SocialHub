@@ -108,6 +108,24 @@ export default function chatSocket(io, socket) {
         { new: true }
       ).populate("participants", "_id username avatar");
 
+      // Restore chat if either participant had deleted it
+      if (conversation.deletedFor?.length > 0) {
+        conversation.deletedFor = conversation.deletedFor.filter(
+          (uid) => uid.toString() !== userId.toString()
+        );
+
+        const receiver = conversation.participants.find(
+          (p) => p._id.toString() !== userId.toString()
+        );
+        if (receiver) {
+          conversation.deletedFor = conversation.deletedFor.filter(
+            (uid) => uid.toString() !== receiver._id.toString()
+          );
+        }
+
+        await conversation.save();
+      }
+
       // 3️⃣ Populate sender info for frontend
       const populatedMsg = await msg.populate("sender", "username avatar");
 
@@ -207,6 +225,26 @@ export default function chatSocket(io, socket) {
     } catch (err) {
       console.error("toggle_visibility socket error:", err);
     }
+  });
+
+  // ======================================================
+  // HIDE CONVERSATION
+  // ======================================================
+  socket.on("hide_conversation", async ({ conversationId }) => {
+    const conv = await Conversation.findById(conversationId);
+    if (!conv) return;
+
+    if (!conv.deletedFor.includes(userId)) {
+      conv.deletedFor.push(userId);
+      await conv.save();
+    }
+
+    // check if both users deleted
+    if (conv.deletedFor.length === conv.participants.length) {
+      await conv.deleteOne(); // 🧹 cascade delete
+    }
+
+    socket.emit("conversation_hidden", { conversationId });
   });
 
   // ======================================================

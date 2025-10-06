@@ -190,6 +190,24 @@ export default function useChatSocket() {
         if (seenUser === user._id.toString()) dispatch(clearUnread(convId));
       });
 
+      // Hide conversation (remove from local list)
+      socketInstance
+        .off("conversation_hidden")
+        .on("conversation_hidden", ({ conversationId }) => {
+          dispatch(
+            chatApi.util.updateQueryData(
+              "getConversations",
+              undefined,
+              (draft) => {
+                if (!draft?.conversations) return;
+                draft.conversations = draft.conversations.filter(
+                  (c) => c._id !== conversationId
+                );
+              }
+            )
+          );
+        });
+
       // ✍️ Typing indicators
       socketInstance
         .off("typing")

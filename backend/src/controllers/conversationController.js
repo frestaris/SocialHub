@@ -26,7 +26,7 @@ export const startConversation = async (req, res) => {
         .json({ success: false, error: "Cannot start a chat with yourself" });
     }
 
-    // ✅ Ensure target user actually exists
+    // ✅ Ensure target user exists
     const targetUser = await User.findById(targetUserId);
     if (!targetUser) {
       return res
@@ -34,7 +34,7 @@ export const startConversation = async (req, res) => {
         .json({ success: false, error: "Target user not found" });
     }
 
-    // ✅ Optional: Ensure you follow the user before chatting
+    // ✅ Optional: ensure following relationship
     const currentUser = await User.findById(currentUserId).populate(
       "following"
     );
@@ -49,38 +49,69 @@ export const startConversation = async (req, res) => {
       });
     }
 
-    // ✅ Find existing 1-to-1 conversation only (no groups)
+    // ✅ Look for existing conversation
     let conversation = await Conversation.findOne({
       participants: { $all: [currentUserId, targetUserId], $size: 2 },
-    })
-      .populate("participants", "username avatar")
-      .populate({
-        path: "lastMessage",
-        populate: { path: "sender", select: "username avatar" },
-      });
+    });
 
-    // ✅ If not found, create new
-    if (!conversation) {
-      conversation = await Conversation.create({
-        participants: [currentUserId, targetUserId],
-        status: "one_way",
-      });
+    // ✅ Handle existing conversation logic
+    if (conversation) {
+      const deletedFor =
+        conversation.deletedFor?.map((id) => id.toString()) || [];
 
-      // Re-populate after creation
+      const deletedForCurrent = deletedFor.includes(currentUserId.toString());
+      const deletedForTarget = deletedFor.includes(targetUserId.toString());
+
+      if (deletedForCurrent && deletedForTarget) {
+        // 🆕 Both deleted → create a fresh one
+        await conversation.deleteOne();
+        conversation = await Conversation.create({
+          participants: [currentUserId, targetUserId],
+          status: "one_way",
+        });
+      } else if (deletedForCurrent && !deletedForTarget) {
+        // 🔄 Only current user deleted → restore for them
+        conversation.deletedFor = conversation.deletedFor.filter(
+          (id) => id.toString() !== currentUserId.toString()
+        );
+        await conversation.save();
+      }
+
+      // ✅ Re-populate before returning
       conversation = await Conversation.findById(conversation._id)
         .populate("participants", "username avatar")
         .populate({
           path: "lastMessage",
           populate: { path: "sender", select: "username avatar" },
         });
+
+      const messages = await Message.find({ conversationId: conversation._id })
+        .populate("sender", "username avatar")
+        .sort({ createdAt: 1 });
+
+      return res.json({ success: true, conversation, messages });
     }
 
-    // ✅ Fetch existing messages
-    const messages = await Message.find({ conversationId: conversation._id })
-      .populate("sender", "username avatar")
-      .sort({ createdAt: 1 });
+    // 🆕 No conversation exists → create new
+    const newConversation = await Conversation.create({
+      participants: [currentUserId, targetUserId],
+      status: "one_way",
+    });
 
-    return res.json({ success: true, conversation, messages });
+    const populatedConversation = await Conversation.findById(
+      newConversation._id
+    )
+      .populate("participants", "username avatar")
+      .populate({
+        path: "lastMessage",
+        populate: { path: "sender", select: "username avatar" },
+      });
+
+    return res.json({
+      success: true,
+      conversation: populatedConversation,
+      messages: [],
+    });
   } catch (err) {
     console.error("startConversation error:", err);
     return res.status(500).json({ success: false, error: "Server error" });
@@ -97,6 +128,7 @@ export const getConversations = async (req, res) => {
 
     const conversations = await Conversation.find({
       participants: new mongoose.Types.ObjectId(userId),
+      deletedFor: { $ne: userId },
     })
       .populate("participants", "username avatar")
       .populate({
@@ -165,6 +197,26 @@ export const sendMessage = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, error: "Conversation not found" });
+    }
+
+    // Restore chat visibility for anyone who previously deleted it
+    if (conversation.deletedFor?.length > 0) {
+      // always restore for sender
+      conversation.deletedFor = conversation.deletedFor.filter(
+        (uid) => uid.toString() !== req.user._id.toString()
+      );
+
+      // also restore for receiver, if they had hidden it
+      const receiverId = conversation.participants.find(
+        (p) => p.toString() !== req.user._id.toString()
+      );
+      if (receiverId) {
+        conversation.deletedFor = conversation.deletedFor.filter(
+          (uid) => uid.toString() !== receiverId.toString()
+        );
+      }
+
+      await conversation.save();
     }
 
     // Ensure user is a participant
@@ -250,14 +302,15 @@ export const deleteMessage = async (req, res) => {
 };
 
 /**
- * Delete a conversation
+ * Hide a conversation
  * ------------------------
- * - Removes conversation + all its messages.
- * - Only participants can delete.
+ * - Removes conversation ONLY for the user.
+ *
  */
-export const deleteConversation = async (req, res) => {
+export const hideConversation = async (req, res) => {
   try {
-    const { id } = req.params; // conversationId
+    const { id } = req.params;
+    const userId = req.user._id;
 
     const conversation = await Conversation.findById(id);
     if (!conversation) {
@@ -266,22 +319,32 @@ export const deleteConversation = async (req, res) => {
         .json({ success: false, error: "Conversation not found" });
     }
 
+    // only participants can modify
     const isParticipant = conversation.participants.some(
-      (p) => p.toString() === req.user._id.toString()
+      (p) => p.toString() === userId.toString()
     );
     if (!isParticipant) {
-      return res.status(403).json({
-        success: false,
-        error: "You are not a participant in this conversation",
-      });
+      return res.status(403).json({ success: false, error: "Not authorized" });
     }
 
-    await Message.deleteMany({ conversationId: id });
-    await conversation.deleteOne();
+    // hide for current user
+    if (!conversation.deletedFor.includes(userId)) {
+      conversation.deletedFor.push(userId);
+      await conversation.save();
+    }
 
-    res.json({ success: true, message: "Conversation deleted" });
+    // if both users deleted → permanently delete
+    if (conversation.deletedFor.length === conversation.participants.length) {
+      await conversation.deleteOne(); // 🧹 triggers cascade to messages
+      console.log(`🧹 Conversation ${conversation._id} deleted (both users)`);
+    }
+
+    res.json({
+      success: true,
+      message: "Conversation hidden for current user",
+    });
   } catch (err) {
-    console.error("deleteConversation error:", err);
+    console.error("hideConversation error:", err);
     res.status(500).json({ success: false, error: "Server error" });
   }
 };

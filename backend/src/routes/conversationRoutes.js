@@ -7,7 +7,7 @@ import {
   sendMessage,
   markMessagesAsRead,
   deleteMessage,
-  deleteConversation,
+  hideConversation,
 } from "../controllers/conversationController.js";
 
 const router = express.Router();
@@ -19,7 +19,7 @@ router.get("/", getConversations);
 router.get("/:id/messages", getMessages);
 router.post("/:id/messages", sendMessage);
 router.patch("/:id/read", markMessagesAsRead);
-router.delete("/:id", deleteConversation);
+router.patch("/:id/hide", hideConversation);
 router.delete("/message/:messageId", deleteMessage);
 
 export default router;

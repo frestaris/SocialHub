@@ -137,7 +137,7 @@ export default function ChatWindow({
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
     display: "flex",
     flexDirection: "column",
-    zIndex: 2100,
+    zIndex: 200,
     transition: "all 0.25s ease",
     animation: "slideUp 0.25s ease",
     overflow: "hidden",

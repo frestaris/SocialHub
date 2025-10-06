@@ -38,7 +38,7 @@ export const chatApi = createApi({
     // ---- Get messages in a conversation ----
     getMessages: builder.query({
       query: (conversationId) => `/${conversationId}/messages`,
-      transformResponse: (res) => res.messages, // only keep the array
+      transformResponse: (res) => res.messages,
       providesTags: (result, error, conversationId) => [
         { type: "Message", id: conversationId },
       ],
@@ -55,6 +55,36 @@ export const chatApi = createApi({
         { type: "Message", id: conversationId },
       ],
     }),
+
+    // 🆕 ---- Delete conversation (soft delete for user) ----
+    deleteConversation: builder.mutation({
+      query: (conversationId) => ({
+        url: `/${conversationId}/hide`,
+        method: "PATCH",
+      }),
+      // Immediately remove it from local cache
+      async onQueryStarted(conversationId, { dispatch, queryFulfilled }) {
+        // Optimistic UI update
+        const patchResult = dispatch(
+          chatApi.util.updateQueryData(
+            "getConversations",
+            undefined,
+            (draft) => {
+              draft.conversations = draft.conversations.filter(
+                (c) => c._id !== conversationId
+              );
+            }
+          )
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo(); // rollback on failure
+        }
+      },
+      invalidatesTags: ["Conversation"],
+    }),
   }),
 });
 
@@ -63,4 +93,5 @@ export const {
   useGetConversationsQuery,
   useGetMessagesQuery,
   useSendMessageMutation,
+  useDeleteConversationMutation,
 } = chatApi;

@@ -1,6 +1,15 @@
-import { List, Avatar, Spin, Badge } from "antd";
-import { UserOutlined, CheckOutlined } from "@ant-design/icons";
-import { useGetConversationsQuery } from "../../redux/chat/chatApi";
+import { List, Avatar, Spin, Badge, Dropdown, Modal } from "antd";
+import {
+  UserOutlined,
+  CheckOutlined,
+  MoreOutlined,
+  ExclamationCircleOutlined,
+} from "@ant-design/icons";
+import {
+  useDeleteConversationMutation,
+  useGetConversationsQuery,
+} from "../../redux/chat/chatApi";
+import { handleSuccess, handleError } from "../../utils/handleMessage";
 import { useDispatch, useSelector } from "react-redux";
 import { setUnreadCounts } from "../../redux/chat/chatSlice";
 import { useEffect } from "react";
@@ -16,21 +25,19 @@ export default function ChatList({
   });
   const conversations = data?.conversations || [];
 
-  // 👀 Grab unread counts from chatSlice
   const unreadCounts = useSelector((s) => s.chat.unread);
   const dispatch = useDispatch();
-  // ✅ When conversations load, hydrate unread counts from backend
+  const [deleteConversation] = useDeleteConversationMutation();
 
+  // Hydrate unread counts from backend on first load
   useEffect(() => {
     if (window.chatSocket?.connected) return;
-
     if (conversations.length > 0) {
       dispatch(
         setUnreadCounts((prev) => {
           const merged = { ...prev };
           conversations.forEach((c) => {
             const backendCount = c.unreadCount || 0;
-            // Only hydrate if we don't already track this chat
             if (merged[c._id] === undefined) merged[c._id] = backendCount;
           });
           return merged;
@@ -38,6 +45,28 @@ export default function ChatList({
       );
     }
   }, [conversations, dispatch]);
+
+  // Handle deletion confirmation
+  const handleDelete = (conversationId) => {
+    Modal.confirm({
+      title: "Delete Conversation",
+      icon: <ExclamationCircleOutlined />,
+      content:
+        "Are you sure you want to delete this chat? This will remove it only from your chat list.",
+      okText: "Delete",
+      okType: "danger",
+      cancelText: "Cancel",
+      async onOk() {
+        try {
+          await deleteConversation(conversationId).unwrap();
+          handleSuccess("Conversation deleted");
+        } catch (err) {
+          console.error("Delete conversation error:", err);
+          handleError("Failed to delete conversation");
+        }
+      },
+    });
+  };
 
   const listContainerStyle = {
     padding: "5px",
@@ -91,6 +120,18 @@ export default function ChatList({
                   sameElse: "DD/MM/YYYY",
                 })
               : "";
+
+            // Dropdown menu items
+            const menuItems = [
+              {
+                key: "delete",
+                label: <span style={{ color: "red" }}>Delete Chat</span>,
+                onClick: (e) => {
+                  e.domEvent.stopPropagation();
+                  handleDelete(conv._id);
+                },
+              },
+            ];
 
             return (
               <div
@@ -151,7 +192,7 @@ export default function ChatList({
                     overflowWrap: "break-word",
                   }}
                 >
-                  {/* --- Top Row: Name + Time --- */}
+                  {/* --- Top Row: Name + Time + Menu --- */}
                   <div
                     style={{
                       display: "flex",
@@ -173,17 +214,73 @@ export default function ChatList({
                     >
                       {name}
                     </span>
-                    <span
+
+                    <div
                       style={{
-                        fontSize: 12,
-                        color: unread ? "#1677ff" : "#999",
-                        fontWeight: unread ? 600 : 400,
-                        whiteSpace: "nowrap",
-                        flexShrink: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
                       }}
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {time}
-                    </span>
+                      <span
+                        style={{
+                          fontSize: 12,
+                          color: unread ? "#1677ff" : "#999",
+                          fontWeight: unread ? 600 : 400,
+                          whiteSpace: "nowrap",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {time}
+                      </span>
+
+                      {/* ⋯ dropdown icon */}
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.background =
+                            "rgba(0,0,0,0.05)")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.background = "transparent")
+                        }
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          height: "100%",
+                          width: 32,
+                          borderRadius: 6,
+                          transition: "background 0.2s ease",
+                          cursor: "pointer",
+                          padding: "4px",
+                        }}
+                      >
+                        <Dropdown
+                          menu={{ items: menuItems }}
+                          placement="bottomRight"
+                          trigger={["click"]}
+                          arrow
+                          getPopupContainer={() => document.body}
+                        >
+                          <MoreOutlined
+                            style={{
+                              fontSize: 18,
+                              color: "#888",
+                              transition: "color 0.2s",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.color = "#1677ff")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.color = "#888")
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </Dropdown>
+                      </div>
+                    </div>
                   </div>
 
                   {/* --- Bottom Row: Last message + ticks --- */}

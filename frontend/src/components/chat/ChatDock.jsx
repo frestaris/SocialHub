@@ -134,7 +134,7 @@ export default function ChatDock() {
     bottom: 0,
     right: 24,
     width: 270,
-    zIndex: 2000,
+    zIndex: 200,
   };
 
   const chatPanelStyle = {
@@ -327,6 +327,7 @@ export default function ChatDock() {
         onCancel={() => setIsModalOpen(false)}
         footer={null}
         width={400}
+        zIndex={1200}
         styles={{
           body: { maxHeight: "60vh", overflowY: "auto", padding: "0 16px" },
         }}

@@ -86,7 +86,7 @@ export default function ChatButton({
               justifyContent: "center",
               alignItems: "center",
               boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
-              zIndex: 2500,
+              zIndex: 200,
               cursor: "pointer",
             }}
             onClick={onToggleList}
