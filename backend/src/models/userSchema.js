@@ -20,6 +20,9 @@ const userSchema = new mongoose.Schema(
 
     followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+    isOnline: { type: Boolean, default: false },
+    lastSeen: { type: Date, default: null },
+    showOnlineStatus: { type: Boolean, default: true },
   },
   { timestamps: true }
 );

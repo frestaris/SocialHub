@@ -9,7 +9,12 @@ import MessageItem from "./MessageItem";
 import { clearUnread, setActiveConversation } from "../../redux/chat/chatSlice";
 import moment from "moment";
 
-export default function ChatWindow({ conversation, onClose, offset = 0 }) {
+export default function ChatWindow({
+  conversation,
+  onClose,
+  offset = 0,
+  userStatus,
+}) {
   const currentUser = useSelector((s) => s.auth.user);
   const conversationId = conversation?._id;
   const activeConversationId = useSelector((s) => s.chat.activeConversationId);
@@ -167,27 +172,64 @@ export default function ChatWindow({ conversation, onClose, offset = 0 }) {
         {otherUser ? (
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <Link to={`/profile/${otherUser._id}`}>
-              <Avatar
-                src={otherUser?.avatar || null}
-                size="medium"
-                icon={!otherUser?.avatar && <UserOutlined />}
-              />
+              <div style={{ position: "relative", display: "inline-block" }}>
+                <Avatar
+                  src={otherUser?.avatar || null}
+                  size="medium"
+                  icon={!otherUser?.avatar && <UserOutlined />}
+                />
+
+                {/* Single Online Status Indicator (inside avatar) */}
+                <span
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    right: 0,
+                    width: 12,
+                    height: 12,
+                    borderRadius: "50%",
+                    background: userStatus?.[otherUser._id]?.online
+                      ? "#4caf50"
+                      : "#9e9e9e",
+                    border: "2px solid white",
+                    boxShadow: "0 0 2px rgba(0,0,0,0.3)",
+                  }}
+                />
+              </div>
             </Link>
-            <div>
+
+            {/* Username + Status */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                lineHeight: 1.2,
+              }}
+            >
               <Link
                 to={`/profile/${otherUser._id}`}
                 style={{
-                  maxWidth: 120,
+                  maxWidth: 140,
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
-                  display: "inline-block",
+                  color: "#1677ff",
+                  fontWeight: 600,
+                  textDecoration: "none",
                 }}
               >
-                <span style={{ color: "#1677ff", fontWeight: 600 }}>
-                  {otherUser.username}
-                </span>
+                {otherUser.username}
               </Link>
+
+              <small style={{ fontSize: 11, color: "#888" }}>
+                {userStatus?.[otherUser._id]?.online
+                  ? "Online"
+                  : userStatus?.[otherUser._id]?.lastSeen
+                  ? `last seen ${moment(
+                      userStatus[otherUser._id].lastSeen
+                    ).fromNow()} ago`
+                  : "Offline"}
+              </small>
             </div>
           </div>
         ) : (

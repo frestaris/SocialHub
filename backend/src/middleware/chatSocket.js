@@ -1,15 +1,11 @@
-// src/socket/chatSocket.js
 import Conversation from "../models/converstationSchema.js";
 import Message from "../models/messageSchema.js";
+import User from "../models/userSchema.js";
 
 /**
  * chatSocket(io, socket)
  * -------------------------
- * Handles all realtime chat events.
- * - join_conversations (with membership check)
- * - send_message (secure + ack)
- * - mark_as_read (seen receipts)
- * - typing / stop_typing (safe)
+ * Handles all realtime chat events + presence tracking.
  */
 export default function chatSocket(io, socket) {
   const userId = socket.user?._id;
@@ -20,11 +16,30 @@ export default function chatSocket(io, socket) {
     return;
   }
 
-  console.log(`✅ Chat socket connected for ${username} (${userId})`);
+  // ======================================================
+  // ONLINE STATUS
+  // ======================================================
+  try {
+    User.findById(userId).then(async (user) => {
+      if (!user) return;
 
-  /**
-   * Helper: ensure user participates in conversation
-   */
+      // respect privacy toggle
+      if (user.showOnlineStatus) {
+        user.isOnline = true;
+        user.lastSeen = new Date();
+        await user.save();
+
+        // broadcast to followers or everyone if needed
+        io.emit("user_online", { userId, username, online: true });
+      }
+    });
+  } catch (err) {
+    console.error("Error updating online status:", err);
+  }
+
+  // ======================================================
+  // Helper: ensure user participates in conversation
+  // ======================================================
   async function ensureMember(conversationId) {
     const conv = await Conversation.findById(conversationId).select(
       "participants"
@@ -33,11 +48,9 @@ export default function chatSocket(io, socket) {
     return conv.participants.some((p) => p.toString() === userId.toString());
   }
 
-  /**
-   * JOIN CONVERSATION ROOMS
-   * ---------------------------------
-   * Client emits: socket.emit("join_conversations", [ids])
-   */
+  // ======================================================
+  // JOIN CONVERSATION ROOMS
+  // ======================================================
   socket.on("join_conversations", async (conversationIds = [], ack) => {
     try {
       const ids = (
@@ -66,11 +79,9 @@ export default function chatSocket(io, socket) {
     }
   });
 
-  /**
-   * SEND MESSAGE (Realtime)
-   * ---------------------------------
-   * socket.emit("send_message", { conversationId, content }, ack)
-   */
+  // ======================================================
+  // SEND MESSAGE
+  // ======================================================
   socket.on("send_message", async ({ conversationId, content }, ack) => {
     try {
       if (!conversationId || !content?.trim()) {
@@ -100,7 +111,6 @@ export default function chatSocket(io, socket) {
       // 3️⃣ Populate sender info for frontend
       const populatedMsg = await msg.populate("sender", "username avatar");
 
-      // 4️⃣ Emit to the conversation room (both participants receive)
       io.to(conversationId.toString()).emit("new_message", populatedMsg);
       console.log(`📡 ${username} → room ${conversationId}: ${content}`);
 
@@ -123,11 +133,9 @@ export default function chatSocket(io, socket) {
     }
   });
 
-  /**
-   * MARK AS READ (Seen)
-   * ---------------------------------
-   * socket.emit("mark_as_read", { conversationId }, ack)
-   */
+  // ======================================================
+  // MARK AS READ
+  // ======================================================
   socket.on("mark_as_read", async ({ conversationId }, ack) => {
     try {
       const isMember = await ensureMember(conversationId);
@@ -147,10 +155,9 @@ export default function chatSocket(io, socket) {
     }
   });
 
-  /**
-   * TYPING INDICATORS
-   * ---------------------------------
-   */
+  // ======================================================
+  // TYPING INDICATORS
+  // ======================================================
   socket.on("typing", async ({ conversationId }) => {
     try {
       const isMember = await ensureMember(conversationId);
@@ -177,12 +184,57 @@ export default function chatSocket(io, socket) {
     }
   });
 
-  /**
-   * OPTIONAL: Emit when a conversation or message is deleted via REST
-   * (You’d call io.to(conversationId).emit(...) from the REST controller)
-   */
+  // ======================================================
+  // TOOGLE VISIBILITY
+  // ======================================================
+  socket.on("toggle_visibility", async (showOnlineStatus) => {
+    try {
+      const user = await User.findById(socket.user._id);
+      if (!user) return;
 
-  socket.on("disconnect", () => {
+      user.showOnlineStatus = showOnlineStatus;
+      user.isOnline = showOnlineStatus ? true : false;
+      user.lastSeen = new Date();
+      await user.save();
+
+      // Broadcast instantly to everyone
+      io.emit("user_status_update", {
+        userId: user._id,
+        online: user.isOnline,
+        showOnlineStatus: user.showOnlineStatus,
+        lastSeen: user.lastSeen,
+      });
+    } catch (err) {
+      console.error("toggle_visibility socket error:", err);
+    }
+  });
+
+  // ======================================================
+  // DISCONNECT → OFFLINE
+  // ======================================================
+  socket.on("disconnect", async () => {
     console.log(`❌ ${username} disconnected from chat`);
+    try {
+      const user = await User.findById(userId);
+      if (user) {
+        user.isOnline = false;
+        user.lastSeen = new Date();
+        await user.save();
+
+        if (user.showOnlineStatus) {
+          io.emit("user_offline", {
+            userId,
+            username,
+            online: false,
+            lastSeen: user.lastSeen,
+          });
+          console.log(`🔴 ${username} went offline`);
+        } else {
+          console.log(`🙈 ${username} hides offline status`);
+        }
+      }
+    } catch (err) {
+      console.error("Error updating offline status:", err);
+    }
   });
 }

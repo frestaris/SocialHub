@@ -3,14 +3,16 @@ import { useState, useEffect } from "react";
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow";
 import ChatButton from "./ChatButton";
-import { Modal, List, message, Avatar, Drawer, Button } from "antd";
-import { PlusOutlined, UserOutlined } from "@ant-design/icons";
+import { Modal, List, message, Avatar, Drawer, Button, Dropdown } from "antd";
+import { PlusOutlined, UserOutlined, MoreOutlined } from "@ant-design/icons";
 import { useStartConversationMutation } from "../../redux/chat/chatApi";
 import { chatSocketHelpers } from "../../utils/useChatSocket";
 import { setActiveConversation } from "../../redux/chat/chatSlice";
+import { setUser } from "../../redux/auth/authSlice";
 
 export default function ChatDock() {
   const user = useSelector((s) => s.auth.user);
+  const userStatus = useSelector((s) => s.chat.userStatus);
   const unreadCounts = useSelector((s) => s.chat.unread);
   const activeConversationId = useSelector((s) => s.chat.activeConversationId);
   const dispatch = useDispatch();
@@ -162,6 +164,7 @@ export default function ChatDock() {
               <ChatList
                 onSelectConversation={(conv) => openChatWindow(conv)}
                 enabled={openList}
+                userStatus={userStatus}
               />
             </div>
           </div>
@@ -180,32 +183,106 @@ export default function ChatDock() {
       )}
 
       {/* Mobile Drawer for ChatList */}
-      {/* ✅ Mobile Drawer for ChatList — with “New Chat” icon on the right */}
+
       {isMobile && (
         <Drawer
           title={
             <div
+              onClick={() => setOpenList((prev) => !prev)}
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 width: "100%",
+                cursor: "pointer",
+                userSelect: "none",
               }}
             >
-              <span style={{ fontWeight: 600 }}>Messages</span>
+              {/* Left: Avatar + title */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{ position: "relative" }}>
+                  <Avatar
+                    src={user?.avatar || null}
+                    icon={!user?.avatar && <UserOutlined />}
+                    size={36}
+                  />
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: 0,
+                      right: 0,
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: user?.showOnlineStatus
+                        ? "#4caf50"
+                        : "#9e9e9e",
+                      border: "2px solid white",
+                    }}
+                  />
+                </div>
+                <span style={{ fontWeight: 600, fontSize: 16 }}>Messages</span>
+              </div>
 
-              {/* ➕ new chat icon (opens modal) */}
-              <Button
-                type="text"
-                icon={<PlusOutlined />}
-                onClick={() => {
-                  setIsModalOpen(true);
-                }}
-                style={{
-                  color: "#1677ff",
-                  fontSize: 20,
-                }}
-              />
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {/* Dropdown */}
+                <Dropdown
+                  menu={{
+                    items: [
+                      {
+                        key: "toggleStatus",
+                        label: (
+                          <span>
+                            {user?.showOnlineStatus
+                              ? "Appear Offline"
+                              : "Appear Online"}
+                          </span>
+                        ),
+                        onClick: (e) => {
+                          e.domEvent.stopPropagation();
+                          const newStatus = !user?.showOnlineStatus;
+                          dispatch(
+                            setUser({ ...user, showOnlineStatus: newStatus })
+                          );
+                          if (chatSocketHelpers?.emit) {
+                            chatSocketHelpers.emit(
+                              "toggle_visibility",
+                              newStatus
+                            );
+                          }
+                        },
+                      },
+                    ],
+                  }}
+                  placement="bottomRight"
+                  trigger={["click"]}
+                  arrow
+                >
+                  <Button
+                    type="text"
+                    icon={<MoreOutlined />}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      color: "#1677ff",
+                      fontSize: 20,
+                    }}
+                  />
+                </Dropdown>
+
+                {/* ➕ New chat */}
+                <Button
+                  type="text"
+                  icon={<PlusOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsModalOpen(true);
+                  }}
+                  style={{
+                    color: "#1677ff",
+                    fontSize: 20,
+                  }}
+                />
+              </div>
             </div>
           }
           placement="bottom"
@@ -225,6 +302,7 @@ export default function ChatDock() {
           <ChatList
             onSelectConversation={(conv) => openChatWindow(conv)}
             enabled={true}
+            userStatus={userStatus}
           />
         </Drawer>
       )}
@@ -296,6 +374,7 @@ export default function ChatDock() {
             conversation={conv}
             offset={isMobile ? 0 : i * 330}
             onClose={() => closeChatWindow(conv._id)}
+            userStatus={userStatus}
           />
         ))}
       </div>

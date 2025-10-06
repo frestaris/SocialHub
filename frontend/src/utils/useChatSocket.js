@@ -8,6 +8,7 @@ import {
   incrementUnread,
   clearUnread,
   setTyping,
+  setUserStatus,
 } from "../redux/chat/chatSlice";
 
 // ✅ Keep a global singleton socket
@@ -199,6 +200,29 @@ export default function useChatSocket() {
           console.log("🛑 stop_typing:", { conversationId, userId });
           dispatch(setTyping({ conversationId, userId, isTyping: false }));
         });
+      // 🟢 User Online / Offline Presence
+      socketInstance.off("user_online").on("user_online", (data) => {
+        console.log("🟢 user_online:", data);
+        dispatch(setUserStatus({ userId: data.userId, online: true }));
+      });
+      // Toggle status
+      socketInstance
+        .off("user_status_update")
+        .on("user_status_update", (data) => {
+          console.log("🟢 user_status_update:", data);
+          dispatch(setUserStatus(data));
+        });
+
+      socketInstance.off("user_offline").on("user_offline", (data) => {
+        console.log("🔴 user_offline:", data);
+        dispatch(
+          setUserStatus({
+            userId: data.userId,
+            online: false,
+            lastSeen: data.lastSeen,
+          })
+        );
+      });
     };
 
     init();
@@ -290,5 +314,13 @@ export const chatSocketHelpers = {
     globalSocket?.emit("join_conversations", [conversationId], (ack) =>
       console.log("👥 join_conversations ack:", ack)
     );
+  },
+  emit: (event, data, callback) => {
+    if (!globalSocket) {
+      console.warn("⚠️ No active socket connection");
+      return;
+    }
+    console.log(`📡 Emitting [${event}] with data:`, data);
+    globalSocket.emit(event, data, callback);
   },
 };

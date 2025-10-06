@@ -27,6 +27,11 @@ const chatSlice = createSlice({
       if (!state.typing) state.typing = {};
       state.typing[conversationId] = isTyping ? userId : null;
     },
+    setUserStatus: (state, action) => {
+      const { userId, online, lastSeen } = action.payload;
+      if (!state.userStatus) state.userStatus = {};
+      state.userStatus[userId] = { online, lastSeen };
+    },
   },
 });
 
@@ -36,6 +41,7 @@ export const {
   clearUnread,
   setActiveConversation,
   setTyping,
+  setUserStatus,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
