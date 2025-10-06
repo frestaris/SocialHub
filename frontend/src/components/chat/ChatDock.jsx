@@ -68,10 +68,22 @@ export default function ChatDock() {
 
   const openChatWindow = (conv) => {
     console.log("🪟 Opening chat window for:", conv._id);
-    if (!chatWindows.find((c) => c._id === conv._id)) {
-      setChatWindows((prev) => [...prev, { ...conv }]);
-      setOpenList(false);
-    }
+
+    setChatWindows((prev) => {
+      const existing = prev.find((c) => c._id === conv._id);
+      if (existing) {
+        // Restore if minimized
+        const updated = prev.map((c) =>
+          c._id === conv._id ? { ...c, minimized: false } : c
+        );
+        return updated;
+      } else {
+        // Otherwise open new window
+        return [...prev, { ...conv }];
+      }
+    });
+
+    setOpenList(false);
     dispatch(setActiveConversation(conv._id));
   };
 
@@ -172,7 +184,7 @@ export default function ChatDock() {
       )}
 
       {/* Mobile Floating Button */}
-      {isMobile && !chatWindows.length && (
+      {isMobile && (
         <ChatButton
           key={totalUnread}
           user={user}
@@ -375,7 +387,15 @@ export default function ChatDock() {
             conversation={conv}
             offset={isMobile ? 0 : i * 330}
             onClose={() => closeChatWindow(conv._id)}
+            onToggleMinimize={(isMin) => {
+              setChatWindows((prev) =>
+                prev.map((c) =>
+                  c._id === conv._id ? { ...c, minimized: isMin } : c
+                )
+              );
+            }}
             userStatus={userStatus}
+            minimized={conv.minimized}
           />
         ))}
       </div>

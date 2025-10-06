@@ -14,6 +14,8 @@ export default function ChatWindow({
   onClose,
   offset = 0,
   userStatus,
+  minimized,
+  onToggleMinimize,
 }) {
   const currentUser = useSelector((s) => s.auth.user);
   const conversationId = conversation?._id;
@@ -28,7 +30,6 @@ export default function ChatWindow({
 
   const [input, setInput] = useState("");
   const typingTimeoutRef = useRef(null);
-  const [minimized, setMinimized] = useState(false);
 
   const { sendMessage, markAsRead, startTyping, stopTyping } =
     chatSocketHelpers;
@@ -153,7 +154,7 @@ export default function ChatWindow({
     <div style={baseWindowStyle}>
       {/* Header */}
       <div
-        onClick={() => setMinimized((prev) => !prev)}
+        onClick={() => onToggleMinimize(!minimized)}
         style={{
           height: 56,
           padding: "0 12px",
@@ -260,7 +261,7 @@ export default function ChatWindow({
             icon={<MinusOutlined />}
             onClick={(e) => {
               e.stopPropagation();
-              setMinimized((prev) => !prev);
+              onToggleMinimize(!minimized);
             }}
           />
           <Button
