@@ -67,7 +67,12 @@ export default function ChatButton({
   if (isMobile) {
     return (
       <Tooltip title="Messaging" placement="top">
-        <Badge count={badgeCount} size="small" offset={[-4, 4]}>
+        <Badge
+          count={badgeCount}
+          overflowCount={9}
+          size="small"
+          offset={[-4, 4]}
+        >
           <div
             style={{
               position: "fixed",
@@ -125,7 +130,12 @@ export default function ChatButton({
     >
       {/* Left side */}
       <Space align="center" size={8}>
-        <Badge count={badgeCount} size="small" offset={[2, 0]}>
+        <Badge
+          count={badgeCount}
+          overflowCount={9}
+          size="small"
+          offset={[-4, 4]}
+        >
           <Tooltip
             title={
               user?.showOnlineStatus

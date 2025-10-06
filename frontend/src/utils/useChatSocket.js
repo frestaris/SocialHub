@@ -100,7 +100,6 @@ export default function useChatSocket() {
       // 🆕 New message received
       socketInstance.off("new_message").on("new_message", (msg) => {
         const convId = msg.conversationId?.toString?.() || msg.conversationId;
-        console.log("💬 new_message:", msg);
 
         // Update message list cache
         dispatch(
@@ -143,7 +142,12 @@ export default function useChatSocket() {
       // 🔔 Chat alert (background message notification)
       socketInstance.off("chat_alert").on("chat_alert", (data) => {
         if (data.fromUser._id === user._id) return;
-        console.log("🔔 chat_alert:", data);
+
+        // Prevent double increment if same conversation already updated by new_message
+        const lastAlertKey = `${data.conversationId}-${data.fromUser._id}`;
+        if (socketInstance.lastAlert === lastAlertKey) return;
+        socketInstance.lastAlert = lastAlertKey;
+
         if (data.conversationId !== activeConversationId)
           dispatch(incrementUnread(data.conversationId));
       });

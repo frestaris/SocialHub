@@ -118,7 +118,7 @@ export default function chatSocket(io, socket) {
       const recipient = conversation.participants.find(
         (p) => p._id.toString() !== userId.toString()
       );
-      if (recipient) {
+      if (recipient && !socket.rooms.has(recipient._id.toString())) {
         io.to(recipient._id.toString()).emit("chat_alert", {
           conversationId,
           fromUser: msg.sender,

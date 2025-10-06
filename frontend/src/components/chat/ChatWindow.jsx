@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Avatar, Input, Button, List } from "antd";
+import { Avatar, Input, Button, List, Badge } from "antd";
 import { UserOutlined, CloseOutlined, MinusOutlined } from "@ant-design/icons";
 import { useGetMessagesQuery, chatApi } from "../../redux/chat/chatApi";
 import { chatSocketHelpers } from "../../utils/useChatSocket";
@@ -17,6 +17,7 @@ export default function ChatWindow({
 }) {
   const currentUser = useSelector((s) => s.auth.user);
   const conversationId = conversation?._id;
+  const unreadCounts = useSelector((s) => s.chat.unread);
   const activeConversationId = useSelector((s) => s.chat.activeConversationId);
   const dispatch = useDispatch();
 
@@ -206,20 +207,36 @@ export default function ChatWindow({
                 lineHeight: 1.2,
               }}
             >
-              <Link
-                to={`/profile/${otherUser._id}`}
-                style={{
-                  maxWidth: 140,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  color: "#1677ff",
-                  fontWeight: 600,
-                  textDecoration: "none",
-                }}
-              >
-                {otherUser.username}
-              </Link>
+              {/* Username + badge on same row */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <Link
+                  to={`/profile/${otherUser._id}`}
+                  style={{
+                    maxWidth: 140,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    color: "#1677ff",
+                    fontWeight: 600,
+                    textDecoration: "none",
+                  }}
+                >
+                  {otherUser.username}
+                </Link>
+
+                {unreadCounts?.[conversationId] > 0 && (
+                  <Badge
+                    count={unreadCounts[conversationId]}
+                    overflowCount={9}
+                    size="small"
+                    style={{
+                      backgroundColor: "#ff4d4f",
+                      position: "relative",
+                      top: -1, // slight vertical alignment tweak
+                    }}
+                  />
+                )}
+              </div>
 
               <small style={{ fontSize: 11, color: "#888" }}>
                 {userStatus?.[otherUser._id]?.online
@@ -408,6 +425,9 @@ export default function ChatWindow({
                 resize: "none",
                 padding: "8px 12px",
                 fontSize: 14,
+                overflowY: "auto",
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
               }}
               value={input}
               onChange={(e) => {
@@ -416,7 +436,7 @@ export default function ChatWindow({
                 clearTimeout(typingTimeoutRef.current);
                 typingTimeoutRef.current = setTimeout(() => {
                   stopTyping(conversationId);
-                }, 1500); // stop typing after 1.5s of inactivity
+                }, 1500);
               }}
               onPressEnter={(e) => {
                 e.preventDefault();
@@ -425,6 +445,7 @@ export default function ChatWindow({
               }}
               placeholder="Write a message..."
             />
+
             <Button type="primary" shape="round" onClick={handleSend}>
               Send
             </Button>

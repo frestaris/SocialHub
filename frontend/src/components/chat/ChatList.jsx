@@ -20,15 +20,25 @@ export default function ChatList({
   const unreadCounts = useSelector((s) => s.chat.unread);
   const dispatch = useDispatch();
   // ✅ When conversations load, hydrate unread counts from backend
+
   useEffect(() => {
+    if (window.chatSocket?.connected) return;
+
     if (conversations.length > 0) {
-      const initialUnread = {};
-      conversations.forEach((c) => {
-        initialUnread[c._id] = c.unreadCount || 0;
-      });
-      dispatch(setUnreadCounts(initialUnread));
+      dispatch(
+        setUnreadCounts((prev) => {
+          const merged = { ...prev };
+          conversations.forEach((c) => {
+            const backendCount = c.unreadCount || 0;
+            // Only hydrate if we don't already track this chat
+            if (merged[c._id] === undefined) merged[c._id] = backendCount;
+          });
+          return merged;
+        })
+      );
     }
   }, [conversations, dispatch]);
+
   const listContainerStyle = {
     padding: "5px",
     boxSizing: "border-box",
@@ -94,7 +104,12 @@ export default function ChatList({
                 }
                 onClick={() => onSelectConversation?.(conv)}
               >
-                <Badge count={unread} size="small" offset={[-4, 4]}>
+                <Badge
+                  count={unread}
+                  overflowCount={9}
+                  size="small"
+                  offset={[-4, 4]}
+                >
                   <div
                     style={{ position: "relative", display: "inline-block" }}
                   >

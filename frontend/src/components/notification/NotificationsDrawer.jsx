@@ -16,7 +16,7 @@ export default function NotificationsDrawer() {
       <Button
         block
         icon={
-          <Badge count={unreadCount} size="small">
+          <Badge count={unreadCount} overflowCount={9} size="small">
             <BellOutlined />
           </Badge>
         }

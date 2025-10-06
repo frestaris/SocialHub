@@ -17,10 +17,9 @@ export default function ChatDock() {
   const activeConversationId = useSelector((s) => s.chat.activeConversationId);
   const dispatch = useDispatch();
 
-  const totalUnread = Object.values(unreadCounts || {}).reduce(
-    (a, b) => a + (b || 0),
-    0
-  );
+  const totalUnread = Object.values(unreadCounts || {}).filter(
+    (c) => c > 0
+  ).length;
 
   const [openList, setOpenList] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -154,6 +153,7 @@ export default function ChatDock() {
         <div style={dockContainerStyle}>
           <div style={chatPanelStyle} className="chat-panel">
             <ChatButton
+              key={totalUnread}
               user={user}
               onNewChat={() => setIsModalOpen(true)}
               onToggleList={toggleList}
@@ -174,6 +174,7 @@ export default function ChatDock() {
       {/* Mobile Floating Button */}
       {isMobile && !chatWindows.length && (
         <ChatButton
+          key={totalUnread}
           user={user}
           onNewChat={() => setIsModalOpen(true)}
           onToggleList={toggleList}

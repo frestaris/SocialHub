@@ -8,9 +8,14 @@ const chatSlice = createSlice({
   },
   reducers: {
     setUnreadCounts: (state, action) => {
-      // payload: { convId: count }
-      state.unread = { ...action.payload };
+      const updates = action.payload;
+      if (typeof updates === "function") {
+        state.unread = updates(state.unread);
+      } else {
+        state.unread = { ...updates };
+      }
     },
+
     incrementUnread: (state, action) => {
       const convId = action.payload;
       state.unread[convId] = (state.unread[convId] || 0) + 1;
