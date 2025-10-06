@@ -12,7 +12,7 @@ import {
 import { handleSuccess, handleError } from "../../utils/handleMessage";
 import { useDispatch, useSelector } from "react-redux";
 import { setUnreadCounts } from "../../redux/chat/chatSlice";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import moment from "moment";
 
 export default function ChatList({
@@ -23,26 +23,29 @@ export default function ChatList({
   const { data, isLoading } = useGetConversationsQuery(undefined, {
     skip: !enabled,
   });
-  const conversations = data?.conversations || [];
-
+  const conversations = useMemo(
+    () => data?.conversations || [],
+    [data?.conversations]
+  );
   const unreadCounts = useSelector((s) => s.chat.unread);
   const dispatch = useDispatch();
   const [deleteConversation] = useDeleteConversationMutation();
 
   // Hydrate unread counts from backend on first load
   useEffect(() => {
-    if (window.chatSocket?.connected) return;
-    if (conversations.length > 0) {
-      dispatch(
-        setUnreadCounts((prev) => {
-          const merged = { ...prev };
-          conversations.forEach((c) => {
-            const backendCount = c.unreadCount || 0;
-            if (merged[c._id] === undefined) merged[c._id] = backendCount;
-          });
-          return merged;
-        })
-      );
+    if (!conversations?.length) return;
+
+    // Build an object of missing conversations only
+    const missing = {};
+    conversations.forEach((c) => {
+      if (unreadCounts[c._id] === undefined) {
+        missing[c._id] = c.unreadCount || 0;
+      }
+    });
+
+    // Only dispatch if there are actually new entries
+    if (Object.keys(missing).length > 0) {
+      dispatch(setUnreadCounts({ ...unreadCounts, ...missing }));
     }
   }, [conversations, dispatch]);
 

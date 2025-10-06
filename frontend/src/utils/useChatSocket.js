@@ -138,7 +138,30 @@ export default function useChatSocket() {
           dispatch(incrementUnread(convId));
         }
       });
+      // Create conversation
+      socketInstance.off("new_conversation").on("new_conversation", (conv) => {
+        console.log("💬 new_conversation received:", conv);
 
+        // Append conversation to getConversations cache if not already there
+        dispatch(
+          chatApi.util.updateQueryData(
+            "getConversations",
+            undefined,
+            (draft) => {
+              if (!draft?.conversations) return;
+              const exists = draft.conversations.some(
+                (c) => c._id === conv._id
+              );
+              if (!exists) draft.conversations.unshift(conv);
+            }
+          )
+        );
+        if (conv?._id) {
+          socketInstance.emit("join_conversations", [conv._id], (ack) => {
+            console.log("👥 Auto-joined new room:", ack);
+          });
+        }
+      });
       // 🔔 Chat alert (background message notification)
       socketInstance.off("chat_alert").on("chat_alert", (data) => {
         if (data.fromUser._id === user._id) return;

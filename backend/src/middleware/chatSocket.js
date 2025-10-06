@@ -132,17 +132,41 @@ export default function chatSocket(io, socket) {
       io.to(conversationId.toString()).emit("new_message", populatedMsg);
       console.log(`📡 ${username} → room ${conversationId}: ${content}`);
 
-      // 5️⃣ Optional: private alert to recipient’s user room
+      // 5️⃣ Notify recipient if they're not yet in the conversation room
       const recipient = conversation.participants.find(
         (p) => p._id.toString() !== userId.toString()
       );
-      if (recipient && !socket.rooms.has(recipient._id.toString())) {
-        io.to(recipient._id.toString()).emit("chat_alert", {
+
+      if (recipient) {
+        const recipientRoom = recipient._id.toString();
+
+        // (A) 🔔 Always send a lightweight chat alert
+        io.to(recipientRoom).emit("chat_alert", {
           conversationId,
           fromUser: msg.sender,
           preview: msg.content.slice(0, 100),
         });
+
+        // (B) 💬 If recipient isn't joined to this conversation, push it live
+        const recipientSocket = [...io.sockets.sockets.values()].find(
+          (s) => s.user?._id?.toString() === recipientRoom
+        );
+        const isJoined = recipientSocket?.rooms?.has(conversationId.toString());
+        if (!isJoined) {
+          io.to(recipientRoom).emit("new_conversation", {
+            ...conversation.toObject(),
+            lastMessage: populatedMsg,
+          });
+        }
       }
+      // 🟢 Presence refresh for both participants on new or first message
+      conversation.participants.forEach((p) => {
+        io.to(p._id.toString()).emit("user_status_update", {
+          userId: p._id,
+          online: true,
+          lastSeen: new Date(),
+        });
+      });
 
       ack?.({ ok: true, message: populatedMsg });
     } catch (err) {
