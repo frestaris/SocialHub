@@ -1,7 +1,7 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
 import ChatList from "./ChatList";
-import ChatWindow from "./ChatWindow";
+import ChatWindow from "./ChatWindow/ChatWindow";
 import ChatButton from "./ChatButton";
 import ChatDrawerMobile from "./ChatDrawerMobile";
 import ChatModalStart from "./ChatModalStart";

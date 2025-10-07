@@ -1,7 +1,7 @@
 import { List, Avatar } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import moment from "moment";
-import MessageItem from "./MessageItem";
+import MessageItem from "../MessageItem/MessageItem";
 
 export default function ChatWindowBody({
   messages,

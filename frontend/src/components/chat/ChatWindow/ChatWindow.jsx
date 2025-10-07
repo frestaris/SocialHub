@@ -1,8 +1,11 @@
 import { useEffect, useState, useRef } from "react";
-import { useGetMessagesQuery, chatApi } from "../../redux/chat/chatApi";
-import { chatSocketHelpers } from "../../utils/useChatSocket";
+import { useGetMessagesQuery, chatApi } from "../../../redux/chat/chatApi";
+import { chatSocketHelpers } from "../../../utils/useChatSocket";
 import { useSelector, useDispatch } from "react-redux";
-import { clearUnread, setActiveConversation } from "../../redux/chat/chatSlice";
+import {
+  clearUnread,
+  setActiveConversation,
+} from "../../../redux/chat/chatSlice";
 import ChatWindowHeader from "./ChatWindowHeader";
 import ChatWindowBody from "./ChatWindowBody";
 import ChatWindowFooter from "./ChatWindowFooter";
