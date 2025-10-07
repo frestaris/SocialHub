@@ -42,7 +42,6 @@ export default function ChatButton({
       onClick: async (e) => {
         e.domEvent.stopPropagation();
         const newStatus = !user?.showOnlineStatus;
-        console.log("🟢 Toggling visibility via socket:", newStatus);
 
         // Optimistic UI update
         dispatch(setUser({ ...user, showOnlineStatus: newStatus }));

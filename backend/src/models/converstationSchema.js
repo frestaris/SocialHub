@@ -25,7 +25,6 @@ conversationSchema.pre(
   { document: true, query: false },
   async function (next) {
     try {
-      console.log(`🧹 Cascade deleting messages for conversation ${this._id}`);
       await Message.deleteMany({ conversationId: this._id });
       next();
     } catch (err) {

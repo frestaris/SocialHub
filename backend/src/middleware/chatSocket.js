@@ -15,6 +15,14 @@ export default function chatSocket(io, socket) {
     console.warn("⚠️ Socket connected without valid user");
     return;
   }
+  // Send current online users to the newly connected socket
+  const onlineUsers = [];
+  for (const [id, s] of io.sockets.sockets) {
+    if (s.user?.isOnline) {
+      onlineUsers.push({ userId: s.user._id, username: s.user.username });
+    }
+  }
+  socket.emit("online_users_snapshot", onlineUsers);
 
   // ======================================================
   // ONLINE STATUS
@@ -71,7 +79,6 @@ export default function chatSocket(io, socket) {
         joined.push(c._id.toString());
       }
 
-      console.log(`👥 ${username} joined ${joined.length} rooms`);
       ack?.({ ok: true, joined });
     } catch (err) {
       console.error("join_conversations error:", err);
@@ -130,8 +137,6 @@ export default function chatSocket(io, socket) {
       const populatedMsg = await msg.populate("sender", "username avatar");
 
       io.to(conversationId.toString()).emit("new_message", populatedMsg);
-      console.log(`📡 ${username} → room ${conversationId}: ${content}`);
-
       // 5️⃣ Notify recipient if they're not yet in the conversation room
       const recipient = conversation.participants.find(
         (p) => p._id.toString() !== userId.toString()
@@ -275,7 +280,6 @@ export default function chatSocket(io, socket) {
   // DISCONNECT → OFFLINE
   // ======================================================
   socket.on("disconnect", async () => {
-    console.log(`❌ ${username} disconnected from chat`);
     try {
       const user = await User.findById(userId);
       if (user) {
@@ -290,9 +294,6 @@ export default function chatSocket(io, socket) {
             online: false,
             lastSeen: user.lastSeen,
           });
-          console.log(`🔴 ${username} went offline`);
-        } else {
-          console.log(`🙈 ${username} hides offline status`);
         }
       }
     } catch (err) {

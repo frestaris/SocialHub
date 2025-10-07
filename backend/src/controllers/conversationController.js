@@ -335,8 +335,7 @@ export const hideConversation = async (req, res) => {
 
     // if both users deleted → permanently delete
     if (conversation.deletedFor.length === conversation.participants.length) {
-      await conversation.deleteOne(); // 🧹 triggers cascade to messages
-      console.log(`🧹 Conversation ${conversation._id} deleted (both users)`);
+      await conversation.deleteOne(); // triggers cascade to messages
     }
 
     res.json({
