@@ -25,15 +25,6 @@ app.use(express.json());
 // Connect to DB
 connectDB();
 
-// Routes
-app.use("/auth", authRoutes);
-app.use("/users", userRoutes);
-app.use("/posts", postRoutes);
-app.use("/comments", commentRoutes);
-app.use("/replies", replyRoutes);
-app.use("/notifications", notificationRoutes);
-app.use("/conversations", conversationRoutes);
-
 // --- Setup server with Socket.IO ---
 const server = http.createServer(app);
 
@@ -47,17 +38,31 @@ const io = new Server(server, {
 
 io.use(socketAuth);
 
-// Handle connections
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// --- Routes ---
+app.use("/auth", authRoutes);
+app.use("/users", userRoutes);
+app.use("/posts", postRoutes);
+app.use("/comments", commentRoutes);
+app.use("/replies", replyRoutes);
+app.use("/notifications", notificationRoutes);
+app.use("/conversations", conversationRoutes);
+
+// Handle socket connections
 io.on("connection", (socket) => {
   import("./src/middleware/chatSocket.js").then(({ default: chatSocket }) => {
     chatSocket(io, socket);
   });
+
   socket.on("disconnect", () => {});
 });
 
 // --- Start server ---
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 
-// Export io so controllers can use it
 export { io };

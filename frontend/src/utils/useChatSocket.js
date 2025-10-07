@@ -258,6 +258,42 @@ export default function useChatSocket() {
             dispatch(setUserStatus({ userId: u.userId, online: true }));
           });
         });
+      // Handle deleted messages
+      socketInstance
+        .off("message_deleted")
+        .on("message_deleted", ({ conversationId, messageId }) => {
+          // 1️⃣ Update messages cache
+          dispatch(
+            chatApi.util.updateQueryData(
+              "getMessages",
+              conversationId,
+              (draft = []) => {
+                const msg = draft.find((m) => m._id === messageId);
+                if (msg) {
+                  msg.deleted = true;
+                  msg.content = "";
+                }
+              }
+            )
+          );
+
+          // 2️⃣ Update conversation preview
+          dispatch(
+            chatApi.util.updateQueryData(
+              "getConversations",
+              undefined,
+              (draft) => {
+                const conv = draft?.conversations?.find(
+                  (c) => c._id === conversationId
+                );
+                if (conv?.lastMessage?._id === messageId) {
+                  conv.lastMessage.deleted = true;
+                  conv.lastMessage.content = "This message was deleted";
+                }
+              }
+            )
+          );
+        });
     };
 
     init();

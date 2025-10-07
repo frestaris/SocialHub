@@ -22,10 +22,8 @@ export default function ChatListItem({
   const otherUsers = (conv?.participants || []).filter((p) => p._id !== userId);
   const name = otherUsers.map((p) => p.username).join(", ");
   const lastMsgObj = conv.lastMessage || null;
-  const lastMsg = lastMsgObj?.content || "No messages yet";
-  const isMine = lastMsgObj?.sender?._id === userId;
 
-  // preserve the original "seen/delivered" logic exactly
+  const isMine = lastMsgObj?.sender?._id === userId;
   const hasBeenSeen = lastMsgObj?.readBy?.some((id) => id !== userId) || false;
   const isDelivered =
     lastMsgObj &&
@@ -33,6 +31,10 @@ export default function ChatListItem({
       (lastMsgObj?.readBy?.length > 1 && !hasBeenSeen));
 
   const unread = unreadCounts?.[conv._id] || 0;
+
+  const lastMessageText = conv.lastMessage?.deleted
+    ? "This message was deleted"
+    : conv.lastMessage?.content || "No messages yet";
 
   const time = conv.lastMessage?.createdAt
     ? moment(conv.lastMessage.createdAt).calendar(null, {
@@ -198,7 +200,8 @@ export default function ChatListItem({
         <div
           style={{
             fontSize: 13,
-            color: "#666",
+            color: conv.lastMessage?.deleted ? "#999" : "#666",
+            fontStyle: conv.lastMessage?.deleted ? "italic" : "normal",
             lineHeight: 1.4,
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -209,7 +212,8 @@ export default function ChatListItem({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            {isMine && lastMsgObj && (
+            {/* Only show ticks if not deleted */}
+            {isMine && lastMsgObj && !conv.lastMessage?.deleted && (
               <span style={{ position: "relative", width: 14, height: 10 }}>
                 {hasBeenSeen ? (
                   <>
@@ -274,7 +278,7 @@ export default function ChatListItem({
                 flex: 1,
               }}
             >
-              {lastMsg}
+              {lastMessageText}
             </span>
           </div>
         </div>

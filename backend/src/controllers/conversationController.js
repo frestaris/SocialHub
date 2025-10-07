@@ -278,26 +278,29 @@ export const markMessagesAsRead = async (req, res) => {
 export const deleteMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
+    const userId = req.user._id;
 
-    const msg = await Message.findById(messageId);
-    if (!msg)
-      return res
-        .status(404)
-        .json({ success: false, error: "Message not found" });
+    const message = await Message.findById(messageId);
+    if (!message) return res.status(404).json({ error: "Message not found" });
 
-    if (msg.sender.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        error: "You can only delete your own messages",
-      });
+    // only the sender can delete globally
+    if (message.sender.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "Not authorized" });
     }
 
-    await msg.deleteOne();
+    message.deleted = true;
+    await message.save();
 
-    res.json({ success: true, message: "Message deleted" });
+    // notify all participants in that conversation
+    req.io.to(message.conversationId.toString()).emit("message_deleted", {
+      messageId,
+      conversationId: message.conversationId,
+    });
+
+    res.json({ success: true });
   } catch (err) {
-    console.error("deleteMessage error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error("❌ deleteMessage error:", err);
+    res.status(500).json({ error: "Failed to delete message" });
   }
 };
 

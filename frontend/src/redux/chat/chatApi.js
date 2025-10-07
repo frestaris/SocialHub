@@ -56,7 +56,7 @@ export const chatApi = createApi({
       ],
     }),
 
-    // 🆕 ---- Delete conversation (soft delete for user) ----
+    // ---- Delete conversation (soft delete for user) ----
     deleteConversation: builder.mutation({
       query: (conversationId) => ({
         url: `/${conversationId}/hide`,
@@ -85,6 +85,38 @@ export const chatApi = createApi({
       },
       invalidatesTags: ["Conversation"],
     }),
+    //  ---- Delete message ----
+    deleteMessage: builder.mutation({
+      query: ({ messageId }) => ({
+        url: `/message/${messageId}`,
+        method: "DELETE",
+      }),
+      async onQueryStarted(
+        { messageId, conversationId },
+        { dispatch, queryFulfilled }
+      ) {
+        // Optimistic mark as deleted
+        dispatch(
+          chatApi.util.updateQueryData(
+            "getMessages",
+            conversationId,
+            (draft = []) => {
+              const msg = draft.find((m) => m._id === messageId);
+              if (msg) {
+                msg.deleted = true;
+                msg.content = "";
+              }
+            }
+          )
+        );
+
+        try {
+          await queryFulfilled;
+        } catch (err) {
+          console.error("deleteMessage failed:", err);
+        }
+      },
+    }),
   }),
 });
 
@@ -94,4 +126,5 @@ export const {
   useGetMessagesQuery,
   useSendMessageMutation,
   useDeleteConversationMutation,
+  useDeleteMessageMutation,
 } = chatApi;
