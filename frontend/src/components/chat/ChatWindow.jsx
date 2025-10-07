@@ -33,15 +33,31 @@ export default function ChatWindow({
   const typingUserId = useSelector((s) => s.chat.typing?.[conversationId]);
   const isTyping = typingUserId && typingUserId !== currentUser._id;
   const messagesEndRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
-  // Scroll to bottom on update
+  // When chat opens (not minimized), show the first unread message
   useEffect(() => {
-    if (!messagesEndRef.current) return;
-    const container = messagesEndRef.current.parentNode;
-    if (messages.length > 0) {
-      container.scrollTop = container.scrollHeight;
+    if (!scrollContainerRef.current || !messages.length || minimized) return;
+
+    const container = scrollContainerRef.current;
+
+    // Find first unread message
+    const firstUnreadIndex = messages.findIndex(
+      (m) => !m.readBy?.includes(currentUser._id)
+    );
+
+    if (firstUnreadIndex !== -1) {
+      const elems = container.querySelectorAll("[data-message-id]");
+      const target = elems[firstUnreadIndex];
+      if (target) {
+        container.scrollTop = target.offsetTop - 20;
+        return;
+      }
     }
-  }, [messages.length]);
+
+    // Fallback: scroll to bottom if all read
+    container.scrollTop = container.scrollHeight;
+  }, [messages.length, minimized]);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -130,14 +146,24 @@ export default function ChatWindow({
       />
       {!minimized && (
         <>
-          <ChatWindowBody
-            messages={messages}
-            isLoading={isLoading}
-            isTyping={isTyping}
-            otherUser={otherUser}
-            currentUser={currentUser}
-            messagesEndRef={messagesEndRef}
-          />
+          <div
+            ref={scrollContainerRef}
+            style={{
+              flex: 1,
+              overflowY: "auto",
+              background: "#fafafa",
+              position: "relative",
+            }}
+          >
+            <ChatWindowBody
+              messages={messages}
+              isLoading={isLoading}
+              isTyping={isTyping}
+              otherUser={otherUser}
+              currentUser={currentUser}
+              messagesEndRef={messagesEndRef}
+            />
+          </div>
           <ChatWindowFooter
             input={input}
             setInput={setInput}

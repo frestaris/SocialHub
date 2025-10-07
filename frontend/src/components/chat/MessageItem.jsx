@@ -12,6 +12,7 @@ export default function MessageItem({ msg }) {
 
   return (
     <List.Item
+      data-message-id={msg._id}
       style={{
         display: "flex",
         alignItems: "flex-end",
