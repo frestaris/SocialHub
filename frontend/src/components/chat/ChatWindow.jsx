@@ -1,13 +1,11 @@
 import { useEffect, useState, useRef } from "react";
-import { Avatar, Input, Button, List, Badge } from "antd";
-import { UserOutlined, CloseOutlined, MinusOutlined } from "@ant-design/icons";
 import { useGetMessagesQuery, chatApi } from "../../redux/chat/chatApi";
 import { chatSocketHelpers } from "../../utils/useChatSocket";
-import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import MessageItem from "./MessageItem";
 import { clearUnread, setActiveConversation } from "../../redux/chat/chatSlice";
-import moment from "moment";
+import ChatWindowHeader from "./ChatWindowHeader";
+import ChatWindowBody from "./ChatWindowBody";
+import ChatWindowFooter from "./ChatWindowFooter";
 
 export default function ChatWindow({
   conversation,
@@ -30,25 +28,21 @@ export default function ChatWindow({
 
   const [input, setInput] = useState("");
   const typingTimeoutRef = useRef(null);
-
   const { sendMessage, markAsRead, startTyping, stopTyping } =
     chatSocketHelpers;
   const typingUserId = useSelector((s) => s.chat.typing?.[conversationId]);
   const isTyping = typingUserId && typingUserId !== currentUser._id;
-
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll when messages update
+  // Scroll to bottom on update
   useEffect(() => {
     if (!messagesEndRef.current) return;
     const container = messagesEndRef.current.parentNode;
-    // ✅ Scroll instantly on mount (no animation)
     if (messages.length > 0) {
       container.scrollTop = container.scrollHeight;
     }
   }, [messages.length]);
 
-  // Maintain active conversation state
   useEffect(() => {
     if (!conversationId) return;
     if (!minimized) {
@@ -63,7 +57,6 @@ export default function ChatWindow({
     };
   }, [conversationId, minimized, dispatch, activeConversationId]);
 
-  // Mark as read when visible and messages exist
   useEffect(() => {
     if (!conversationId) return;
     if (!minimized && messages.length > 0) {
@@ -95,36 +88,11 @@ export default function ChatWindow({
     setInput("");
   };
 
-  // Typing style
-  const dotStyle = {
-    width: "6px",
-    height: "6px",
-    borderRadius: "50%",
-    backgroundColor: "#9ca3af",
-    animation: "typingBounce 1.4s infinite ease-in-out both",
-  };
-
-  useEffect(() => {
-    // inject animation only once
-    if (!document.getElementById("typingBounceKeyframes")) {
-      const style = document.createElement("style");
-      style.id = "typingBounceKeyframes";
-      style.textContent = `
-      @keyframes typingBounce {
-        0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
-        40% { transform: scale(1.0); opacity: 1; }
-      }
-    `;
-      document.head.appendChild(style);
-    }
-  }, []);
-
   const otherUser =
     conversation?.participants?.find(
       (p) => p._id.toString() !== currentUser?._id?.toString()
     ) || null;
 
-  // Inline styling
   const baseWindowStyle = {
     position: "fixed",
     bottom: 0,
@@ -152,305 +120,33 @@ export default function ChatWindow({
 
   return (
     <div style={baseWindowStyle}>
-      {/* Header */}
-      <div
-        onClick={() => onToggleMinimize(!minimized)}
-        style={{
-          height: 56,
-          padding: "0 12px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background: "#fdfdfd",
-          borderBottom: "1px solid #eee",
-          borderRadius: "12px 12px 0 0",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-          cursor: "pointer",
-          transition: "background 0.2s",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = "#f8f8f8")}
-        onMouseLeave={(e) => (e.currentTarget.style.background = "#fdfdfd")}
-      >
-        {otherUser ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <Link to={`/profile/${otherUser._id}`}>
-              <div style={{ position: "relative", display: "inline-block" }}>
-                <Avatar
-                  src={otherUser?.avatar || null}
-                  size="medium"
-                  icon={!otherUser?.avatar && <UserOutlined />}
-                />
-
-                {/* Single Online Status Indicator (inside avatar) */}
-                <span
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    right: 0,
-                    width: 12,
-                    height: 12,
-                    borderRadius: "50%",
-                    background: userStatus?.[otherUser._id]?.online
-                      ? "#4caf50"
-                      : "#9e9e9e",
-                    border: "2px solid white",
-                    boxShadow: "0 0 2px rgba(0,0,0,0.3)",
-                  }}
-                />
-              </div>
-            </Link>
-
-            {/* Username + Status */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                lineHeight: 1.2,
-              }}
-            >
-              {/* Username + badge on same row */}
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <Link
-                  to={`/profile/${otherUser._id}`}
-                  style={{
-                    maxWidth: 140,
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                    color: "#1677ff",
-                    fontWeight: 600,
-                    textDecoration: "none",
-                  }}
-                >
-                  {otherUser.username}
-                </Link>
-
-                {unreadCounts?.[conversationId] > 0 && (
-                  <Badge
-                    count={unreadCounts[conversationId]}
-                    overflowCount={9}
-                    size="small"
-                    style={{
-                      backgroundColor: "#ff4d4f",
-                      position: "relative",
-                      top: -1, // slight vertical alignment tweak
-                    }}
-                  />
-                )}
-              </div>
-
-              <small style={{ fontSize: 11, color: "#888" }}>
-                {userStatus?.[otherUser._id]?.online
-                  ? "Online"
-                  : userStatus?.[otherUser._id]?.lastSeen
-                  ? `last seen ${moment(
-                      userStatus[otherUser._id].lastSeen
-                    ).fromNow()} ago`
-                  : "Offline"}
-              </small>
-            </div>
-          </div>
-        ) : (
-          <span style={{ fontSize: 14, color: "#888" }}>Unknown user</span>
-        )}
-
-        <div style={{ display: "flex", gap: 4 }}>
-          <Button
-            type="text"
-            size="small"
-            icon={<MinusOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleMinimize(!minimized);
-            }}
-          />
-          <Button
-            type="text"
-            size="small"
-            icon={<CloseOutlined />}
-            onClick={(e) => {
-              e.stopPropagation();
-              onClose();
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Body */}
+      <ChatWindowHeader
+        otherUser={otherUser}
+        unreadCount={unreadCounts?.[conversationId]}
+        userStatus={userStatus}
+        onToggleMinimize={onToggleMinimize}
+        minimized={minimized}
+        onClose={onClose}
+      />
       {!minimized && (
         <>
-          <div
-            style={{
-              flex: 1,
-              overflowY: "auto",
-              padding: "12px 12px 48px",
-              background: "#fafafa",
-              wordWrap: "break-word",
-              overflowWrap: "break-word",
-            }}
-          >
-            {isLoading && messages.length === 0 ? (
-              <p style={{ textAlign: "center", padding: "20px" }}>Loading...</p>
-            ) : (
-              <List
-                dataSource={messages}
-                renderItem={(msg, index) => {
-                  const prevMsg = messages[index - 1];
-                  const currentDate = moment(msg.createdAt).format(
-                    "YYYY-MM-DD"
-                  );
-                  const prevDate = prevMsg
-                    ? moment(prevMsg.createdAt).format("YYYY-MM-DD")
-                    : null;
-                  const showDivider = currentDate !== prevDate;
-
-                  return (
-                    <>
-                      {showDivider && (
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            margin: "12px 0",
-                            color: "#888",
-                            fontSize: 12,
-                          }}
-                        >
-                          <div
-                            style={{
-                              flex: 1,
-                              height: 1,
-                              background: "#e0e0e0",
-                            }}
-                          />
-                          <div
-                            title={moment(msg.createdAt).format("MMMM D, YYYY")}
-                            style={{
-                              background: "#f5f5f5",
-                              padding: "4px 12px",
-                              borderRadius: 20,
-                              margin: "0 10px",
-                              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-                              border: "1px solid #e0e0e0",
-                              userSelect: "none",
-                            }}
-                          >
-                            {(() => {
-                              const date = moment(msg.createdAt);
-                              if (date.isSame(moment(), "day")) return "Today";
-                              if (
-                                date.isSame(moment().subtract(1, "day"), "day")
-                              )
-                                return "Yesterday";
-                              return date.format("dddd");
-                            })()}
-                          </div>
-                          <div
-                            style={{
-                              flex: 1,
-                              height: 1,
-                              background: "#e0e0e0",
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      <MessageItem
-                        key={msg._id}
-                        msg={{
-                          ...msg,
-                          isMine:
-                            msg.sender?._id?.toString() ===
-                            currentUser._id?.toString(),
-                          otherUserId: otherUser?._id,
-                        }}
-                      />
-                    </>
-                  );
-                }}
-                split={false}
-              />
-            )}
-            {isTyping && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  marginTop: 4,
-                  marginBottom: 4,
-                }}
-              >
-                <Avatar
-                  src={otherUser?.avatar || null}
-                  size="small"
-                  icon={!otherUser?.avatar && <UserOutlined />}
-                />
-                <div
-                  style={{
-                    background: "#f2f3f5",
-                    borderRadius: "18px",
-                    padding: "6px 12px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-                  }}
-                >
-                  <div style={dotStyle}></div>
-                  <div style={{ ...dotStyle, animationDelay: "0.2s" }}></div>
-                  <div style={{ ...dotStyle, animationDelay: "0.4s" }}></div>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Footer */}
-          <div
-            style={{
-              borderTop: "1px solid #eee",
-              padding: "8px",
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              background: "#fff",
-            }}
-          >
-            <Input.TextArea
-              rows={1}
-              style={{
-                borderRadius: 20,
-                resize: "none",
-                padding: "8px 12px",
-                fontSize: 14,
-                overflowY: "auto",
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-              }}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                startTyping(conversationId);
-                clearTimeout(typingTimeoutRef.current);
-                typingTimeoutRef.current = setTimeout(() => {
-                  stopTyping(conversationId);
-                }, 1500);
-              }}
-              onPressEnter={(e) => {
-                e.preventDefault();
-                handleSend();
-                stopTyping(conversationId);
-              }}
-              placeholder="Write a message..."
-            />
-
-            <Button type="primary" shape="round" onClick={handleSend}>
-              Send
-            </Button>
-          </div>
+          <ChatWindowBody
+            messages={messages}
+            isLoading={isLoading}
+            isTyping={isTyping}
+            otherUser={otherUser}
+            currentUser={currentUser}
+            messagesEndRef={messagesEndRef}
+          />
+          <ChatWindowFooter
+            input={input}
+            setInput={setInput}
+            handleSend={handleSend}
+            startTyping={startTyping}
+            stopTyping={stopTyping}
+            conversationId={conversationId}
+            typingTimeoutRef={typingTimeoutRef}
+          />
         </>
       )}
     </div>

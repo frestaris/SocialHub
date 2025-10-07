@@ -3,12 +3,12 @@ import { useState, useEffect } from "react";
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow";
 import ChatButton from "./ChatButton";
-import { Modal, List, message, Avatar, Drawer, Button, Dropdown } from "antd";
-import { PlusOutlined, UserOutlined, MoreOutlined } from "@ant-design/icons";
+import ChatDrawerMobile from "./ChatDrawerMobile";
+import ChatModalStart from "./ChatModalStart";
 import { useStartConversationMutation } from "../../redux/chat/chatApi";
 import { chatSocketHelpers } from "../../utils/useChatSocket";
 import { setActiveConversation } from "../../redux/chat/chatSlice";
-import { setUser } from "../../redux/auth/authSlice";
+import { handleError } from "../../utils/handleMessage";
 
 export default function ChatDock() {
   const user = useSelector((s) => s.auth.user);
@@ -20,7 +20,6 @@ export default function ChatDock() {
   const totalUnread = Object.values(unreadCounts || {}).filter(
     (c) => c > 0
   ).length;
-
   const [openList, setOpenList] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [chatWindows, setChatWindows] = useState([]);
@@ -30,7 +29,7 @@ export default function ChatDock() {
   const [startConversation] = useStartConversationMutation();
   const { joinConversation } = chatSocketHelpers;
 
-  // Responsive breakpoints
+  // responsive handling
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
@@ -50,16 +49,11 @@ export default function ChatDock() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Lock background scroll when a chat is open on mobile
   useEffect(() => {
-    if (isMobile && chatWindows.length > 0) {
+    if (isMobile && chatWindows.length > 0)
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    else document.body.style.overflow = "";
+    return () => (document.body.style.overflow = "");
   }, [isMobile, chatWindows.length]);
 
   if (!user?._id) return null;
@@ -67,103 +61,70 @@ export default function ChatDock() {
   const toggleList = () => setOpenList((prev) => !prev);
 
   const openChatWindow = (conv) => {
-    console.log("🪟 Opening chat window for:", conv._id);
-
     setChatWindows((prev) => {
       const existing = prev.find((c) => c._id === conv._id);
       if (existing) {
-        // Restore if minimized
-        const updated = prev.map((c) =>
+        return prev.map((c) =>
           c._id === conv._id ? { ...c, minimized: false } : c
         );
-        return updated;
-      } else {
-        // Otherwise open new window
-        return [...prev, { ...conv }];
       }
+      return [...prev, { ...conv }];
     });
-
     setOpenList(false);
     dispatch(setActiveConversation(conv._id));
   };
 
   const closeChatWindow = (id) => {
-    console.log("❌ Closing chat window:", id);
     setChatWindows(chatWindows.filter((c) => c._id !== id));
-    if (activeConversationId === id) {
-      dispatch(setActiveConversation(null));
-    }
+    if (activeConversationId === id) dispatch(setActiveConversation(null));
   };
 
   const handleStartChat = async (targetUserId) => {
     try {
       const res = await startConversation(targetUserId).unwrap();
-
       if (res.success && res.conversation?._id) {
-        console.log("🚀 New conversation created:", res.conversation._id);
         joinConversation(res.conversation._id);
-
         openChatWindow({
           ...res.conversation,
           initialMessages: res.messages,
         });
-
         setIsModalOpen(false);
-        message.success(
-          `Chat started with ${
-            res.conversation.participants
-              ?.map((p) => p.username)
-              ?.find((name) => name !== user.username) || "user"
-          }`
-        );
       } else {
-        message.error(res.error || "Failed to start chat");
+        handleError(res.error || "Failed to start chat");
       }
     } catch (err) {
-      console.error("❌ Start chat error:", err);
-      message.error(
-        err?.data?.error ||
-          err?.message ||
-          "Something went wrong while starting the chat"
-      );
+      handleError(err?.data?.error || "Something went wrong");
     }
-  };
-
-  const dockContainerStyle = {
-    position: "fixed",
-    bottom: 0,
-    right: 24,
-    width: 270,
-    zIndex: 200,
-  };
-
-  const chatPanelStyle = {
-    background: "#fff",
-    border: "1px solid #e5e5e5",
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    overflow: "hidden",
-    transition: "all 0.25s ease",
-    height: openList ? 450 : 48,
-    display: "flex",
-    flexDirection: "column",
-  };
-
-  const bodyStyle = {
-    flex: 1,
-    overflowY: "auto",
-    background: "#fff",
   };
 
   const visibleWindows = chatWindows.slice(-maxWindows);
 
   return (
     <>
-      {/* Desktop Dock Panel */}
       {!isMobile && (
-        <div style={dockContainerStyle}>
-          <div style={chatPanelStyle} className="chat-panel">
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            right: 24,
+            width: 270,
+            zIndex: 200,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              border: "1px solid #e5e5e5",
+              borderTopLeftRadius: 8,
+              borderTopRightRadius: 8,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              overflow: "hidden",
+              transition: "all 0.25s ease",
+              height: openList ? 450 : 48,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <ChatButton
               key={totalUnread}
               user={user}
@@ -172,9 +133,9 @@ export default function ChatDock() {
               openList={openList}
               badgeCount={totalUnread}
             />
-            <div style={bodyStyle}>
+            <div style={{ flex: 1, overflowY: "auto", background: "#fff" }}>
               <ChatList
-                onSelectConversation={(conv) => openChatWindow(conv)}
+                onSelectConversation={openChatWindow}
                 enabled={openList}
                 userStatus={userStatus}
               />
@@ -183,192 +144,35 @@ export default function ChatDock() {
         </div>
       )}
 
-      {/* Mobile Floating Button */}
       {isMobile && (
-        <ChatButton
-          key={totalUnread}
-          user={user}
-          onNewChat={() => setIsModalOpen(true)}
-          onToggleList={toggleList}
-          openList={openList}
-          badgeCount={totalUnread}
-        />
-      )}
-
-      {/* Mobile Drawer for ChatList */}
-
-      {isMobile && (
-        <Drawer
-          title={
-            <div
-              onClick={() => setOpenList((prev) => !prev)}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%",
-                cursor: "pointer",
-                userSelect: "none",
-              }}
-            >
-              {/* Left: Avatar + title */}
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ position: "relative" }}>
-                  <Avatar
-                    src={user?.avatar || null}
-                    icon={!user?.avatar && <UserOutlined />}
-                    size={36}
-                  />
-                  <span
-                    style={{
-                      position: "absolute",
-                      bottom: 0,
-                      right: 0,
-                      width: 10,
-                      height: 10,
-                      borderRadius: "50%",
-                      background: user?.showOnlineStatus
-                        ? "#4caf50"
-                        : "#9e9e9e",
-                      border: "2px solid white",
-                    }}
-                  />
-                </div>
-                <span style={{ fontWeight: 600, fontSize: 16 }}>Messages</span>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                {/* Dropdown */}
-                <Dropdown
-                  menu={{
-                    items: [
-                      {
-                        key: "toggleStatus",
-                        label: (
-                          <span>
-                            {user?.showOnlineStatus
-                              ? "Appear Offline"
-                              : "Appear Online"}
-                          </span>
-                        ),
-                        onClick: (e) => {
-                          e.domEvent.stopPropagation();
-                          const newStatus = !user?.showOnlineStatus;
-                          dispatch(
-                            setUser({ ...user, showOnlineStatus: newStatus })
-                          );
-                          if (chatSocketHelpers?.emit) {
-                            chatSocketHelpers.emit(
-                              "toggle_visibility",
-                              newStatus
-                            );
-                          }
-                        },
-                      },
-                    ],
-                  }}
-                  placement="bottomRight"
-                  trigger={["click"]}
-                  arrow
-                >
-                  <Button
-                    type="text"
-                    icon={<MoreOutlined />}
-                    onClick={(e) => e.stopPropagation()}
-                    style={{
-                      color: "#1677ff",
-                      fontSize: 20,
-                    }}
-                  />
-                </Dropdown>
-
-                {/* ➕ New chat */}
-                <Button
-                  type="text"
-                  icon={<PlusOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsModalOpen(true);
-                  }}
-                  style={{
-                    color: "#1677ff",
-                    fontSize: 20,
-                  }}
-                />
-              </div>
-            </div>
-          }
-          placement="bottom"
-          height="60%"
-          open={openList}
-          onClose={() => setOpenList(false)}
-          styles={{
-            body: { padding: 0 },
-            content: {
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              boxShadow: "0 -4px 20px rgba(0,0,0,0.2)",
-              overflowX: "hidden",
-            },
-          }}
-        >
-          <ChatList
-            onSelectConversation={(conv) => openChatWindow(conv)}
-            enabled={true}
-            userStatus={userStatus}
+        <>
+          <ChatButton
+            key={totalUnread}
+            user={user}
+            onNewChat={() => setIsModalOpen(true)}
+            onToggleList={toggleList}
+            openList={openList}
+            badgeCount={totalUnread}
           />
-        </Drawer>
+          <ChatDrawerMobile
+            open={openList}
+            onClose={() => setOpenList(false)}
+            user={user}
+            userStatus={userStatus}
+            dispatch={dispatch}
+            setIsModalOpen={setIsModalOpen}
+            onSelectConversation={openChatWindow}
+          />
+        </>
       )}
 
-      {/* Modal: Start new chat */}
-      <Modal
-        title="People You Follow"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}
-        width={400}
-        zIndex={1200}
-        styles={{
-          body: { maxHeight: "60vh", overflowY: "auto", padding: "0 16px" },
-        }}
-      >
-        <List
-          itemLayout="horizontal"
-          dataSource={user?.following || []}
-          locale={{ emptyText: "You’re not following anyone yet" }}
-          renderItem={(f) => (
-            <List.Item
-              key={f._id}
-              onClick={() => handleStartChat(f._id)}
-              style={{
-                cursor: "pointer",
-                borderRadius: 8,
-                padding: "6px 10px",
-                marginBottom: 6,
-                transition: "background 0.2s",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#f5f5f5")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "transparent")
-              }
-            >
-              <List.Item.Meta
-                avatar={
-                  <Avatar
-                    src={f.avatar || null}
-                    icon={!f.avatar && <UserOutlined />}
-                  />
-                }
-                title={<span style={{ color: "#1677ff" }}>{f.username}</span>}
-              />
-            </List.Item>
-          )}
-        />
-      </Modal>
+      <ChatModalStart
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        following={user?.following}
+        onStartChat={handleStartChat}
+      />
 
-      {/* Floating chat windows */}
       <div
         style={{
           position: "fixed",
@@ -388,13 +192,13 @@ export default function ChatDock() {
             conversation={conv}
             offset={isMobile ? 0 : i * 330}
             onClose={() => closeChatWindow(conv._id)}
-            onToggleMinimize={(isMin) => {
+            onToggleMinimize={(isMin) =>
               setChatWindows((prev) =>
                 prev.map((c) =>
                   c._id === conv._id ? { ...c, minimized: isMin } : c
                 )
-              );
-            }}
+              )
+            }
             userStatus={userStatus}
             minimized={conv.minimized}
           />
