@@ -305,6 +305,56 @@ export const deleteMessage = async (req, res) => {
 };
 
 /**
+ * Edit a message
+ * -------------------
+ * - Only the sender can edit.
+ * - Empty content triggers delete confirmation.
+ */
+export const editMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { content } = req.body;
+    const userId = req.user._id;
+
+    const message = await Message.findById(messageId);
+    if (!message) return res.status(404).json({ error: "Message not found" });
+
+    if (message.sender.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "Not authorized" });
+    }
+
+    // empty content → treat as delete
+    if (!content.trim()) {
+      message.deleted = true;
+      message.content = "";
+      await message.save({ validateBeforeSave: false });
+      req.io.to(message.conversationId.toString()).emit("message_deleted", {
+        messageId,
+        conversationId: message.conversationId,
+      });
+      return res.json({ success: true, deleted: true });
+    }
+
+    message.content = content.trim();
+    message.edited = true;
+    await message.save();
+
+    const populated = await message.populate("sender", "username avatar");
+
+    req.io.to(message.conversationId.toString()).emit("message_edited", {
+      messageId,
+      conversationId: message.conversationId,
+      message: populated,
+    });
+
+    res.json({ success: true, message: populated });
+  } catch (err) {
+    console.error("❌ editMessage error:", err);
+    res.status(500).json({ error: "Failed to edit message" });
+  }
+};
+
+/**
  * Hide a conversation
  * ------------------------
  * - Removes conversation ONLY for the user.

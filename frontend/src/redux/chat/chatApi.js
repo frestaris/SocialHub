@@ -117,6 +117,38 @@ export const chatApi = createApi({
         }
       },
     }),
+    // ---- Edit message ----
+    editMessage: builder.mutation({
+      query: ({ messageId, content }) => ({
+        url: `/message/${messageId}`,
+        method: "PATCH",
+        body: { content },
+      }),
+      async onQueryStarted(
+        { messageId, conversationId, content },
+        { dispatch, queryFulfilled }
+      ) {
+        // Optimistic update
+        const patch = dispatch(
+          chatApi.util.updateQueryData(
+            "getMessages",
+            conversationId,
+            (draft = []) => {
+              const msg = draft.find((m) => m._id === messageId);
+              if (msg) {
+                msg.content = content;
+                msg.edited = true;
+              }
+            }
+          )
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patch.undo();
+        }
+      },
+    }),
   }),
 });
 
@@ -127,4 +159,5 @@ export const {
   useSendMessageMutation,
   useDeleteConversationMutation,
   useDeleteMessageMutation,
+  useEditMessageMutation,
 } = chatApi;

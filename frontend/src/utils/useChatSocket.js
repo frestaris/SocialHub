@@ -294,6 +294,40 @@ export default function useChatSocket() {
             )
           );
         });
+      // Edited message
+      socketInstance
+        .off("message_edited")
+        .on("message_edited", ({ conversationId, messageId, message }) => {
+          dispatch(
+            chatApi.util.updateQueryData(
+              "getMessages",
+              conversationId,
+              (draft = []) => {
+                const msg = draft.find((m) => m._id === messageId);
+                if (msg) {
+                  msg.content = message.content;
+                  msg.edited = true;
+                }
+              }
+            )
+          );
+
+          dispatch(
+            chatApi.util.updateQueryData(
+              "getConversations",
+              undefined,
+              (draft) => {
+                const conv = draft?.conversations?.find(
+                  (c) => c._id === conversationId
+                );
+                if (conv?.lastMessage?._id === messageId) {
+                  conv.lastMessage.content = message.content;
+                  conv.lastMessage.edited = true;
+                }
+              }
+            )
+          );
+        });
     };
 
     init();
