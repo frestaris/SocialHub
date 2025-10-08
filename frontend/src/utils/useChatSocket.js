@@ -12,6 +12,9 @@ import {
 } from "../redux/chat/chatSlice";
 import { store } from "../redux/store";
 
+const messageSound = new Audio("/juntos-607.mp3");
+messageSound.volume = 0.6;
+
 // ✅ Keep a global singleton socket
 let globalSocket = null;
 
@@ -145,6 +148,23 @@ export default function useChatSocket() {
           )
         );
 
+        // Play sound only for incoming messages
+        if (
+          msg.sender._id !== user._id &&
+          convId !== activeConversationRef.current
+        ) {
+          messageSound.currentTime = 0;
+          messageSound.play().catch((err) => {
+            if (
+              err.name === "NotAllowedError" ||
+              err.name === "NotSupportedError" ||
+              err.message.includes("gesture")
+            ) {
+              return;
+            }
+            console.warn("Audio playback error:", err);
+          });
+        }
         // Increment unread count
         if (
           msg.sender._id !== user._id &&

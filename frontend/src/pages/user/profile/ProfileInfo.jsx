@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 
 // --- Ant Design ---
-import { Card, Avatar, Typography, Button, Space } from "antd";
+import { Card, Avatar, Typography, Button, Space, Tooltip } from "antd";
 import {
   MessageOutlined,
   SettingOutlined,
@@ -259,36 +259,38 @@ export default function ProfileInfo({ user }) {
 
             {/* Message Button */}
             {!isOwner && isFollowingUser && (
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<MessageOutlined style={{ fontSize: 22 }} />}
-                onClick={handleStartChat}
-                style={{
-                  position: "absolute",
-                  bottom: 16,
-                  right: 16,
-                  width: 48,
-                  height: 48,
-                  borderRadius: "50%",
-                  background: "#1677ff",
-                  boxShadow: "0 4px 10px rgba(22,119,255,0.3)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.25s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scale(1.1)";
-                  e.currentTarget.style.boxShadow =
-                    "0 6px 14px rgba(22,119,255,0.4)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 10px rgba(22,119,255,0.3)";
-                }}
-              />
+              <Tooltip title="Send a Message" placement="top">
+                <Button
+                  type="primary"
+                  shape="circle"
+                  icon={<MessageOutlined style={{ fontSize: 18 }} />}
+                  onClick={handleStartChat}
+                  style={{
+                    position: "absolute",
+                    bottom: 16,
+                    right: 16,
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    background: "#1677ff",
+                    boxShadow: "0 4px 10px rgba(22,119,255,0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    transition: "all 0.25s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.1)";
+                    e.currentTarget.style.boxShadow =
+                      "0 6px 14px rgba(22,119,255,0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 10px rgba(22,119,255,0.3)";
+                  }}
+                />
+              </Tooltip>
             )}
 
             {isOwner && (
