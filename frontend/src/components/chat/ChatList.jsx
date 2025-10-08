@@ -84,7 +84,6 @@ export default function ChatList({
   }, [conversations, searchText, data?.userId]);
 
   const listContainerStyle = {
-    padding: "5px",
     boxSizing: "border-box",
     background: "#fff",
     height: "100%",
@@ -96,16 +95,26 @@ export default function ChatList({
   return (
     <div style={listContainerStyle}>
       {/* Search bar */}
-      <Input.Search
-        placeholder="Search by name..."
-        value={searchText}
-        onChange={(e) => setSearchText(e.target.value)}
-        allowClear
+      <div
         style={{
-          margin: "8px 0",
-          borderRadius: 8,
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          background: "#fff",
+          padding: "8px",
+          borderBottom: "1px solid #f0f0f0",
         }}
-      />
+      >
+        <Input.Search
+          placeholder="Search by name..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          allowClear
+          style={{
+            borderRadius: 8,
+          }}
+        />
+      </div>
 
       {isLoading ? (
         <div

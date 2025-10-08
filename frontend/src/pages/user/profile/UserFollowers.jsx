@@ -33,7 +33,7 @@ export default function UserFollowers({ followers }) {
       {/* --- Card preview (first 4 followers) --- */}
       <Card
         style={{
-          marginTop: 24,
+          marginTop: 20,
           borderRadius: "12px",
           boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
         }}

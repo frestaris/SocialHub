@@ -50,11 +50,16 @@ export default function ChatDock() {
   }, []);
 
   useEffect(() => {
-    if (isMobile && chatWindows.length > 0)
+    if (isMobile && chatWindows.some((w) => !w.minimized)) {
       document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "";
-    return () => (document.body.style.overflow = "");
-  }, [isMobile, chatWindows.length]);
+    } else {
+      document.body.style.overflow = "";
+    }
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobile, chatWindows]);
 
   useEffect(() => {
     // Listen for global event from ProfileInfo
@@ -76,14 +81,25 @@ export default function ChatDock() {
 
   const openChatWindow = (conv) => {
     setChatWindows((prev) => {
+      // If chat already open, just un-minimize it
       const existing = prev.find((c) => c._id === conv._id);
       if (existing) {
         return prev.map((c) =>
           c._id === conv._id ? { ...c, minimized: false } : c
         );
       }
-      return [...prev, { ...conv }];
+
+      // Add new chat window at the end
+      const updated = [...prev, { ...conv }];
+
+      // If exceeding max windows, close (remove) the oldest one
+      if (updated.length > maxWindows) {
+        updated.shift();
+      }
+
+      return updated;
     });
+
     setOpenList(false);
     dispatch(setActiveConversation(conv._id));
   };
@@ -160,14 +176,17 @@ export default function ChatDock() {
 
       {isMobile && (
         <>
-          <ChatButton
-            key={totalUnread}
-            user={user}
-            onNewChat={() => setIsModalOpen(true)}
-            onToggleList={toggleList}
-            openList={openList}
-            badgeCount={totalUnread}
-          />
+          {(!chatWindows.length || chatWindows.every((c) => c.minimized)) && (
+            <ChatButton
+              key={totalUnread}
+              user={user}
+              onNewChat={() => setIsModalOpen(true)}
+              onToggleList={toggleList}
+              openList={openList}
+              badgeCount={totalUnread}
+            />
+          )}
+
           <ChatDrawerMobile
             open={openList}
             onClose={() => setOpenList(false)}

@@ -184,7 +184,7 @@ export default function ChatWindowHeader({
           <div
             style={{
               padding: "8px 12px",
-              background: "#fff",
+              background: "#fafafa",
               animation: "fadeSlideDown 0.25s ease",
             }}
           >

@@ -242,6 +242,7 @@ export default function ChatWindow({
             stopTyping={stopTyping}
             conversationId={conversationId}
             typingTimeoutRef={typingTimeoutRef}
+            autoFocus
           />
         </>
       )}
