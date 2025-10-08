@@ -126,13 +126,20 @@ export default function ChatWindowHeader({
               </div>
 
               <small style={{ fontSize: 11, color: "#888" }}>
-                {userStatus?.[otherUser._id]?.online
-                  ? "Online"
-                  : userStatus?.[otherUser._id]?.lastSeen
-                  ? `last seen ${moment(
-                      userStatus[otherUser._id].lastSeen
-                    ).fromNow()} ago`
-                  : "Offline"}
+                {(() => {
+                  const status = userStatus?.[otherUser._id];
+                  if (status?.online) return "Online";
+                  if (status?.lastSeen) {
+                    const formatted = moment(status.lastSeen).calendar(null, {
+                      sameDay: "[today at] h:mm A",
+                      lastDay: "[yesterday at] h:mm A",
+                      lastWeek: "dddd [at] h:mm A",
+                      sameElse: "DD/MM/YYYY [at] h:mm A",
+                    });
+                    return `Last seen ${formatted}`;
+                  }
+                  return "Offline";
+                })()}
               </small>
             </div>
           </div>

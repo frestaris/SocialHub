@@ -37,6 +37,9 @@ const chatSlice = createSlice({
       if (!state.userStatus) state.userStatus = {};
       state.userStatus[userId] = { online, lastSeen };
     },
+    setUserStatusBulk: (state, action) => {
+      state.userStatus = { ...state.userStatus, ...action.payload };
+    },
   },
 });
 
@@ -47,6 +50,7 @@ export const {
   setActiveConversation,
   setTyping,
   setUserStatus,
+  setUserStatusBulk,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;

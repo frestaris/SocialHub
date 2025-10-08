@@ -7,7 +7,7 @@ import User from "../models/userSchema.js";
  * -------------------------
  * Handles all realtime chat events + presence tracking.
  */
-export default function chatSocket(io, socket) {
+export default async function chatSocket(io, socket) {
   const userId = socket.user?._id;
   const username = socket.user?.username || "UnknownUser";
 
@@ -15,14 +15,61 @@ export default function chatSocket(io, socket) {
     console.warn("⚠️ Socket connected without valid user");
     return;
   }
-  // Send current online users to the newly connected socket
-  const onlineUsers = [];
-  for (const [id, s] of io.sockets.sockets) {
-    if (s.user?.isOnline) {
-      onlineUsers.push({ userId: s.user._id, username: s.user.username });
-    }
+
+  // ======================================================
+  // 1️⃣ Mark the current user online first
+  // ======================================================
+  try {
+    const user = await User.findById(userId);
+    if (!user) return;
+
+    user.isOnline = true;
+    user.lastSeen = new Date();
+    await user.save();
+
+    io.emit("user_online", {
+      userId,
+      username,
+      online: true,
+      showOnlineStatus: user.showOnlineStatus,
+    });
+  } catch (err) {
+    console.error("Error marking user online:", err);
   }
-  socket.emit("online_users_snapshot", onlineUsers);
+
+  // ======================================================
+  // 2️⃣ Build the live presence snapshot AFTER marking online
+  // ======================================================
+  try {
+    // Fetch all users (only need a few fields)
+    const allUsers = await User.find(
+      {},
+      "_id username lastSeen showOnlineStatus"
+    ).lean();
+
+    // Find all connected socket users (real live connections)
+    const connectedIds = new Set(
+      [...io.sockets.sockets.values()]
+        .map((s) => s.user?._id?.toString())
+        .filter(Boolean)
+    );
+
+    // Combine DB info with live connection data
+    const snapshot = allUsers.map((u) => {
+      const isConnected = connectedIds.has(u._id.toString());
+      return {
+        userId: u._id.toString(),
+        username: u.username,
+        online: u.showOnlineStatus && isConnected,
+        lastSeen: u.lastSeen,
+      };
+    });
+
+    // Send it only to the user that just connected
+    socket.emit("online_users_snapshot", snapshot);
+  } catch (err) {
+    console.error("Error building user presence snapshot:", err);
+  }
 
   // ======================================================
   // ONLINE STATUS
@@ -282,20 +329,19 @@ export default function chatSocket(io, socket) {
   socket.on("disconnect", async () => {
     try {
       const user = await User.findById(userId);
-      if (user) {
-        user.isOnline = false;
-        user.lastSeen = new Date();
-        await user.save();
+      if (!user) return;
 
-        if (user.showOnlineStatus) {
-          io.emit("user_offline", {
-            userId,
-            username,
-            online: false,
-            lastSeen: user.lastSeen,
-          });
-        }
-      }
+      user.isOnline = false;
+      user.lastSeen = new Date();
+      await user.save();
+
+      // Always show lastSeen (even if user hides status)
+      io.emit("user_offline", {
+        userId,
+        username,
+        online: false,
+        lastSeen: user.lastSeen,
+      });
     } catch (err) {
       console.error("Error updating offline status:", err);
     }

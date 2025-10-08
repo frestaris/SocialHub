@@ -202,7 +202,7 @@ export default function useChatSocket() {
           dispatch(incrementUnread(data.conversationId));
       });
 
-      // 👀 Seen updates (deduplicated)
+      // Seen updates (deduplicated)
       let lastSeenKey = null;
       socketInstance.off("seen").on("seen", ({ conversationId, userId }) => {
         const key = `${conversationId}-${userId}`;
@@ -216,11 +216,14 @@ export default function useChatSocket() {
           chatApi.util.updateQueryData(
             "getMessages",
             { conversationId, limit: 20 },
-            (draft = { messages: [] }) => {
-              draft.messages.forEach((m) => {
-                if (!m.readBy.map(String).includes(userId))
+            (draft = {}) => {
+              const list = draft.messages || draft || [];
+              (list.messages || list).forEach?.((m) => {
+                if (!m.readBy.map(String).includes(userId)) {
                   m.readBy.push(userId);
+                }
               });
+              if (draft.messages) draft.messages = list.messages || list;
             }
           )
         );
@@ -293,14 +296,26 @@ export default function useChatSocket() {
           })
         );
       });
+      // Presence snapshot (initial load)
       socketInstance
         .off("online_users_snapshot")
         .on("online_users_snapshot", (users) => {
           if (!Array.isArray(users)) return;
+
+          const statusMap = {};
           users.forEach((u) => {
-            dispatch(setUserStatus({ userId: u.userId, online: true }));
+            statusMap[u.userId] = {
+              online: u.online,
+              lastSeen: u.lastSeen,
+            };
+          });
+
+          dispatch({
+            type: "chat/setUserStatusBulk",
+            payload: statusMap,
           });
         });
+
       // Handle deleted messages
       socketInstance
         .off("message_deleted")
