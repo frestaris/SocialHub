@@ -37,9 +37,17 @@ export const chatApi = createApi({
 
     // ---- Get messages in a conversation ----
     getMessages: builder.query({
-      query: (conversationId) => `/${conversationId}/messages`,
-      transformResponse: (res) => res.messages,
-      providesTags: (result, error, conversationId) => [
+      query: ({ conversationId, before, limit = 20 }) => {
+        const params = new URLSearchParams();
+        params.append("limit", limit);
+        if (before) params.append("before", before);
+        return `/${conversationId}/messages?${params.toString()}`;
+      },
+      transformResponse: (res) => ({
+        messages: res.messages,
+        hasMore: res.hasMore,
+      }),
+      providesTags: (result, error, { conversationId }) => [
         { type: "Message", id: conversationId },
       ],
     }),
@@ -156,6 +164,7 @@ export const {
   useStartConversationMutation,
   useGetConversationsQuery,
   useGetMessagesQuery,
+  useLazyGetMessagesQuery,
   useSendMessageMutation,
   useDeleteConversationMutation,
   useDeleteMessageMutation,

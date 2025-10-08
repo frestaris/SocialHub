@@ -10,6 +10,7 @@ import {
   setTyping,
   setUserStatus,
 } from "../redux/chat/chatSlice";
+import { store } from "../redux/store";
 
 // ✅ Keep a global singleton socket
 let globalSocket = null;
@@ -98,22 +99,26 @@ export default function useChatSocket() {
       socketInstance.off("new_message").on("new_message", (msg) => {
         const convId = msg.conversationId?.toString?.() || msg.conversationId;
 
-        // Update messages cache
-        dispatch(
-          chatApi.util.updateQueryData("getMessages", convId, (draft = []) => {
-            const optimisticIdx = draft.findIndex(
-              (m) =>
-                m.pending &&
-                m.sender?._id === msg.sender._id &&
-                m.content === msg.content
-            );
+        // ✅ Update *all* cached message pages for this conversation
+        const allCached = chatApi.util.selectInvalidatedBy(store.getState(), [
+          { type: "Message", id: convId },
+        ]);
 
-            if (optimisticIdx !== -1) draft[optimisticIdx] = msg;
-            else if (!draft.some((m) => m._id === msg._id)) draft.push(msg);
-          })
-        );
+        allCached.forEach(({ originalArgs }) => {
+          dispatch(
+            chatApi.util.updateQueryData(
+              "getMessages",
+              originalArgs,
+              (draft = { messages: [] }) => {
+                const list = draft.messages || [];
+                const exists = list.some((m) => m._id === msg._id);
+                if (!exists) list.push(msg);
+              }
+            )
+          );
+        });
 
-        // Update conversation preview
+        // ✅ Update conversation preview
         dispatch(
           chatApi.util.updateQueryData(
             "getConversations",
@@ -140,7 +145,7 @@ export default function useChatSocket() {
           )
         );
 
-        // Unread count
+        // Increment unread count
         if (
           msg.sender._id !== user._id &&
           convId !== activeConversationRef.current

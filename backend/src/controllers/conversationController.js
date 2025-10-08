@@ -163,12 +163,40 @@ export const getConversations = async (req, res) => {
 export const getMessages = async (req, res) => {
   try {
     const { id } = req.params; // conversationId
+    const { limit = 20, before } = req.query;
 
-    const messages = await Message.find({ conversationId: id })
+    const query = { conversationId: id };
+
+    // 🕓 If `before` is provided, only fetch messages older than that ID
+    if (before) {
+      query._id = { $lt: before };
+    }
+
+    // Fetch messages in descending order (newest first)
+    const messages = await Message.find(query)
       .populate("sender", "username avatar")
-      .sort({ createdAt: 1 });
+      .sort({ _id: -1 })
+      .limit(Number(limit));
 
-    res.json({ success: true, messages });
+    // Reverse so they appear oldest → newest in chat
+    const orderedMessages = messages.reverse();
+
+    // Determine if there are older messages available
+    let hasMore = false;
+    if (messages.length === Number(limit)) {
+      const oldestId = messages[messages.length - 1]?._id;
+      const olderExists = await Message.exists({
+        conversationId: id,
+        _id: { $lt: oldestId },
+      });
+      hasMore = !!olderExists;
+    }
+
+    res.json({
+      success: true,
+      messages: orderedMessages,
+      hasMore,
+    });
   } catch (err) {
     console.error("getMessages error:", err);
     res.status(500).json({ success: false, error: "Server error" });
