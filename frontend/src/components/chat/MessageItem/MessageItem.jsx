@@ -1,4 +1,3 @@
-// src/components/chat/MessageItem/MessageItem.jsx
 import { List, Avatar, Modal } from "antd";
 import { UserOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import {
@@ -8,7 +7,7 @@ import {
 import { useState } from "react";
 import MessageBubble from "./MessageBubble";
 
-export default function MessageItem({ msg }) {
+export default function MessageItem({ msg, searchTerm }) {
   const [deleteMessage] = useDeleteMessageMutation();
   const [editMessage] = useEditMessageMutation();
   const isMine = msg.isMine;
@@ -130,6 +129,7 @@ export default function MessageItem({ msg }) {
             EDIT_WINDOW_MS={EDIT_WINDOW_MS}
             hasBeenSeen={hasBeenSeen}
             isDelivered={isDelivered}
+            searchTerm={searchTerm}
           />
         )}
       </div>

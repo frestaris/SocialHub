@@ -37,6 +37,13 @@ export default function ChatWindow({
   const isTyping = typingUserId && typingUserId !== currentUser._id;
   const messagesEndRef = useRef(null);
   const scrollContainerRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredMessages = searchTerm
+    ? messages.filter((m) =>
+        m.content.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : messages;
 
   // When chat opens (not minimized), show the first unread message
   useEffect(() => {
@@ -146,6 +153,7 @@ export default function ChatWindow({
         onToggleMinimize={onToggleMinimize}
         minimized={minimized}
         onClose={onClose}
+        onSearch={setSearchTerm}
       />
       {!minimized && (
         <>
@@ -159,12 +167,13 @@ export default function ChatWindow({
             }}
           >
             <ChatWindowBody
-              messages={messages}
               isLoading={isLoading}
               isTyping={isTyping}
               otherUser={otherUser}
               currentUser={currentUser}
               messagesEndRef={messagesEndRef}
+              messages={filteredMessages}
+              searchTerm={searchTerm}
             />
           </div>
           <ChatWindowFooter

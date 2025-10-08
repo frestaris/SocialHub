@@ -10,6 +10,7 @@ export default function ChatWindowBody({
   otherUser,
   currentUser,
   messagesEndRef,
+  searchTerm,
 }) {
   const dotStyle = {
     width: "6px",
@@ -94,6 +95,7 @@ export default function ChatWindowBody({
                       currentUser._id?.toString(),
                     otherUserId: otherUser?._id,
                   }}
+                  searchTerm={searchTerm}
                 />
               </>
             );

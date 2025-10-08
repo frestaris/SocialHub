@@ -1,11 +1,12 @@
 import { Avatar, Badge, Dropdown } from "antd";
-import { UserOutlined, CheckOutlined, MoreOutlined } from "@ant-design/icons";
+import { UserOutlined, MoreOutlined } from "@ant-design/icons";
 import moment from "moment";
+import MessageStatusIcon from "./MessageItem/MessageStatusIcon";
 
 /**
  * Props:
  * - conv: conversation object
- * - userId: current user's id (from getConversations transform)
+ * - userId: current user's id
  * - unreadCounts: map of convId -> count
  * - onSelect: (conv) => void
  * - onDelete: (conversationId) => void
@@ -212,61 +213,11 @@ export default function ChatListItem({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            {/* Only show ticks if not deleted */}
             {isMine && lastMsgObj && !conv.lastMessage?.deleted && (
-              <span style={{ position: "relative", width: 14, height: 10 }}>
-                {hasBeenSeen ? (
-                  <>
-                    <CheckOutlined
-                      style={{
-                        position: "absolute",
-                        left: 0,
-                        fontSize: 10,
-                        color: "#34b7f1",
-                        opacity: 0.9,
-                      }}
-                    />
-                    <CheckOutlined
-                      style={{
-                        position: "absolute",
-                        left: 3,
-                        fontSize: 10,
-                        color: "#34b7f1",
-                      }}
-                    />
-                  </>
-                ) : isDelivered ? (
-                  <>
-                    <CheckOutlined
-                      style={{
-                        position: "absolute",
-                        left: 0,
-                        fontSize: 10,
-                        color: "#999",
-                        opacity: 0.9,
-                      }}
-                    />
-                    <CheckOutlined
-                      style={{
-                        position: "absolute",
-                        left: 3,
-                        fontSize: 10,
-                        color: "#999",
-                      }}
-                    />
-                  </>
-                ) : (
-                  <CheckOutlined
-                    style={{
-                      position: "absolute",
-                      left: 3,
-                      fontSize: 10,
-                      color: "#999",
-                      opacity: 0.9,
-                    }}
-                  />
-                )}
-              </span>
+              <MessageStatusIcon
+                hasBeenSeen={hasBeenSeen}
+                isDelivered={isDelivered}
+              />
             )}
 
             <span

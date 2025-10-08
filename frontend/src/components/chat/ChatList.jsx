@@ -1,4 +1,4 @@
-import { List, Spin, Modal } from "antd";
+import { List, Spin, Modal, Input } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import {
   useDeleteConversationMutation,
@@ -7,7 +7,7 @@ import {
 import { handleSuccess, handleError } from "../../utils/handleMessage";
 import { useDispatch, useSelector } from "react-redux";
 import { setUnreadCounts } from "../../redux/chat/chatSlice";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ChatListItem from "./ChatListItem";
 
 export default function ChatList({
@@ -28,7 +28,9 @@ export default function ChatList({
   const dispatch = useDispatch();
   const [deleteConversation] = useDeleteConversationMutation();
 
-  // Hydrate unread counts from backend on first load
+  const [searchText, setSearchText] = useState("");
+
+  // ✅ Hydrate unread counts on first load
   useEffect(() => {
     if (!conversations?.length) return;
 
@@ -42,10 +44,9 @@ export default function ChatList({
     if (Object.keys(missing).length > 0) {
       dispatch(setUnreadCounts({ ...unreadCounts, ...missing }));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversations, dispatch]);
+  }, [conversations, unreadCounts, dispatch]);
 
-  // Deletion confirm stays here (no behavior change)
+  // ✅ Deletion confirm
   const handleDelete = (conversationId) => {
     Modal.confirm({
       title: "Delete Conversation",
@@ -67,21 +68,60 @@ export default function ChatList({
     });
   };
 
+  // Filter only by participant name
+  const filteredConversations = useMemo(() => {
+    if (!searchText.trim()) return conversations;
+    const lower = searchText.toLowerCase();
+
+    return conversations.filter((conv) =>
+      (conv.participants || []).some(
+        (p) =>
+          p.username &&
+          p.username.toLowerCase().includes(lower) &&
+          p._id !== data?.userId
+      )
+    );
+  }, [conversations, searchText, data?.userId]);
+
   const listContainerStyle = {
     padding: "5px",
     boxSizing: "border-box",
     background: "#fff",
     height: "100%",
     overflowY: "auto",
+    display: "flex",
+    flexDirection: "column",
   };
 
   return (
     <div style={listContainerStyle}>
+      {/* Search bar */}
+      <Input.Search
+        placeholder="Search by name..."
+        value={searchText}
+        onChange={(e) => setSearchText(e.target.value)}
+        allowClear
+        style={{
+          margin: "8px 0",
+          borderRadius: 8,
+        }}
+      />
+
       {isLoading ? (
-        <Spin style={{ marginTop: 40 }} />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            height: "100%",
+            paddingTop: 40,
+          }}
+        >
+          <Spin />
+        </div>
       ) : (
         <List
-          dataSource={conversations}
+          dataSource={filteredConversations}
           renderItem={(conv) => (
             <ChatListItem
               conv={conv}

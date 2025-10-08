@@ -119,8 +119,23 @@ export default function useChatSocket() {
             "getConversations",
             undefined,
             (draft) => {
-              const conv = draft?.conversations?.find((c) => c._id === convId);
-              if (conv) conv.lastMessage = msg;
+              if (!draft?.conversations) return;
+
+              // Find the conversation
+              const idx = draft.conversations.findIndex(
+                (c) => c._id === convId
+              );
+              const conv = draft.conversations[idx];
+
+              if (conv) {
+                // Update last message
+                conv.lastMessage = msg;
+                conv.updatedAt = new Date().toISOString();
+
+                // Move conversation to top
+                draft.conversations.splice(idx, 1);
+                draft.conversations.unshift(conv);
+              }
             }
           )
         );

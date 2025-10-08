@@ -4,6 +4,21 @@ import MessageStatusIcon from "./MessageStatusIcon";
 import MessageMenu from "./MessageMenu";
 import moment from "../../../utils/momentShort";
 
+function highlightText(text, term) {
+  if (!term) return text;
+  const regex = new RegExp(`(${term})`, "gi");
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    part.toLowerCase() === term.toLowerCase() ? (
+      <mark key={i} style={{ backgroundColor: "#fff176", padding: 0 }}>
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+}
+
 export default function MessageBubble({
   msg,
   isMine,
@@ -20,6 +35,7 @@ export default function MessageBubble({
   EDIT_WINDOW_MS,
   hasBeenSeen,
   isDelivered,
+  searchTerm,
 }) {
   return (
     <Dropdown
@@ -94,11 +110,12 @@ export default function MessageBubble({
         ) : (
           <>
             <span style={{ lineHeight: 1.4 }}>
-              {msg.content}
+              {highlightText(msg.content, searchTerm)}
               {msg.edited && (
                 <span style={{ fontSize: 10, color: "#888" }}> (edited)</span>
               )}
             </span>
+
             <div
               style={{
                 display: "flex",
