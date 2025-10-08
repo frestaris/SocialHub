@@ -2,10 +2,14 @@ import { useState, useMemo, useRef } from "react";
 
 // --- Ant Design ---
 import { Card, Avatar, Typography, Button, Space } from "antd";
-import { SettingOutlined, UserOutlined } from "@ant-design/icons";
+import {
+  MessageOutlined,
+  SettingOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
 
 // --- Redux ---
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 // --- Components ---
 import SettingsModal from "../settings/SettingsModal";
@@ -15,23 +19,59 @@ import CoverEdit from "./CoverEdit";
 import AvatarEdit from "./AvatarEdit";
 import moment from "../../../utils/momentShort";
 
+// --- Chat ---
+import { useStartConversationMutation } from "../../../redux/chat/chatApi";
+import { chatSocketHelpers } from "../../../utils/useChatSocket";
+import { handleError } from "../../../utils/handleMessage";
+import { setActiveConversation } from "../../../redux/chat/chatSlice";
+
 const { Title, Paragraph, Text } = Typography;
 
 export default function ProfileInfo({ user }) {
   // --- Redux state ---
   const currentUser = useSelector((state) => state.auth.user);
   const isOwner = currentUser && user && currentUser._id === user._id;
+  const dispatch = useDispatch();
 
   // --- Local state ---
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [hover, setHover] = useState(false);
-
-  // --- Bio expand/collapse ---
   const [expanded, setExpanded] = useState(false);
   const [avatarProgress, setAvatarProgress] = useState(0);
   const bioRef = useRef(null);
 
+  // --- Chat setup ---
+  const [startConversation] = useStartConversationMutation();
+
+  // Start or open chat with this user
+  const handleStartChat = async () => {
+    try {
+      const res = await startConversation(user._id).unwrap();
+      if (res.success && res.conversation?._id) {
+        // Join socket room
+        chatSocketHelpers.joinConversation(res.conversation._id);
+
+        // Mark active conversation in Redux
+        dispatch(setActiveConversation(res.conversation._id));
+
+        // Tell ChatDock to open this conversation window
+        window.dispatchEvent(
+          new CustomEvent("openChatFromProfile", {
+            detail: {
+              conversation: res.conversation,
+            },
+          })
+        );
+      } else {
+        handleError(res.error || "Could not start chat");
+      }
+    } catch (err) {
+      handleError(err?.data?.error || "Something went wrong starting chat");
+    }
+  };
+
+  // --- Derived state ---
   const isFollowingUser = useMemo(() => {
     if (!currentUser || !user) return false;
     return user.followers?.some((f) => f._id === currentUser._id);
@@ -178,6 +218,7 @@ export default function ProfileInfo({ user }) {
           <Text type="secondary">
             Member since {moment(user?.createdAt).format("MMM YYYY")}
           </Text>
+
           {/* --- Bio with expand/collapse --- */}
           {bio && (
             <div style={{ marginTop: 24, textAlign: "left" }}>
@@ -205,6 +246,7 @@ export default function ProfileInfo({ user }) {
             </div>
           )}
 
+          {/* --- Buttons Section --- */}
           <Space direction="vertical" style={{ width: "100%", marginTop: 12 }}>
             {!isOwner && (
               <FollowButton
@@ -214,6 +256,41 @@ export default function ProfileInfo({ user }) {
                 block
               />
             )}
+
+            {/* Message Button */}
+            {!isOwner && isFollowingUser && (
+              <Button
+                type="primary"
+                shape="circle"
+                icon={<MessageOutlined style={{ fontSize: 22 }} />}
+                onClick={handleStartChat}
+                style={{
+                  position: "absolute",
+                  bottom: 16,
+                  right: 16,
+                  width: 48,
+                  height: 48,
+                  borderRadius: "50%",
+                  background: "#1677ff",
+                  boxShadow: "0 4px 10px rgba(22,119,255,0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  transition: "all 0.25s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.1)";
+                  e.currentTarget.style.boxShadow =
+                    "0 6px 14px rgba(22,119,255,0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 10px rgba(22,119,255,0.3)";
+                }}
+              />
+            )}
+
             {isOwner && (
               <Button
                 type="primary"

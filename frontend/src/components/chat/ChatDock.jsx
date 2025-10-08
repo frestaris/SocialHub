@@ -56,6 +56,20 @@ export default function ChatDock() {
     return () => (document.body.style.overflow = "");
   }, [isMobile, chatWindows.length]);
 
+  useEffect(() => {
+    // Listen for global event from ProfileInfo
+    const handleOpenFromProfile = (e) => {
+      const conv = e.detail.conversation;
+      if (!conv?._id) return;
+      joinConversation(conv._id);
+      openChatWindow(conv);
+    };
+
+    window.addEventListener("openChatFromProfile", handleOpenFromProfile);
+    return () =>
+      window.removeEventListener("openChatFromProfile", handleOpenFromProfile);
+  }, [joinConversation]);
+
   if (!user?._id) return null;
 
   const toggleList = () => setOpenList((prev) => !prev);
