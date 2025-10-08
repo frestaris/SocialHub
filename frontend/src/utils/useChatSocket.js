@@ -213,13 +213,16 @@ export default function useChatSocket() {
         const seenUser = userId?.toString?.() || userId;
 
         dispatch(
-          chatApi.util.updateQueryData("getMessages", convId, (draft = []) => {
-            draft.forEach((m) => {
-              if (!Array.isArray(m.readBy)) m.readBy = [];
-              if (!m.readBy.map(String).includes(seenUser))
-                m.readBy.push(userId);
-            });
-          })
+          chatApi.util.updateQueryData(
+            "getMessages",
+            { conversationId, limit: 20 },
+            (draft = { messages: [] }) => {
+              draft.messages.forEach((m) => {
+                if (!m.readBy.map(String).includes(userId))
+                  m.readBy.push(userId);
+              });
+            }
+          )
         );
 
         dispatch(
@@ -341,9 +344,9 @@ export default function useChatSocket() {
           dispatch(
             chatApi.util.updateQueryData(
               "getMessages",
-              conversationId,
-              (draft = []) => {
-                const msg = draft.find((m) => m._id === messageId);
+              { conversationId, limit: 20 },
+              (draft = { messages: [] }) => {
+                const msg = draft.messages.find((m) => m._id === messageId);
                 if (msg) {
                   msg.content = message.content;
                   msg.edited = true;
