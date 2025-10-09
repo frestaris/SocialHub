@@ -92,7 +92,7 @@ export default function TopCreators() {
                       background:
                         user.cover && user.cover.trim() !== ""
                           ? `url(${user.cover}) center/cover no-repeat`
-                          : "linear-gradient(135deg, #1677ff, #52c41a)",
+                          : "linear-gradient(135deg, #0F172A, #1E3A8A, #22D3EE)",
                       position: "relative",
                     }}
                   >

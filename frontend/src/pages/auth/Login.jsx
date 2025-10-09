@@ -58,7 +58,6 @@ export default function Login() {
       const data = await firebaseLogin({ token }).unwrap();
       if (data.success) {
         dispatch(setCredentials({ user: data.user, token }));
-        handleSuccess("Logged in successfully!");
         navigate(from, { replace: true });
       }
     } catch (err) {

@@ -2,11 +2,7 @@ import { useState, useMemo, useRef } from "react";
 
 // --- Ant Design ---
 import { Card, Avatar, Typography, Button, Space, Tooltip } from "antd";
-import {
-  MessageOutlined,
-  SettingOutlined,
-  UserOutlined,
-} from "@ant-design/icons";
+import { SendOutlined, SettingOutlined, UserOutlined } from "@ant-design/icons";
 
 // --- Redux ---
 import { useSelector, useDispatch } from "react-redux";
@@ -118,7 +114,8 @@ export default function ProfileInfo({ user }) {
               style={{
                 width: "100%",
                 height: "100%",
-                background: "linear-gradient(135deg, #1677ff 0%, #52c41a 100%)",
+                background:
+                  "linear-gradient(135deg, #0F172A, #1E3A8A, #22D3EE)",
               }}
             />
           )}
@@ -263,7 +260,7 @@ export default function ProfileInfo({ user }) {
                 <Button
                   type="primary"
                   shape="circle"
-                  icon={<MessageOutlined style={{ fontSize: 18 }} />}
+                  icon={<SendOutlined style={{ fontSize: 18 }} />}
                   onClick={handleStartChat}
                   style={{
                     position: "absolute",
@@ -278,14 +275,16 @@ export default function ProfileInfo({ user }) {
                     alignItems: "center",
                     justifyContent: "center",
                     transition: "all 0.25s ease",
+                    transform: "rotate(-15deg) scale(1)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.1)";
+                    e.currentTarget.style.transform =
+                      "rotate(-15deg) scale(1.1)";
                     e.currentTarget.style.boxShadow =
                       "0 6px 14px rgba(22,119,255,0.4)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.transform = "rotate(-15deg) scale(1)";
                     e.currentTarget.style.boxShadow =
                       "0 4px 10px rgba(22,119,255,0.3)";
                   }}

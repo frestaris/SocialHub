@@ -19,7 +19,7 @@ export default function ReplyForm({
         status={error && !value?.trim() ? "error" : ""}
       />
       <div style={{ marginTop: 4, textAlign: "right" }}>
-        <Button onClick={onCancel} style={{ marginRight: 8 }}>
+        <Button size="small" onClick={onCancel} style={{ marginRight: 8 }}>
           Cancel
         </Button>
         <Button

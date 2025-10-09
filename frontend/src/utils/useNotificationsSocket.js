@@ -48,6 +48,7 @@ export default function useNotificationsSocket() {
       // 4️⃣ Listen for incoming notifications
       socketInstance.on("notification", (notif) => {
         if (notif.userId?.toString() === user._id?.toString()) {
+          // update local cache immediately
           dispatch(
             notificationApi.util.updateQueryData(
               "getNotifications",
@@ -60,6 +61,9 @@ export default function useNotificationsSocket() {
               }
             )
           );
+
+          // then trigger refetch for reliability
+          dispatch(notificationApi.util.invalidateTags(["Notification"]));
         }
       });
     };

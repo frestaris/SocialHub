@@ -33,8 +33,12 @@ export default function useChatSocket() {
   useEffect(() => {
     if (!user?._id) return;
 
-    // ✅ Reuse if same user already connected
-    if (globalSocket?.connected && globalSocket.userId === user._id) {
+    // Prevent duplicate setup
+    if (
+      globalSocket &&
+      globalSocket.connected &&
+      globalSocket.userId === user._id
+    ) {
       socketRef.current = globalSocket;
       return;
     }
@@ -71,7 +75,7 @@ export default function useChatSocket() {
       globalSocket = socketInstance;
       globalSocket.userId = user._id;
       socketRef.current = socketInstance;
-      window.chatSocket = socketInstance; // (dev inspection only)
+      window.chatSocket = socketInstance;
 
       // -------------------------------
       // 🔌 Connection lifecycle
@@ -195,11 +199,10 @@ export default function useChatSocket() {
       // 🔔 Background chat alert
       socketInstance.off("chat_alert").on("chat_alert", (data) => {
         if (data.fromUser._id === user._id) return;
+
         const key = `${data.conversationId}-${data.fromUser._id}`;
         if (socketInstance.lastAlert === key) return;
         socketInstance.lastAlert = key;
-        if (data.conversationId !== activeConversationRef.current)
-          dispatch(incrementUnread(data.conversationId));
       });
 
       // Seen updates (deduplicated)
