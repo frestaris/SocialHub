@@ -39,13 +39,14 @@ export default function PostCard({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Avatar
             size="large"
-            src={
-              post.userId?.avatar
-                ? `${post.userId.avatar}?t=${post.userId._id}`
-                : null
-            }
-            icon={!post.userId?.avatar && <UserOutlined />}
+            src={post.userId?.avatar || undefined}
+            icon={<UserOutlined />}
+            onError={(e) => {
+              e.currentTarget.src = "";
+              return false;
+            }}
           />
+
           <div>
             <Text
               strong
