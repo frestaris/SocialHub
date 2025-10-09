@@ -1,4 +1,4 @@
-import { List, Avatar } from "antd";
+import { List, Avatar, Spin } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import moment from "moment";
 import MessageItem from "../MessageItem/MessageItem";
@@ -31,8 +31,14 @@ export default function ChatWindowBody({
         overflowWrap: "break-word",
       }}
     >
-      {isLoading && messages.length === 0 ? (
-        <p style={{ textAlign: "center", padding: "20px" }}>Loading...</p>
+      {isLoading ? (
+        <div style={{ textAlign: "center", padding: "40px 0" }}>
+          <Spin size="medium" />
+        </div>
+      ) : messages.length === 0 ? (
+        <div style={{ textAlign: "center", padding: "40px 0", color: "#999" }}>
+          Say hello...
+        </div>
       ) : (
         <List
           dataSource={messages}

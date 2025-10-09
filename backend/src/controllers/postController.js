@@ -3,6 +3,28 @@ import User from "../models/userSchema.js";
 import Notification from "../models/notificationSchema.js";
 import { io } from "../../index.js";
 
+const blockedDomains = [
+  "pornhub",
+  "xvideos",
+  "onlyfans",
+  "redtube",
+  "adult",
+  "hentai",
+  "nsfw",
+  "sex",
+  "xxx",
+  "cam",
+];
+
+function isSafeUrl(url) {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return !blockedDomains.some((b) => host.includes(b));
+  } catch {
+    return false;
+  }
+}
+
 /**
  * CREATE POST
  * --------------
@@ -19,6 +41,14 @@ export const createPost = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Cannot mix YouTube and image URLs in one post",
+      });
+    }
+
+    // Domain & content safety checks
+    if (images?.some((u) => !isSafeUrl(u))) {
+      return res.status(400).json({
+        success: false,
+        error: "One or more URLs come from disallowed domains.",
       });
     }
 
