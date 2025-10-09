@@ -228,7 +228,7 @@ export default function Navigation() {
 
               {/* --- Mobile notifications --- */}
               <div style={{ margin: "12px 0" }}>
-                <NotificationsDrawer />
+                <NotificationsDrawer onNavigate={() => setDrawerOpen(false)} />
               </div>
 
               <Button

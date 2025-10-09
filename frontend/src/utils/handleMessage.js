@@ -56,7 +56,7 @@ export const handleSuccess = (msg = "Success") => {
   notification.success({
     description: msg,
     duration: 2,
-    placement: "topRight",
+    placement: "top",
   });
 };
 

@@ -16,7 +16,17 @@ export const notificationApi = createApi({
   tagTypes: ["Notification"],
   endpoints: (builder) => ({
     getNotifications: builder.query({
-      query: () => "/",
+      query: ({ skip = 0, limit = 10 } = {}) => {
+        const params = new URLSearchParams();
+        params.append("limit", limit);
+        params.append("skip", skip);
+        return `/?${params.toString()}`;
+      },
+      transformResponse: (res) => ({
+        notifications: res.notifications,
+        hasMore: res.hasMore,
+        total: res.total,
+      }),
       providesTags: ["Notification"],
     }),
     markAsRead: builder.mutation({
@@ -68,4 +78,5 @@ export const {
   useMarkAsReadMutation,
   useAddNotificationLocallyMutation,
   useClearNotificationsMutation,
+  useLazyGetNotificationsQuery,
 } = notificationApi;

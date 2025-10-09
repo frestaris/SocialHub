@@ -2,12 +2,18 @@ import Notification from "../models/notificationSchema.js";
 
 export const getNotifications = async (req, res) => {
   try {
+    const { skip = 0, limit = 10 } = req.query;
+
     const notifications = await Notification.find({ userId: req.user._id })
       .populate("fromUser", "username avatar")
       .sort({ createdAt: -1 })
-      .limit(50);
+      .skip(Number(skip))
+      .limit(Number(limit));
 
-    res.json({ success: true, notifications });
+    const total = await Notification.countDocuments({ userId: req.user._id });
+    const hasMore = skip + notifications.length < total;
+
+    res.json({ success: true, notifications, hasMore, total });
   } catch (err) {
     console.error("Get notifications error:", err);
     res.status(500).json({ success: false, error: "Server error" });

@@ -1,60 +1,24 @@
-import { useState } from "react";
+import { Dropdown, Badge, Spin } from "antd";
 import { BellOutlined } from "@ant-design/icons";
-import { Badge, Dropdown } from "antd";
-import { useNavigate } from "react-router-dom";
-import {
-  useGetNotificationsQuery,
-  useMarkAsReadMutation,
-} from "../../redux/notification/notificationApi";
 import NotificationsList from "./NotificationsList";
+import useNotificationsFeed from "../../hooks/useNotificationsFeed";
+import { useState } from "react";
 
 export default function NotificationsDropdown() {
-  const { data, isLoading } = useGetNotificationsQuery();
-  const [markAsRead] = useMarkAsReadMutation();
-  const navigate = useNavigate();
-
-  const notifications = data?.notifications || [];
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
   const [open, setOpen] = useState(false);
 
-  const handleClick = (n) => {
-    // Guard against missing postId
-    if (!n.postId && n.type !== "follow") {
-      console.warn("Notification missing postId", n);
-      return;
-    }
-    switch (n.type) {
-      case "new_post":
-      case "like_post":
-      case "comment":
-      case "view_milestone":
-        // Post-related notification
-        navigate(`/post/${n.postId}`);
-        break;
-
-      case "like_comment":
-      case "reply":
-      case "reply_on_post":
-        // Goes to post + highlights comment
-        navigate(`/post/${n.postId}?comment=${n.commentId}`);
-        break;
-
-      case "like_reply":
-        // Goes to post + highlights reply (use commentId + replyId if needed)
-        navigate(`/post/${n.postId}?comment=${n.commentId}&reply=${n.replyId}`);
-        break;
-
-      case "follow":
-        navigate(`/profile/${n.fromUser._id}`);
-        break;
-
-      default:
-        break;
-    }
-
-    setOpen(false);
-  };
+  const {
+    notifications,
+    unreadCount,
+    listRef,
+    isLoading,
+    isFetching,
+    loadingMore,
+    hasMore,
+    handleScroll,
+    handleClick,
+    markAsRead,
+  } = useNotificationsFeed({ limit: 10, active: open });
 
   return (
     <Dropdown
@@ -66,17 +30,48 @@ export default function NotificationsDropdown() {
         if (next) markAsRead();
       }}
       popupRender={() => (
-        <div style={{ width: 320, maxHeight: 420, overflowY: "auto" }}>
+        <div
+          ref={listRef}
+          onScroll={handleScroll}
+          style={{
+            width: 340,
+            maxHeight: 420,
+            overflowY: "auto",
+            background: "#fff",
+            borderRadius: 8,
+            boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+          }}
+        >
           <NotificationsList
             notifications={notifications}
             isLoading={isLoading}
-            onClick={handleClick}
+            onClick={(n) => {
+              handleClick(n);
+              setOpen(false);
+            }}
           />
+
+          {(isFetching || loadingMore) && (
+            <div style={{ textAlign: "center", padding: 8 }}>
+              <Spin size="small" />
+            </div>
+          )}
+
+          {!hasMore && notifications.length > 0 && (
+            <div style={{ textAlign: "center", color: "#999", padding: 8 }}>
+              No more notifications
+            </div>
+          )}
         </div>
       )}
     >
       <span>
-        <Badge count={unreadCount} overflowCount={9} offset={[0, 6]}>
+        <Badge
+          count={unreadCount}
+          overflowCount={9}
+          offset={[0, 6]}
+          style={{ backgroundColor: "#1677ff" }}
+        >
           <BellOutlined style={{ fontSize: 20, cursor: "pointer" }} />
         </Badge>
       </span>

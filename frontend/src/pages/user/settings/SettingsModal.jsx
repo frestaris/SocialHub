@@ -79,8 +79,12 @@ export default function SettingsModal({ open, onClose, user }) {
         (p) => p.providerId === "password"
       );
       setHasPassword(pw);
+    } else if (user?.providers) {
+      // fallback if Firebase user not ready
+      const pw = user.providers.some((p) => p.provider === "password");
+      setHasPassword(pw);
     }
-  }, []);
+  }, [user]);
 
   // Reset form values when modal opens
   useEffect(() => {
