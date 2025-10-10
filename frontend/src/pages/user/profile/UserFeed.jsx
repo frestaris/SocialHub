@@ -3,7 +3,7 @@ import { Card, Typography, Button, Grid, Spin, Result, Tooltip } from "antd";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 
 // --- React ---
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import moment from "../../../utils/momentShort";
 
 // --- Routing ---
@@ -33,7 +33,9 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
   const isMedium = !screens.md; // between md and lg
 
   // --- Local state ---
-  const [expandedPostId, setExpandedPostId] = useState(null); // track expanded text
+  const [expandedPostId, setExpandedPostId] = useState(null);
+  const [overflowingIds, setOverflowingIds] = useState({});
+  const contentRefs = useRef({});
   const [editingPost, setEditingPost] = useState(null);
   const [deletingPost, setDeletingPost] = useState(null);
   const [hidingPostId, setHidingPostId] = useState(null);
@@ -71,6 +73,36 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
       setHidingPostId(null);
     }
   };
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (!contentRefs.current) return;
+      const newState = {};
+      for (const [id, el] of Object.entries(contentRefs.current)) {
+        if (!el) continue;
+        try {
+          const lineHeight = parseInt(
+            window.getComputedStyle(el).lineHeight,
+            10
+          );
+          if (!lineHeight || isNaN(lineHeight)) continue;
+          const maxHeight = lineHeight * 3;
+          newState[id] = el.scrollHeight > maxHeight;
+        } catch (err) {
+          console.warn("⚠️ Overflow check failed for element", id, err);
+        }
+      }
+      setOverflowingIds(newState);
+    };
+
+    const timeout = setTimeout(checkOverflow, 100);
+    window.addEventListener("resize", checkOverflow);
+
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener("resize", checkOverflow);
+    };
+  }, [feed]);
 
   // --- Loading state ---
   if (isLoading) {
@@ -277,8 +309,12 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
               {item.content && (
                 <div style={{ flex: 1 }}>
                   <div
+                    ref={(el) => (contentRefs.current[item._id] = el)}
                     style={{
-                      maxHeight: expandedPostId === item._id ? "500px" : "60px",
+                      maxHeight:
+                        expandedPostId === item._id
+                          ? "500px"
+                          : "calc(1.5em * 3)", // 3 lines
                       overflow: "hidden",
                       transition: "max-height 0.5s ease",
                     }}
@@ -293,7 +329,7 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
                     </Paragraph>
                   </div>
 
-                  {item.content.length > 120 && (
+                  {overflowingIds[item._id] && (
                     <Button
                       type="link"
                       style={{ padding: 0, fontSize: 12 }}
