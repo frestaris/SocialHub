@@ -4,10 +4,12 @@ import {
   PlayCircleOutlined,
   CustomerServiceOutlined,
   ReadOutlined,
-  BulbOutlined,
   GlobalOutlined,
   HeartOutlined,
-  ShoppingOutlined,
+  CameraOutlined,
+  CoffeeOutlined,
+  RocketOutlined,
+  VideoCameraOutlined,
 } from "@ant-design/icons";
 
 export const categories = [
@@ -18,8 +20,10 @@ export const categories = [
   { key: "news", icon: GlobalOutlined, label: "News" },
   { key: "sport", icon: HeartOutlined, label: "Sport" },
   { key: "learning", icon: ReadOutlined, label: "Learning" },
-  { key: "podcast", icon: BulbOutlined, label: "Podcast" },
-  { key: "fashion", icon: ShoppingOutlined, label: "Fashion" },
+  { key: "travel", icon: CameraOutlined, label: "Travel" },
+  { key: "technology", icon: RocketOutlined, label: "Technology" },
+  { key: "food", icon: CoffeeOutlined, label: "Food" },
+  { key: "vlog", icon: VideoCameraOutlined, label: "Vlog" },
 ];
 
 export const categoryColors = {
@@ -30,6 +34,8 @@ export const categoryColors = {
   news: "cyan",
   sport: "red",
   learning: "gold",
-  podcast: "lime",
-  fashion: "magenta",
+  travel: "orange",
+  technology: "blue",
+  food: "gold",
+  vlog: "pink",
 };

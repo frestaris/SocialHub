@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 
 // --- Libraries ---
 import { Typography, Avatar, Button, Grid, Modal } from "antd";
@@ -25,6 +25,22 @@ import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 export default function PostInfo({ post }) {
   const [expanded, setExpanded] = useState(false);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+  const contentRef = useRef(null);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (contentRef.current) {
+        const el = contentRef.current;
+        const lineHeight = parseInt(window.getComputedStyle(el).lineHeight, 10);
+        const maxHeight = lineHeight * 3; // limit to 3 lines
+        setIsOverflowing(el.scrollHeight > maxHeight);
+      }
+    };
+    checkOverflow();
+    window.addEventListener("resize", checkOverflow);
+    return () => window.removeEventListener("resize", checkOverflow);
+  }, [post.content]);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -273,21 +289,38 @@ export default function PostInfo({ post }) {
         >
           <div
             style={{
-              maxHeight: expanded ? "500px" : "60px",
+              position: "relative",
               overflow: "hidden",
-              transition: "max-height 0.5s ease",
+              transition: "max-height 0.4s ease",
+              maxHeight: expanded
+                ? `${contentRef.current?.scrollHeight || 500}px`
+                : "4.8em", // ≈ 3 lines * 1.6 line-height
             }}
           >
-            <Paragraph style={{ margin: 0, whiteSpace: "pre-line" }}>
+            <p
+              ref={contentRef}
+              style={{
+                margin: 0,
+                fontSize: 14,
+                lineHeight: "1.6em",
+                whiteSpace: "pre-line",
+                wordBreak: "break-word",
+                overflow: "hidden",
+              }}
+            >
               {post.content}
-            </Paragraph>
+            </p>
           </div>
 
-          {/* Expand/Collapse toggle */}
-          {post.content.length > 120 && (
+          {/* Show More/Less toggle */}
+          {isOverflowing && (
             <Button
               type="link"
-              style={{ padding: 0, fontSize: 12 }}
+              style={{
+                padding: 0,
+                fontSize: 12,
+                transition: "color 0.2s ease",
+              }}
               onClick={() => setExpanded(!expanded)}
             >
               {expanded ? "Show Less" : "Show More"}
