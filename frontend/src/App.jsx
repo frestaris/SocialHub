@@ -29,7 +29,7 @@ export default function App() {
   useNotificationsSocket();
   useChatSocket();
   useAuthTokenRefresh();
-  console.log(user);
+
   return (
     <Router>
       <Layout style={{ minHeight: "100vh" }}>

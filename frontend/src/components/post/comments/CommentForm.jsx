@@ -27,54 +27,56 @@ export default function CommentForm({
           status={error ? "error" : ""}
         />
 
-        {/* 📤 Send icon inside textarea */}
-        <Button
-          type="text"
-          icon={
-            <SendOutlined
-              style={{
-                fontSize: 18,
-                color: editing
-                  ? isUnchanged
-                    ? "#bbb"
-                    : "#1677ff"
-                  : value.trim()
-                  ? "#1677ff"
-                  : "#bbb",
-                transform: !editing ? "rotate(-15deg)" : "none",
-              }}
-            />
-          }
-          onClick={onSubmit}
-          disabled={editing ? isUnchanged : !value.trim()}
-          loading={loading}
-          style={{
-            position: "absolute",
-            bottom: 6,
-            right: 6,
-            width: 28,
-            height: 28,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 2,
-          }}
-        />
-      </div>
-
-      {/* Action Buttons (only for edit mode) */}
-      {editing && (
-        <div style={{ marginTop: 8, textAlign: "right" }}>
+        {/* Send + Close icons */}
+        <div style={{ marginTop: 4, textAlign: "right" }}>
           <Space>
+            {editing && (
+              <Button
+                type="text"
+                icon={<CloseOutlined style={{ fontSize: 18, color: "#999" }} />}
+                onClick={onCancel}
+                disabled={loading}
+                style={{
+                  width: 28,
+                  height: 28,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              />
+            )}
+
             <Button
               type="text"
-              icon={<CloseOutlined style={{ fontSize: 18, color: "#999" }} />}
-              onClick={onCancel}
-              disabled={loading}
+              icon={
+                <SendOutlined
+                  style={{
+                    fontSize: 18,
+                    color: editing
+                      ? isUnchanged
+                        ? "#bbb"
+                        : "#1677ff"
+                      : value.trim()
+                      ? "#1677ff"
+                      : "#bbb",
+                    transform: !editing ? "rotate(-15deg)" : "none",
+                  }}
+                />
+              }
+              onClick={onSubmit}
+              disabled={editing ? isUnchanged : !value.trim()}
+              loading={loading}
+              style={{
+                width: 28,
+                height: 28,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             />
           </Space>
         </div>
-      )}
+      </div>
     </>
   );
 }
