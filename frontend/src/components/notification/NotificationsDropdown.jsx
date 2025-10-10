@@ -14,7 +14,6 @@ export default function NotificationsDropdown() {
     isLoading,
     isFetching,
     loadingMore,
-    hasMore,
     handleScroll,
     handleClick,
     markAsRead,
@@ -54,12 +53,6 @@ export default function NotificationsDropdown() {
           {(isFetching || loadingMore) && (
             <div style={{ textAlign: "center", padding: 8 }}>
               <Spin size="small" />
-            </div>
-          )}
-
-          {!hasMore && notifications.length > 0 && (
-            <div style={{ textAlign: "center", color: "#999", padding: 8 }}>
-              No more notifications
             </div>
           )}
         </div>

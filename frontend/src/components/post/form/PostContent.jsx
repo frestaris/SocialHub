@@ -1,5 +1,5 @@
 import { Form, Input, Select } from "antd";
-import { categories } from "../../../utils/categories";
+import { categories } from "../../../utils/posts/categories";
 const { TextArea } = Input;
 
 export default function PostContent({ label = "Content" }) {

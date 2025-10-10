@@ -2,15 +2,15 @@ import { useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { useDispatch, useSelector } from "react-redux";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase";
-import { chatApi } from "../redux/chat/chatApi";
+import { auth } from "../../firebase";
+import { chatApi } from "../../redux/chat/chatApi";
 import {
   incrementUnread,
   clearUnread,
   setTyping,
   setUserStatus,
-} from "../redux/chat/chatSlice";
-import { store } from "../redux/store";
+} from "../../redux/chat/chatSlice";
+import { store } from "../../redux/store";
 
 const messageSound = new Audio("/juntos-607.mp3");
 messageSound.volume = 0.6;

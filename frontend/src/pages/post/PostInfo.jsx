@@ -15,12 +15,12 @@ import { useSelector } from "react-redux";
 
 // --- Components ---
 import VideoPlayer from "./VideoPlayer";
-import FollowButton from "../../components/FollowButton";
-import PostActions from "../../components/post/PostActions";
+import FollowButton from "../../components/common/FollowButton";
+import PostActions from "../../components/post/cards/PostActions";
 
 const { Text, Paragraph, Title } = Typography;
 const { useBreakpoint } = Grid;
-import ArrowButton from "../../components/ArrowButton";
+import ArrowButton from "../../components/common/ArrowButton";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 export default function PostInfo({ post }) {

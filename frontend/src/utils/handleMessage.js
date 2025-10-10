@@ -1,5 +1,5 @@
 import { notification } from "antd";
-import { getFirebaseErrorMessage } from "./firebaseErrorMessages";
+import { getFirebaseErrorMessage } from "./firebase/firebaseErrorMessages";
 
 export const handleError = (err, context = "Error", isRegister = false) => {
   let msg;

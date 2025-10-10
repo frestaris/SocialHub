@@ -1,5 +1,5 @@
 import { Tag, Grid } from "antd";
-import { categories, categoryColors } from "../utils/categories";
+import { categories, categoryColors } from "../../utils/posts/categories";
 
 const { useBreakpoint } = Grid;
 

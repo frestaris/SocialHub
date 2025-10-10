@@ -9,15 +9,15 @@ import { useSelector, useDispatch } from "react-redux";
 
 // --- Components ---
 import SettingsModal from "../settings/SettingsModal";
-import Upload from "../../../components/post/Upload";
-import FollowButton from "../../../components/FollowButton";
+import Upload from "../../../components/post/modals/Upload";
+import FollowButton from "../../../components/common/FollowButton";
 import CoverEdit from "./CoverEdit";
 import AvatarEdit from "./AvatarEdit";
 import moment from "../../../utils/momentShort";
 
 // --- Chat ---
 import { useStartConversationMutation } from "../../../redux/chat/chatApi";
-import { chatSocketHelpers } from "../../../utils/useChatSocket";
+import { chatSocketHelpers } from "../../../utils/sockets/useChatSocket";
 import { handleError } from "../../../utils/handleMessage";
 import { setActiveConversation } from "../../../redux/chat/chatSlice";
 

@@ -2,7 +2,7 @@ import { Drawer, Avatar, Button, Dropdown } from "antd";
 import { PlusOutlined, UserOutlined, MoreOutlined } from "@ant-design/icons";
 import ChatList from "./ChatList";
 import { setUser } from "../../redux/auth/authSlice";
-import { chatSocketHelpers } from "../../utils/useChatSocket";
+import { chatSocketHelpers } from "../../utils/sockets/useChatSocket";
 
 export default function ChatDrawerMobile({
   open,

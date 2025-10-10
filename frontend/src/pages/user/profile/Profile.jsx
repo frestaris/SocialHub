@@ -15,7 +15,7 @@ import { useGetUserFeedQuery } from "../../../redux/post/postApi";
 import ProfileInfo from "./ProfileInfo";
 import UserFollowers from "./UserFollowers";
 import UserFeed from "./UserFeed";
-import Footer from "../../../components/Footer";
+import Footer from "../../../components/common/Footer";
 
 export default function Profile() {
   // --- Routing ---

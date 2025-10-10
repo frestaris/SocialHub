@@ -23,15 +23,15 @@ import {
 // --- Routing & Redux ---
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../redux/auth/authSlice";
+import { logout } from "../../redux/auth/authSlice";
 
 // --- Local components/hooks ---
-import SettingsModal from "../pages/user/settings/SettingsModal";
-import Upload from "./post/Upload";
+import SettingsModal from "../../pages/user/settings/SettingsModal";
+import Upload from "../post/modals/Upload";
 import SearchBar from "./SearchBar";
-import NotificationsDropdown from "./notification/NotificationsDropdown";
-import NotificationsDrawer from "./notification/NotificationsDrawer";
-import useSearchHandler from "../hooks/useSearchHandler";
+import NotificationsDropdown from "../notification/NotificationsDropdown";
+import NotificationsDrawer from "../notification/NotificationsDrawer";
+import useSearchHandler from "../../hooks/useSearchHandler";
 
 const { Header } = Layout;
 const { useBreakpoint } = Grid;

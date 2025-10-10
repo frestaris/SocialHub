@@ -19,13 +19,13 @@ import Masonry from "react-masonry-css";
 
 // --- Components ---
 import TopCreators from "./TopCreators";
-import PostCard from "../../components/post/PostCard";
+import PostCard from "../../components/post/cards/PostCard";
 import HotNow from "./HotNow";
-import Upload from "../../components/post/Upload";
+import Upload from "../../components/post/modals/Upload";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";
-import PostModals from "../../components/post/PostModals";
+import PostModals from "../../components/post/modals/PostModals";
 
 const { useBreakpoint } = Grid;
 const breakpointColumns = { default: 3, 1100: 2, 700: 1 };

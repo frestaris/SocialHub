@@ -6,7 +6,7 @@ import ChatButton from "./ChatButton";
 import ChatDrawerMobile from "./ChatDrawerMobile";
 import ChatModalStart from "./ChatModalStart";
 import { useStartConversationMutation } from "../../redux/chat/chatApi";
-import { chatSocketHelpers } from "../../utils/useChatSocket";
+import { chatSocketHelpers } from "../../utils/sockets/useChatSocket";
 import { setActiveConversation } from "../../redux/chat/chatSlice";
 import { handleError } from "../../utils/handleMessage";
 

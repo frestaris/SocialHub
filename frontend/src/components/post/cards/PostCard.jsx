@@ -1,7 +1,7 @@
 import { Card, Avatar, Typography } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
-import moment from "../../utils/momentShort";
+import moment from "../../../utils/momentShort";
 
 import PostActions from "./PostActions";
 import PostDropdown from "./PostDropdown";

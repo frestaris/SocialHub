@@ -10,7 +10,7 @@ import {
 } from "@ant-design/icons";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../redux/auth/authSlice";
-import { chatSocketHelpers } from "../../utils/useChatSocket";
+import { chatSocketHelpers } from "../../utils/sockets/useChatSocket";
 
 export default function ChatButton({
   user,
@@ -65,35 +65,28 @@ export default function ChatButton({
    */
   if (isMobile) {
     return (
-      <Tooltip title="Messaging" placement="top">
-        <Badge
-          count={badgeCount}
-          overflowCount={9}
-          size="small"
-          offset={[-4, 4]}
+      <Badge count={badgeCount} overflowCount={9} size="small" offset={[-4, 4]}>
+        <div
+          style={{
+            position: "fixed",
+            bottom: 80,
+            right: 16,
+            width: 56,
+            height: 56,
+            borderRadius: "50%",
+            background: "#1677ff",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
+            zIndex: 200,
+            cursor: "pointer",
+          }}
+          onClick={onToggleList}
         >
-          <div
-            style={{
-              position: "fixed",
-              bottom: 80,
-              right: 16,
-              width: 56,
-              height: 56,
-              borderRadius: "50%",
-              background: "#1677ff",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
-              zIndex: 200,
-              cursor: "pointer",
-            }}
-            onClick={onToggleList}
-          >
-            <MessageOutlined style={{ color: "#fff", fontSize: 24 }} />
-          </div>
-        </Badge>
-      </Tooltip>
+          <MessageOutlined style={{ color: "#fff", fontSize: 24 }} />
+        </div>
+      </Badge>
     );
   }
 

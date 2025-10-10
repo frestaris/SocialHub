@@ -1,8 +1,8 @@
-import { uploadToFirebase } from "./uploadToFirebase";
+import { uploadToFirebase } from "../firebase/uploadToFirebase";
 import { getVideoDuration } from "./getVideoDuration";
 import { fetchYouTubeMetadata } from "./fetchYouTubeMetadata";
-import { auth } from "../firebase";
-import { handleError } from "./handleMessage";
+import { auth } from "../../firebase";
+import { handleError } from "../handleMessage";
 
 /**
  * Build a normalized post payload before sending to backend

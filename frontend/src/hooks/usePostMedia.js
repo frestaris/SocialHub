@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Form } from "antd";
-import { fetchYouTubeMetadata } from "../utils/fetchYouTubeMetadata";
+import { fetchYouTubeMetadata } from "../utils/posts/fetchYouTubeMetadata";
 
 /**
  * Hook to manage post media inputs.

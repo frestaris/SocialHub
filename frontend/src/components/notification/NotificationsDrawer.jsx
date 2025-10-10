@@ -14,7 +14,6 @@ export default function NotificationsDrawer({ onNavigate }) {
     isLoading,
     isFetching,
     loadingMore,
-    hasMore,
     handleScroll,
     handleClick,
     markAsRead,
@@ -88,18 +87,6 @@ export default function NotificationsDrawer({ onNavigate }) {
               }}
             >
               <Spin size="default" />
-            </div>
-          )}
-
-          {!hasMore && notifications.length > 0 && (
-            <div
-              style={{
-                textAlign: "center",
-                color: "#999",
-                padding: "10px 0",
-              }}
-            >
-              No more notifications
             </div>
           )}
         </div>

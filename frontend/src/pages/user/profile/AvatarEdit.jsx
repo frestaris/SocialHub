@@ -22,7 +22,7 @@ import {
 import { useUpdateUserMutation } from "../../../redux/user/userApi";
 
 // --- Firebase ---
-import { uploadToFirebase } from "../../../utils/uploadToFirebase";
+import { uploadToFirebase } from "../../../utils/firebase/uploadToFirebase";
 import { auth } from "../../../firebase";
 
 // --- Utils ---

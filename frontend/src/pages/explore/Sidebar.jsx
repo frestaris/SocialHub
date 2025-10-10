@@ -5,7 +5,7 @@ import { Menu } from "antd";
 import { useNavigate } from "react-router-dom";
 
 // --- Utils ---
-import { categories } from "../../utils/categories";
+import { categories } from "../../utils/posts/categories";
 
 export default function Sidebar({
   selectedCategories = [],

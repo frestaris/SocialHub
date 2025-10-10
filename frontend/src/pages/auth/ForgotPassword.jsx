@@ -9,7 +9,7 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "../../firebase";
 import { baseURL } from "../../utils/baseURL";
 import { handleError, handleSuccess } from "../../utils/handleMessage";
-import { getFirebaseErrorMessage } from "../../utils/firebaseErrorMessages";
+import { getFirebaseErrorMessage } from "../../utils/firebase/firebaseErrorMessages";
 
 const { Title } = Typography;
 

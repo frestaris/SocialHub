@@ -10,8 +10,8 @@ import { useSelector } from "react-redux";
 import { useListUsersQuery } from "../../redux/user/userApi";
 
 // --- Components ---
-import FollowButton from "../../components/FollowButton";
-import ReusableCarousel from "../../components/ReusableCarousel";
+import FollowButton from "../../components/common/FollowButton";
+import ReusableCarousel from "../../components/common/ReusableCarousel";
 
 const { Title } = Typography;
 const { useBreakpoint } = Grid;

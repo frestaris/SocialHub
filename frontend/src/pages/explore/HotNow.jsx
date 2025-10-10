@@ -12,9 +12,9 @@ import {
 import { Typography, Grid } from "antd";
 
 // --- Components ---
-import ReusableCarousel from "../../components/ReusableCarousel";
-import PostCard from "../../components/post/PostCard";
-import PostModals from "../../components/post/PostModals";
+import ReusableCarousel from "../../components/common/ReusableCarousel";
+import PostCard from "../../components/post/cards/PostCard";
+import PostModals from "../../components/post/modals/PostModals";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";

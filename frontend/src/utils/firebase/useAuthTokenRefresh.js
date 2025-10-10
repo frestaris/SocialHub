@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { onIdTokenChanged } from "firebase/auth";
-import { auth } from "../firebase";
+import { auth } from "../../firebase";
 import { useDispatch } from "react-redux";
-import { setToken, logout } from "../redux/auth/authSlice";
+import { setToken, logout } from "../../redux/auth/authSlice";
 
 export default function useAuthTokenRefresh() {
   const dispatch = useDispatch();

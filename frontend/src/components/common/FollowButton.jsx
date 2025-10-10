@@ -6,14 +6,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "antd";
 
 // --- Redux ---
-import { useToggleFollowUserMutation } from "../redux/user/userApi";
+import { useToggleFollowUserMutation } from "../../redux/user/userApi";
 
 // --- Utils ---
 import {
   handleError,
   handleWarning,
   clearNotifications,
-} from "../utils/handleMessage";
+} from "../../utils/handleMessage";
 
 export default function FollowButton({ userId, isFollowing, size = "middle" }) {
   const currentUser = useSelector((state) => state.auth.user);

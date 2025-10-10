@@ -129,22 +129,31 @@ export default function CommentList({
 
                       {/* Reply form for editing THIS reply */}
                       {editing?.parentId === item._id &&
-                        editing?._id === reply._id && (
-                          <ReplyForm
-                            value={replyContent[item._id] || ""}
-                            onChange={(val) =>
-                              setReplyContent((prev) => ({
-                                ...prev,
-                                [item._id]: val,
-                              }))
-                            }
-                            onCancel={() => onReplyCancel(item._id)}
-                            onSubmit={() =>
-                              onReplySubmit(item._id, editing._id)
-                            }
-                            editing
-                          />
-                        )}
+                        editing?._id === reply._id &&
+                        (() => {
+                          const currentValue = replyContent[item._id] || "";
+                          const original = reply.content || "";
+                          const unchanged =
+                            currentValue.trim() === original.trim();
+
+                          return (
+                            <ReplyForm
+                              value={currentValue}
+                              onChange={(val) =>
+                                setReplyContent((prev) => ({
+                                  ...prev,
+                                  [item._id]: val,
+                                }))
+                              }
+                              onCancel={() => onReplyCancel(item._id)}
+                              onSubmit={() =>
+                                onReplySubmit(item._id, editing._id)
+                              }
+                              editing
+                              isUnchanged={unchanged}
+                            />
+                          );
+                        })()}
                     </div>
                   ))}
                 </>

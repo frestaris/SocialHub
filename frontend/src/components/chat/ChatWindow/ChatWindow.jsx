@@ -3,7 +3,7 @@ import {
   useGetMessagesQuery,
   useLazyGetMessagesQuery,
 } from "../../../redux/chat/chatApi";
-import { chatSocketHelpers } from "../../../utils/useChatSocket";
+import { chatSocketHelpers } from "../../../utils/sockets/useChatSocket";
 import { useSelector, useDispatch } from "react-redux";
 import {
   clearUnread,

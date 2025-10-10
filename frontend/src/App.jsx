@@ -2,14 +2,14 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Layout, Spin } from "antd";
 import { Suspense, lazy } from "react";
 
-import Navigation from "./components/Navigation";
-import NotFound from "./components/NotFound";
+import Navigation from "./components/common/Navigation";
+import NotFound from "./components/common/NotFound";
 import ChatDock from "./components/chat/ChatDock";
 
-import useNotificationsSocket from "./utils/useNotificationsSocket";
-import useAuthTokenRefresh from "./utils/useAuthTokenRefresh";
+import useNotificationsSocket from "./utils/sockets/useNotificationsSocket";
+import useAuthTokenRefresh from "./utils/firebase/useAuthTokenRefresh";
 import { useSelector } from "react-redux";
-import useChatSocket from "./utils/useChatSocket";
+import useChatSocket from "./utils/sockets/useChatSocket";
 
 const { Content } = Layout;
 
@@ -29,6 +29,7 @@ export default function App() {
   useNotificationsSocket();
   useChatSocket();
   useAuthTokenRefresh();
+  console.log(user);
   return (
     <Router>
       <Layout style={{ minHeight: "100vh" }}>

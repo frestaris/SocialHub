@@ -2,7 +2,7 @@ import { Avatar, Button, List, Typography } from "antd";
 import { UserOutlined, LikeOutlined, LikeFilled } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import moment from "../../../utils/momentShort";
-import PostDropdown from "../../../components/post/PostDropdown";
+import PostDropdown from "../cards/PostDropdown";
 
 const { Paragraph, Text } = Typography;
 

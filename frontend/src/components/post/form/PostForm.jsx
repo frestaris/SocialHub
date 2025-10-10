@@ -13,7 +13,7 @@ import SubmitButton from "./SubmitButton";
 import usePostMedia from "../../../hooks/usePostMedia";
 
 // --- Utils ---
-import { buildPostPayload } from "../../../utils/buildPostPayload";
+import { buildPostPayload } from "../../../utils/posts/buildPostPayload";
 
 export default function PostForm({ onCreatePost, loading }) {
   // --- AntD Form instance ---

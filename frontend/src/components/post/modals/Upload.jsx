@@ -5,13 +5,13 @@ import { Modal, Grid } from "antd";
 import { useNavigate } from "react-router-dom";
 
 // --- Redux ---
-import { useCreatePostMutation } from "../../redux/post/postApi";
+import { useCreatePostMutation } from "../../../redux/post/postApi";
 
 // --- Components ---
-import PostForm from "../post/form/PostForm";
+import PostForm from "../../post/form/PostForm";
 
 // --- Utils ---
-import { handleError, handleSuccess } from "../../utils/handleMessage";
+import { handleError, handleSuccess } from "../../../utils/handleMessage";
 
 const { useBreakpoint } = Grid;
 

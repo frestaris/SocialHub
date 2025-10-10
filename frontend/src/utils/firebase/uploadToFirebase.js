@@ -1,5 +1,5 @@
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { storage } from "../firebase";
+import { storage } from "../../firebase";
 
 /**
  * Upload a file to Firebase Storage with a 4 MB cap (default).

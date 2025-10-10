@@ -2,8 +2,8 @@ import { useEffect } from "react";
 import { io } from "socket.io-client";
 import { useDispatch, useSelector } from "react-redux";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../firebase";
-import { notificationApi } from "../redux/notification/notificationApi";
+import { auth } from "../../firebase";
+import { notificationApi } from "../../redux/notification/notificationApi";
 
 /**
  * useNotificationsSocket

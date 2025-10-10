@@ -10,8 +10,8 @@ import { MenuUnfoldOutlined } from "@ant-design/icons";
 // --- Components ---
 import Sidebar from "./Sidebar";
 import Feed from "./Feed";
-import SearchBar from "../../components/SearchBar";
-import Footer from "../../components/Footer";
+import SearchBar from "../../components/common/SearchBar";
+import Footer from "../../components/common/Footer";
 
 // --- Hooks ---
 import useSearchHandler from "../../hooks/useSearchHandler";

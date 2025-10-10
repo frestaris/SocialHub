@@ -4,7 +4,7 @@ import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 const { useBreakpoint } = Grid;
 
-import ArrowButton from "../components/ArrowButton";
+import ArrowButton from "./ArrowButton";
 
 export default function ReusableCarousel({
   children,
