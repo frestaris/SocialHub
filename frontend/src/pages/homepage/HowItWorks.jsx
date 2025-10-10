@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-
+import image from "../../assets/image-banner.png";
 const { Title, Paragraph } = Typography;
 
 // --- Steps data ---
@@ -132,9 +132,13 @@ export default function HowItWorks() {
       {/* CTA fills lower half */}
       <div
         ref={ctaRef}
-        className="fade-element delay-3"
         style={{
-          background: "linear-gradient(135deg, #0F172A, #1E3A8A, #22D3EE)",
+          backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.3)), url(${image})`,
+
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+
           borderRadius: 12,
           color: "#fff",
           padding: "80px 20px 100px",
@@ -158,16 +162,16 @@ export default function HowItWorks() {
             icon={<CompassOutlined />}
             style={{
               marginRight: 16,
-              background: "#22D3EE",
+              background: "#5e8aed",
               border: "none",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#38E0FF";
+              e.currentTarget.style.background = "#5e8aed";
               e.currentTarget.style.boxShadow =
                 "0 4px 12px rgba(34,211,238,0.4)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#22D3EE";
+              e.currentTarget.style.background = "#5e8aed";
               e.currentTarget.style.boxShadow = "none";
             }}
             onClick={handleCTA}

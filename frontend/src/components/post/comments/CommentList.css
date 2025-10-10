@@ -50,13 +50,21 @@
   content: none;
 }
 
+/* Highlight animation when redirected from notification */
 .highlighted-comment {
-  animation: highlightFlash 2s ease;
+  background-color: #e6f4ff;
+  border-radius: 8px;
+  transition: background-color 0.6s ease;
+  box-shadow: 0 0 0 2px #1677ff33;
+  animation: flash-highlight 2s ease-in-out;
 }
 
-@keyframes highlightFlash {
+@keyframes flash-highlight {
   0% {
-    background-color: #fffbcc;
+    background-color: #cfe8ff;
+  }
+  50% {
+    background-color: #e6f4ff;
   }
   100% {
     background-color: transparent;

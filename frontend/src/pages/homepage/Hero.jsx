@@ -1,52 +1,47 @@
 import { useEffect, useRef } from "react";
-
-// --- Libraries ---
-import { Typography } from "antd";
+import { Typography, Grid } from "antd";
 import { DownOutlined } from "@ant-design/icons";
-
-// --- Assets ---
-import image from "../../assets/image-1.jpg";
+import image from "../../assets/image-hero.avif";
 
 const { Title, Paragraph } = Typography;
+const { useBreakpoint } = Grid;
 
 export default function Hero() {
   const textRef = useRef(null);
   const paraRef = useRef(null);
+  const screens = useBreakpoint();
+  const isMobile = !screens.md;
 
-  // --- Scroll to next section ---
   const handleScroll = () => {
-    const nextSection = document.getElementById("how-it-works");
-    if (nextSection) {
-      nextSection.scrollIntoView({ behavior: "smooth" });
-    }
+    const next = document.getElementById("how-it-works");
+    next?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // --- Fade-in animations ---
   useEffect(() => {
-    const elements = [textRef.current, paraRef.current];
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("fade-in-up");
-            observer.unobserve(entry.target);
+    const els = [textRef.current, paraRef.current];
+    const obs = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add("fade-in-up");
+            obs.unobserve(e.target);
           }
-        });
-      },
+        }),
       { threshold: 0.2 }
     );
-
-    elements.forEach((el) => el && observer.observe(el));
-    return () => observer.disconnect();
+    els.forEach((el) => el && obs.observe(el));
+    return () => obs.disconnect();
   }, []);
 
   return (
     <div
       style={{
         minHeight: "calc(100vh - 64px)",
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.6)), url(${image})`,
-        backgroundSize: "cover",
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.35)), url(${image})`,
+
+        backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
+        backgroundSize: isMobile ? "cover" : "contain",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -54,29 +49,26 @@ export default function Hero() {
         position: "relative",
         textAlign: "center",
         color: "#fff",
-        padding: "0 20px",
+        backgroundColor: "#5e8aed",
       }}
     >
-      {/* Centered content */}
-      <div style={{ maxWidth: "800px" }}>
+      <div style={{ maxWidth: 800 }}>
         <div ref={textRef} className="fade-element">
-          <Title level={1} style={{ color: "#fff", marginBottom: "20px" }}>
+          <Title level={1} style={{ color: "#fff", marginBottom: 20 }}>
             Your Community. Your Creators.
           </Title>
         </div>
-
         <div ref={paraRef} className="fade-element delay-1">
-          <Paragraph style={{ fontSize: "18px", color: "#eee" }}>
+          <Paragraph style={{ fontSize: 18, color: "#eee" }}>
             Support and discover amazing creators in one place.
           </Paragraph>
         </div>
       </div>
 
-      {/* Chevron pinned to bottom */}
       <div
         style={{
           position: "absolute",
-          bottom: "20px",
+          bottom: 20,
           left: "50%",
           transform: "translateX(-50%)",
           cursor: "pointer",
@@ -85,34 +77,31 @@ export default function Hero() {
       >
         <DownOutlined
           style={{
-            fontSize: "32px",
+            fontSize: 32,
             color: "#fff",
             animation: "bounce 1.5s infinite",
           }}
         />
       </div>
 
-      {/* Animations */}
-      <style>
-        {`
-          .fade-element {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-          }
-          .fade-in-up {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          .delay-1 { transition-delay: 0.2s; }
+      <style>{`
+        .fade-element {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .fade-in-up {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .delay-1 { transition-delay: 0.2s; }
 
-          @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(6px); }
-            60% { transform: translateY(3px); }
-          }
-        `}
-      </style>
+        @keyframes bounce {
+          0%,20%,50%,80%,100% { transform: translateY(0); }
+          40% { transform: translateY(6px); }
+          60% { transform: translateY(3px); }
+        }
+      `}</style>
     </div>
   );
 }
