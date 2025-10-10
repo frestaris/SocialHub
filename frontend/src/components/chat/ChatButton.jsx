@@ -69,7 +69,7 @@ export default function ChatButton({
         <div
           style={{
             position: "fixed",
-            bottom: 80,
+            bottom: 55,
             right: 16,
             width: 56,
             height: 56,

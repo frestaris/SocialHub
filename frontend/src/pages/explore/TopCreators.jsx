@@ -16,7 +16,7 @@ import ReusableCarousel from "../../components/common/ReusableCarousel";
 const { Title } = Typography;
 const { useBreakpoint } = Grid;
 
-export default function TopCreators() {
+export default function TopCreators({ hideTitle = false }) {
   // --- API query ---
   const { data, isLoading, isError } = useListUsersQuery();
   const users = data?.users || [];
@@ -51,7 +51,7 @@ export default function TopCreators() {
 
   return (
     <div style={{ margin: "20px 0" }}>
-      <Title level={3}>Top Creators</Title>
+      {!hideTitle && <Title level={3}>Top Creators</Title>}
 
       <ReusableCarousel>
         {users.map((user) => {

@@ -19,6 +19,7 @@ import {
   ProfileOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
+import logo from "../../assets/logo.png";
 
 // --- Routing & Redux ---
 import { Link, useNavigate } from "react-router-dom";
@@ -109,10 +110,33 @@ export default function Navigation() {
       >
         {/* Logo */}
         <div
-          style={{ fontWeight: "bold", fontSize: "20px", cursor: "pointer" }}
           onClick={() => navigate("/")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            cursor: "pointer",
+          }}
         >
-          Social Hub
+          <img
+            src={logo}
+            alt="Social Hub Logo"
+            style={{
+              width: 36,
+              height: 36,
+              objectFit: "contain",
+              marginTop: -2,
+            }}
+          />
+          <span
+            style={{
+              fontWeight: 700,
+              fontSize: 22,
+              color: "#0F172A",
+            }}
+          >
+            Social Hub
+          </span>
         </div>
 
         {/* SearchBar (desktop only) */}

@@ -1,61 +1,59 @@
 import { useEffect, useRef } from "react";
-
-// --- Libraries ---
-import { Row, Col, Typography, Grid, Button } from "antd";
+import { Row, Col, Typography, Button } from "antd";
 import {
   UserAddOutlined,
   PlusCircleOutlined,
   MessageOutlined,
+  CompassOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
-
-// --- Redux / Routing ---
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 const { Title, Paragraph } = Typography;
-const { useBreakpoint } = Grid;
 
 // --- Steps data ---
 const steps = [
   {
     id: 1,
-    icon: <UserAddOutlined style={{ fontSize: "32px", color: "#1677ff" }} />,
+    icon: <UserAddOutlined style={{ fontSize: 32, color: "#1677ff" }} />,
     title: "Create Your Account",
     description: "Sign up and start sharing your own posts right away.",
   },
   {
     id: 2,
-    icon: <PlusCircleOutlined style={{ fontSize: "32px", color: "#1677ff" }} />,
+    icon: <PlusCircleOutlined style={{ fontSize: 32, color: "#1677ff" }} />,
     title: "Upload Content",
     description:
-      "Post images, videos, or just text — whatever you want to share.",
+      "Post videos, images, or just text — whatever fits your style.",
   },
   {
     id: 3,
-    icon: <MessageOutlined style={{ fontSize: "32px", color: "#1677ff" }} />,
-    title: "Explore & Engage",
+    icon: <MessageOutlined style={{ fontSize: 32, color: "#1677ff" }} />,
+    title: "Engage with the Community",
     description:
-      "Browse the feed, like posts, and join discussions with the community.",
+      "Chat live, follow your favorite creators, and join the conversation.",
   },
 ];
 
 export default function HowItWorks() {
   const stepRefs = useRef([]);
-  const buttonRef = useRef(null);
-
-  const screens = useBreakpoint();
-  const isSmall = !screens.md;
-
+  const ctaRef = useRef(null);
   const navigate = useNavigate();
   const user = useSelector((state) => state.auth.user);
 
-  // --- CTA Button handler ---
-  const handleCTA = () => {
-    if (user) navigate("/explore");
-    else navigate("/login");
+  const handleCTA = () => (user ? navigate("/explore") : navigate("/login"));
+
+  const handleScrollNext = () => {
+    const nextSection = document.getElementById("featured-creators");
+    if (nextSection) {
+      const yOffset = -64;
+      const y =
+        nextSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
   };
 
-  // --- Intersection observer animations ---
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -68,43 +66,34 @@ export default function HowItWorks() {
       },
       { threshold: 0.2 }
     );
-
     stepRefs.current.forEach((el) => el && observer.observe(el));
-    if (buttonRef.current) observer.observe(buttonRef.current);
-
+    if (ctaRef.current) observer.observe(ctaRef.current);
     return () => observer.disconnect();
   }, []);
 
   return (
-    <div
+    <section
       id="how-it-works"
       style={{
+        background: "#fafafa",
         minHeight: "100vh",
-        background: "#fff",
         display: "flex",
-        alignItems: "center",
         flexDirection: "column",
-        justifyContent: "center",
-        position: "relative",
+        justifyContent: "space-between",
+        textAlign: "center",
+        padding: "100px 20px",
         overflowX: "hidden",
+        position: "relative",
       }}
     >
-      <div
-        style={{ maxWidth: "1000px", margin: "0 auto", textAlign: "center" }}
-      >
-        {/* Title */}
-        <Title
-          level={2}
-          style={{
-            marginTop: isSmall ? "84px" : "0px",
-            marginBottom: "64px",
-          }}
+      {/* Steps content */}
+      <div style={{ maxWidth: 1000, margin: "0 auto", flexGrow: 1 }}>
+        <Row
+          gutter={[32, 32]}
+          justify="center"
+          align="middle"
+          style={{ height: "100%" }}
         >
-          How It Works
-        </Title>
-
-        {/* Steps */}
-        <Row gutter={[32, 32]} justify="center">
           {steps.map((step, i) => (
             <Col xs={24} sm={12} md={8} key={step.id}>
               <div
@@ -113,18 +102,26 @@ export default function HowItWorks() {
               >
                 <div
                   style={{
-                    textAlign: "center",
-                    padding: "24px",
-                    borderRadius: "12px",
                     background: "#fff",
-                    transition: "all 0.3s ease",
+                    borderRadius: 12,
+                    padding: 24,
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                    transition: "transform 0.3s",
                   }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "translateY(-6px)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "translateY(0)")
+                  }
                 >
                   {step.icon}
-                  <Title level={4} style={{ marginTop: "16px" }}>
+                  <Title level={4} style={{ marginTop: 16 }}>
                     {step.title}
                   </Title>
-                  <Paragraph>{step.description}</Paragraph>
+                  <Paragraph style={{ color: "#555" }}>
+                    {step.description}
+                  </Paragraph>
                 </div>
               </div>
             </Col>
@@ -132,41 +129,73 @@ export default function HowItWorks() {
         </Row>
       </div>
 
-      {/* CTA Button */}
+      {/* CTA fills lower half */}
       <div
-        ref={buttonRef}
+        ref={ctaRef}
         className="fade-element delay-3"
-        style={{ marginTop: "48px", textAlign: "center" }}
+        style={{
+          background: "linear-gradient(135deg, #0F172A, #1E3A8A, #22D3EE)",
+          borderRadius: 12,
+          color: "#fff",
+          padding: "80px 20px 100px",
+          marginTop: 40,
+          position: "relative",
+        }}
       >
-        <Button type="primary" size="large" onClick={handleCTA}>
-          {user ? "Explore Now" : "Get Started"}
-        </Button>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          <Title level={2} style={{ color: "#fff" }}>
+            Join a Community of Creators & Fans
+          </Title>
+          <Paragraph
+            style={{ fontSize: 18, color: "#e0e0e0", marginBottom: 40 }}
+          >
+            Connect, share, and chat in real time with people who inspire you.
+          </Paragraph>
+
+          <Button
+            type="primary"
+            size="large"
+            icon={<CompassOutlined />}
+            style={{
+              marginRight: 16,
+              background: "#22D3EE",
+              border: "none",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#38E0FF";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(34,211,238,0.4)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "#22D3EE";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+            onClick={handleCTA}
+          >
+            {user ? "Explore Now" : "Get Started"}
+          </Button>
+
+          {/* Scroll-down button */}
+          <div
+            onClick={handleScrollNext}
+            style={{
+              position: "absolute",
+              bottom: 20,
+              left: "50%",
+              transform: "translateX(-50%)",
+              cursor: "pointer",
+            }}
+          >
+            <DownOutlined
+              style={{
+                fontSize: 28,
+                color: "#fff",
+                animation: "bounce 1.5s infinite",
+              }}
+            />
+          </div>
+        </div>
       </div>
-
-      {/* Animations */}
-      <style>
-        {`
-          .fade-element {
-            opacity: 0;
-            transform: translateY(40px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
-          }
-          .fade-in-up {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          .delay-0 { transition-delay: 0s; }
-          .delay-1 { transition-delay: 0.2s; }
-          .delay-2 { transition-delay: 0.4s; }
-          .delay-3 { transition-delay: 0.6s; }
-
-          @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(6px); }
-            60% { transform: translateY(3px); }
-          }
-        `}
-      </style>
-    </div>
+    </section>
   );
 }
