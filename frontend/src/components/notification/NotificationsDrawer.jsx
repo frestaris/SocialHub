@@ -29,7 +29,7 @@ export default function NotificationsDrawer({ onNavigate }) {
       <Button
         type="text"
         icon={
-          <Badge count={unreadCount} overflowCount={9} size="medium">
+          <Badge count={unreadCount} overflowCount={9} size="small">
             <BellOutlined style={{ fontSize: 20 }} />
           </Badge>
         }
@@ -37,7 +37,7 @@ export default function NotificationsDrawer({ onNavigate }) {
           setOpen(true);
           markAsRead();
         }}
-      ></Button>
+      />
 
       <Drawer
         title="Notifications"

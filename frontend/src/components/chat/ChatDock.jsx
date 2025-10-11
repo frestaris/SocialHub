@@ -32,6 +32,13 @@ export default function ChatDock() {
   const [startConversation] = useStartConversationMutation();
   const { joinConversation } = chatSocketHelpers;
 
+  useEffect(() => {
+    const handleToggleChatList = () => setOpenList((prev) => !prev);
+    window.addEventListener("toggleChatList", handleToggleChatList);
+    return () =>
+      window.removeEventListener("toggleChatList", handleToggleChatList);
+  }, []);
+
   // responsive handling
   useEffect(() => {
     const handleResize = () => {
@@ -214,28 +221,15 @@ export default function ChatDock() {
       )}
 
       {isMobile && (
-        <>
-          {(!chatWindows.length || chatWindows.every((c) => c.minimized)) && (
-            <ChatButton
-              key={totalUnread}
-              user={user}
-              onNewChat={() => setIsModalOpen(true)}
-              onToggleList={toggleList}
-              openList={openList}
-              badgeCount={totalUnread}
-            />
-          )}
-
-          <ChatDrawerMobile
-            open={openList}
-            onClose={() => setOpenList(false)}
-            user={user}
-            userStatus={userStatus}
-            dispatch={dispatch}
-            setIsModalOpen={setIsModalOpen}
-            onSelectConversation={openChatWindow}
-          />
-        </>
+        <ChatDrawerMobile
+          open={openList}
+          onClose={() => setOpenList(false)}
+          user={user}
+          userStatus={userStatus}
+          dispatch={dispatch}
+          setIsModalOpen={setIsModalOpen}
+          onSelectConversation={openChatWindow}
+        />
       )}
 
       <ChatModalStart

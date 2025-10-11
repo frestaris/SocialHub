@@ -10,6 +10,7 @@ import {
   Avatar,
   Dropdown,
   Space,
+  Badge,
 } from "antd";
 import {
   MenuOutlined,
@@ -18,6 +19,7 @@ import {
   SettingOutlined,
   PlusOutlined,
   CompassOutlined,
+  MessageOutlined,
 } from "@ant-design/icons";
 import logo from "../../assets/logo.png";
 
@@ -66,6 +68,9 @@ export default function Navigation() {
     navigate(path);
     if (close) setDrawerOpen(false);
   };
+  const unreadCount = Object.values(
+    useSelector((s) => s.chat.unread) || {}
+  ).filter((c) => c > 0).length;
 
   // --- Avatar dropdown menu ---
   const avatarMenu = {
@@ -154,7 +159,42 @@ export default function Navigation() {
         )}
 
         {/* Right section */}
-        {screens.sm ? (
+        {!screens.md ? (
+          // ----- MOBILE -----
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            {/* Chat button icon (mobile) */}
+            <Badge
+              count={unreadCount}
+              overflowCount={9}
+              size="small"
+              offset={[-4, 4]}
+            >
+              <Button
+                type="text"
+                icon={
+                  <MessageOutlined
+                    style={{
+                      fontSize: 20,
+                      position: "relative",
+                      top: -2,
+                    }}
+                  />
+                }
+                onClick={() =>
+                  window.dispatchEvent(new CustomEvent("toggleChatList"))
+                }
+              />
+            </Badge>
+            <NotificationsDrawer />
+            {/* Hamburger menu */}
+            <Button
+              type="text"
+              icon={<MenuOutlined style={{ fontSize: 20 }} />}
+              onClick={() => setDrawerOpen(true)}
+            />
+          </div>
+        ) : (
+          // ----- DESKTOP -----
           <div style={{ display: "flex", alignItems: "center" }}>
             <Menu
               mode="horizontal"
@@ -200,18 +240,6 @@ export default function Navigation() {
                 Login
               </Button>
             )}
-          </div>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {/* Notifications drawer trigger */}
-            <NotificationsDrawer />
-
-            {/* Hamburger menu */}
-            <Button
-              type="text"
-              icon={<MenuOutlined style={{ fontSize: 20 }} />}
-              onClick={() => setDrawerOpen(true)}
-            />
           </div>
         )}
       </Header>

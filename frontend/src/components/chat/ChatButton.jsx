@@ -1,10 +1,8 @@
-import { useEffect, useState } from "react";
 import { Avatar, Button, Space, Tooltip, Badge, Dropdown } from "antd";
 import {
   EditOutlined,
   DownOutlined,
   UpOutlined,
-  MessageOutlined,
   UserOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
@@ -20,15 +18,6 @@ export default function ChatButton({
   badgeCount = 0,
 }) {
   const dispatch = useDispatch();
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Detect if screen is mobile (<768px)
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   // Dropdown menu
   const menuItems = [
@@ -55,40 +44,6 @@ export default function ChatButton({
       },
     },
   ];
-
-  /**
-   * --------------------------
-   * MOBILE VERSION
-   * --------------------------
-   * - Floating circular button at bottom-right.
-   * - Opens the chat drawer when tapped.
-   */
-  if (isMobile) {
-    return (
-      <Badge count={badgeCount} overflowCount={9} size="small" offset={[-4, 4]}>
-        <div
-          style={{
-            position: "fixed",
-            bottom: 55,
-            right: 16,
-            width: 56,
-            height: 56,
-            borderRadius: "50%",
-            background: "#1677ff",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
-            zIndex: 200,
-            cursor: "pointer",
-          }}
-          onClick={onToggleList}
-        >
-          <MessageOutlined style={{ color: "#fff", fontSize: 24 }} />
-        </div>
-      </Badge>
-    );
-  }
 
   /**
    * --------------------------
