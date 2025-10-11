@@ -90,6 +90,13 @@ export default function useChatSocket() {
           .then((res) => {
             const ids = (res?.conversations || []).map((c) => c._id);
             if (ids.length > 0) socketInstance.emit("join_conversations", ids);
+
+            // also hydrate unread counts immediately
+            const unreadMap = {};
+            res.conversations.forEach((c) => {
+              unreadMap[c._id] = c.unreadCount || 0;
+            });
+            dispatch({ type: "chat/setUnreadCounts", payload: unreadMap });
           })
           .catch((err) => console.warn("join_conversations error:", err));
       });

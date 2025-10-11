@@ -5,6 +5,7 @@ import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./src/config/db.js";
 import { socketAuth } from "./src/middleware/socketAuth.js";
+import chatSocket from "./src/middleware/chatSocket.js";
 
 // Routes
 import authRoutes from "./src/routes/authRoutes.js";
@@ -57,11 +58,9 @@ app.use("/replies", replyRoutes);
 app.use("/notifications", notificationRoutes);
 app.use("/conversations", conversationRoutes);
 
-// Handle socket connections
+// --- Socket connections ---
 io.on("connection", (socket) => {
-  import("./src/middleware/chatSocket.js").then(({ default: chatSocket }) => {
-    chatSocket(io, socket);
-  });
+  chatSocket(io, socket);
 
   socket.on("disconnect", () => {});
 });

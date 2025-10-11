@@ -70,18 +70,35 @@ export default function ChatList({
 
   // Filter only by participant name
   const filteredConversations = useMemo(() => {
-    if (!searchText.trim()) return conversations;
-    const lower = searchText.toLowerCase();
+    if (!conversations?.length) return [];
 
-    return conversations.filter((conv) =>
-      (conv.participants || []).some(
-        (p) =>
-          p.username &&
-          p.username.toLowerCase().includes(lower) &&
-          p._id !== data?.userId
-      )
-    );
-  }, [conversations, searchText, data?.userId]);
+    const list = [...conversations].map((conv) => ({
+      ...conv,
+      unreadCount: unreadCounts?.[conv._id] || conv.unreadCount || 0,
+      lastActivity:
+        conv.lastMessage?.createdAt || conv.updatedAt || conv.createdAt,
+    }));
+
+    // Filter by search
+    const lower = searchText.trim().toLowerCase();
+    const filtered = lower
+      ? list.filter((conv) =>
+          (conv.participants || []).some(
+            (p) =>
+              p.username &&
+              p.username.toLowerCase().includes(lower) &&
+              p._id !== data?.userId
+          )
+        )
+      : list;
+
+    // ✅ Sort: unread first, then most recent activity
+    return filtered.sort((a, b) => {
+      if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
+      if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
+      return new Date(b.lastActivity) - new Date(a.lastActivity);
+    });
+  }, [conversations, unreadCounts, searchText, data?.userId]);
 
   const listContainerStyle = {
     boxSizing: "border-box",
@@ -139,6 +156,7 @@ export default function ChatList({
               userStatus={userStatus}
               onSelect={onSelectConversation}
               onDelete={handleDelete}
+              isUnread={(conv.unreadCount || 0) > 0}
             />
           )}
         />

@@ -1,13 +1,16 @@
 import { useEffect, useRef } from "react";
-import { Typography } from "antd";
+import { Typography, Grid } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import image from "../../assets/image-hero.avif";
 
 const { Title, Paragraph } = Typography;
+const { useBreakpoint } = Grid;
 
 export default function Hero() {
   const textRef = useRef(null);
   const paraRef = useRef(null);
+  const screens = useBreakpoint();
+  const isMobile = !screens.sm;
 
   const handleScroll = () => {
     const next = document.getElementById("how-it-works");
@@ -65,7 +68,7 @@ export default function Hero() {
       <div
         style={{
           position: "absolute",
-          bottom: 20,
+          bottom: isMobile ? 50 : 20,
           left: "50%",
           transform: "translateX(-50%)",
           cursor: "pointer",

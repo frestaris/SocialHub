@@ -19,6 +19,7 @@ export default function ChatListItem({
   onSelect,
   onDelete,
   userStatus,
+  isUnread,
 }) {
   const otherUsers = (conv?.participants || []).filter((p) => p._id !== userId);
   const name = otherUsers.map((p) => p.username).join(", ");
@@ -46,18 +47,6 @@ export default function ChatListItem({
       })
     : "";
 
-  const itemStyle = {
-    cursor: "pointer",
-    padding: "8px 10px",
-    marginBottom: "6px",
-    borderRadius: "8px",
-    display: "flex",
-    alignItems: "flex-start",
-    gap: 10,
-    transition: "background 0.2s",
-  };
-  const hoverStyle = { background: "#f5f5f5" };
-
   const menuItems = [
     {
       key: "delete",
@@ -72,12 +61,24 @@ export default function ChatListItem({
   return (
     <div
       key={conv._id}
-      style={itemStyle}
-      onMouseEnter={(e) =>
-        (e.currentTarget.style.background = hoverStyle.background)
-      }
-      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
       onClick={() => onSelect?.(conv)}
+      onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f5f5")}
+      onMouseLeave={(e) =>
+        (e.currentTarget.style.background = isUnread
+          ? "#f0f5ff"
+          : "transparent")
+      }
+      style={{
+        cursor: "pointer",
+        padding: "8px 10px",
+        marginBottom: "6px",
+        borderRadius: "8px",
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 10,
+        transition: "background 0.2s",
+        background: isUnread ? "#f0f5ff" : "transparent",
+      }}
     >
       <Badge count={unread} overflowCount={9} size="small" offset={[-4, 4]}>
         <div style={{ position: "relative", display: "inline-block" }}>
