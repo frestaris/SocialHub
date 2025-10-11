@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Layout, Spin } from "antd";
 import { Suspense, lazy } from "react";
@@ -6,11 +8,12 @@ import Navigation from "./components/common/Navigation";
 import NotFound from "./components/common/NotFound";
 import ChatDock from "./components/chat/ChatDock";
 
+import { initAnalytics } from "./utils/analytics/analytics";
+import AnalyticsTracker from "./utils/analytics/AnalyticsTracker";
 import useNotificationsSocket from "./utils/sockets/useNotificationsSocket";
 import useAuthTokenRefresh from "./utils/firebase/useAuthTokenRefresh";
 import { useSelector } from "react-redux";
 import useChatSocket from "./utils/sockets/useChatSocket";
-
 const { Content } = Layout;
 
 // Lazy-loaded pages (heavier ones)
@@ -30,8 +33,13 @@ export default function App() {
   useChatSocket();
   useAuthTokenRefresh();
 
+  useEffect(() => {
+    const GA_ID = import.meta.env.VITE_GA_ID;
+    initAnalytics(GA_ID);
+  }, []);
   return (
     <Router>
+      <AnalyticsTracker />
       <Layout style={{ minHeight: "100vh" }}>
         {/* Global navigation bar (always visible) */}
         <Navigation />

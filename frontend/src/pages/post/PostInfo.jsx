@@ -282,7 +282,7 @@ export default function PostInfo({ post }) {
         <div
           style={{
             marginTop: "16px",
-            background: "#e7e7e7",
+            background: "#e8f0fe",
             padding: "12px",
             borderRadius: "8px",
           }}
