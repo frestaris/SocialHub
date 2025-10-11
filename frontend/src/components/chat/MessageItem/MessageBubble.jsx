@@ -3,6 +3,8 @@ import MessageEditor from "./MessageEditor";
 import MessageStatusIcon from "./MessageStatusIcon";
 import MessageMenu from "./MessageMenu";
 import moment from "../../../utils/momentShort";
+import { Link } from "react-router-dom";
+import PostPreviewBubble from "./PostPreviewBubble";
 
 function highlightText(text, term) {
   if (!term) return text;
@@ -17,6 +19,43 @@ function highlightText(text, term) {
       part
     )
   );
+}
+function renderMessageContent(text, searchTerm) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const match = text.match(urlRegex)?.[0];
+  const postMatch = match?.match(/\/post\/([A-Za-z0-9_-]+)(?:$|\b|\/|\?|#)/);
+
+  // message contains a post link → show preview card
+  if (postMatch) {
+    const postId = postMatch[1];
+    return <PostPreviewBubble postId={postId} />;
+  }
+
+  // normal text (may contain URLs and/or search term)
+  const segments = text.split(urlRegex);
+
+  return segments.map((segment, i) => {
+    if (urlRegex.test(segment)) {
+      // clickable URL
+      return (
+        <Link
+          key={i}
+          to={segment.replace(window.location.origin, "")}
+          onClick={() => window.dispatchEvent(new CustomEvent("closeAllChats"))}
+          style={{
+            color: "#1677ff",
+            textDecoration: "underline",
+            wordBreak: "break-all",
+          }}
+        >
+          {segment}
+        </Link>
+      );
+    } else {
+      // highlight search term inside this segment
+      return <span key={i}>{highlightText(segment, searchTerm)}</span>;
+    }
+  });
 }
 
 export default function MessageBubble({
@@ -110,7 +149,7 @@ export default function MessageBubble({
         ) : (
           <>
             <span style={{ lineHeight: 1.4 }}>
-              {highlightText(msg.content, searchTerm)}
+              {renderMessageContent(msg.content, searchTerm)}
               {msg.edited && (
                 <span style={{ fontSize: 10, color: "#888" }}> (edited)</span>
               )}

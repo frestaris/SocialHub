@@ -298,6 +298,85 @@ export const postApi = createApi({
         }
       },
     }),
+    // ---- INCREMENT POST SHARES ----
+    incrementPostShares: builder.mutation({
+      query: (postId) => ({
+        url: `/${postId}/share`,
+        method: "PATCH",
+      }),
+      async onQueryStarted(postId, { dispatch, queryFulfilled, getState }) {
+        try {
+          const { data } = await queryFulfilled;
+          const state = getState();
+          const queries = state.postApi.queries;
+
+          // ✅ Update single post view
+          dispatch(
+            postApi.util.updateQueryData("getPostById", postId, (draft) => {
+              if (draft?.post) {
+                draft.post.shares = data.shares;
+              }
+            })
+          );
+
+          // ✅ Update getPosts caches
+          Object.entries(queries).forEach(([cacheKey, entry]) => {
+            if (cacheKey.startsWith("getPosts") && entry.originalArgs) {
+              dispatch(
+                postApi.util.updateQueryData(
+                  "getPosts",
+                  entry.originalArgs,
+                  (draft) => {
+                    const idx = draft.posts?.findIndex((p) => p._id === postId);
+                    if (idx !== -1) {
+                      draft.posts[idx].shares = data.shares;
+                    }
+                  }
+                )
+              );
+            }
+          });
+
+          // ✅ Update getUserFeed caches
+          Object.entries(queries).forEach(([cacheKey, entry]) => {
+            if (cacheKey.startsWith("getUserFeed") && entry.originalArgs) {
+              dispatch(
+                postApi.util.updateQueryData(
+                  "getUserFeed",
+                  entry.originalArgs,
+                  (draft) => {
+                    const idx = draft.feed?.findIndex((f) => f._id === postId);
+                    if (idx !== -1) {
+                      draft.feed[idx].shares = data.shares;
+                    }
+                  }
+                )
+              );
+            }
+          });
+
+          // ✅ Update getPostsByUser caches
+          Object.entries(queries).forEach(([cacheKey, entry]) => {
+            if (cacheKey.startsWith("getPostsByUser") && entry.originalArgs) {
+              dispatch(
+                postApi.util.updateQueryData(
+                  "getPostsByUser",
+                  entry.originalArgs,
+                  (draft) => {
+                    const idx = draft.posts?.findIndex((p) => p._id === postId);
+                    if (idx !== -1) {
+                      draft.posts[idx].shares = data.shares;
+                    }
+                  }
+                )
+              );
+            }
+          });
+        } catch (err) {
+          console.error("Increment shares error:", err);
+        }
+      },
+    }),
 
     // ---- TOGGLE LIKE POST ----
     toggleLikePost: builder.mutation({
@@ -452,6 +531,7 @@ export const {
   useUpdatePostMutation,
   useDeletePostMutation,
   useIncrementPostViewsMutation,
+  useIncrementPostSharesMutation,
   useToggleLikePostMutation,
   useToggleHidePostMutation,
 } = postApi;

@@ -7,6 +7,7 @@ import {
   LikeFilled,
   CommentOutlined,
   EyeOutlined,
+  ShareAltOutlined,
 } from "@ant-design/icons";
 
 // Redux & Router
@@ -42,24 +43,28 @@ export default function PostActions({
     (post.comments?.length || 0) +
     (post.comments?.reduce((acc, c) => acc + (c.replies?.length || 0), 0) || 0);
 
-  // ---- Handlers ----
+  // ---- Shared Login Handler ----
+  const handleLoginRequired = (message) => {
+    handleWarning(
+      "Login Required",
+      message,
+      <Button
+        type="primary"
+        size="small"
+        onClick={() => {
+          clearNotifications();
+          navigate("/login", { state: { from: `/post/${post._id}` } });
+        }}
+      >
+        Go to Login
+      </Button>
+    );
+  };
+
+  // ---- Like Handler ----
   const handleLikeToggle = async () => {
     if (!currentUser) {
-      // redirect unauthenticated users to login
-      handleWarning(
-        "Login Required",
-        "You need to log in to like posts.",
-        <Button
-          type="primary"
-          size="small"
-          onClick={() => {
-            clearNotifications();
-            navigate("/login", { state: { from: `/post/${post._id}` } });
-          }}
-        >
-          Go to Login
-        </Button>
-      );
+      handleLoginRequired("You need to log in to like posts.");
       return;
     }
 
@@ -68,6 +73,20 @@ export default function PostActions({
     } catch (err) {
       handleError(err, "Failed to update like");
     }
+  };
+
+  // ---- Share Handler ----
+  const handleSharePost = () => {
+    if (!currentUser) {
+      handleLoginRequired("You need to log in to share posts.");
+      return;
+    }
+
+    window.dispatchEvent(
+      new CustomEvent("sharePostToChat", {
+        detail: { postId: post._id },
+      })
+    );
   };
 
   return (
@@ -140,6 +159,20 @@ export default function PostActions({
           >
             <CommentOutlined />
             <span>{totalComments}</span>
+          </div>
+
+          {/* Share */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              cursor: "pointer",
+              color: "#555",
+            }}
+            onClick={handleSharePost}
+          >
+            <ShareAltOutlined /> <span>{post.shares || 0}</span>
           </div>
         </div>
       </Space>

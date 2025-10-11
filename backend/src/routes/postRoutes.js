@@ -10,6 +10,7 @@ import {
   incrementPostViews,
   toggleLikePost,
   toggleHidePost,
+  incrementPostShares,
 } from "../controllers/postController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -28,5 +29,6 @@ router.put("/:id", protect, updatePost);
 router.delete("/:id", protect, deletePost);
 router.patch("/:id/like", protect, toggleLikePost);
 router.patch("/:id/hide", protect, toggleHidePost);
+router.patch("/:id/share", protect, incrementPostShares);
 
 export default router;

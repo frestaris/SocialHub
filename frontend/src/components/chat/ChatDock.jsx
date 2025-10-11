@@ -9,6 +9,7 @@ import { useStartConversationMutation } from "../../redux/chat/chatApi";
 import { chatSocketHelpers } from "../../utils/sockets/useChatSocket";
 import { setActiveConversation } from "../../redux/chat/chatSlice";
 import { handleError } from "../../utils/handleMessage";
+import { useIncrementPostSharesMutation } from "../../redux/post/postApi";
 
 export default function ChatDock() {
   const user = useSelector((s) => s.auth.user);
@@ -25,6 +26,8 @@ export default function ChatDock() {
   const [chatWindows, setChatWindows] = useState([]);
   const [maxWindows, setMaxWindows] = useState(3);
   const [isMobile, setIsMobile] = useState(false);
+  const [pendingSharePostId, setPendingSharePostId] = useState(null);
+  const [incrementPostShares] = useIncrementPostSharesMutation();
 
   const [startConversation] = useStartConversationMutation();
   const { joinConversation } = chatSocketHelpers;
@@ -75,6 +78,27 @@ export default function ChatDock() {
       window.removeEventListener("openChatFromProfile", handleOpenFromProfile);
   }, [joinConversation]);
 
+  useEffect(() => {
+    const handleSharePost = (e) => {
+      const { postId } = e.detail;
+      setIsModalOpen(true);
+      setPendingSharePostId(postId);
+    };
+    window.addEventListener("sharePostToChat", handleSharePost);
+    return () => window.removeEventListener("sharePostToChat", handleSharePost);
+  }, []);
+  useEffect(() => {
+    const handleCloseAllChats = () => {
+      // Close or minimize all chat windows
+      setChatWindows((prev) => prev.map((c) => ({ ...c, minimized: true })));
+      setOpenList(false);
+    };
+
+    window.addEventListener("closeAllChats", handleCloseAllChats);
+    return () =>
+      window.removeEventListener("closeAllChats", handleCloseAllChats);
+  }, []);
+
   if (!user?._id) return null;
 
   const toggleList = () => setOpenList((prev) => !prev);
@@ -119,6 +143,21 @@ export default function ChatDock() {
           initialMessages: res.messages,
         });
         setIsModalOpen(false);
+
+        // Automatically send post link if sharing
+        if (pendingSharePostId) {
+          const postUrl = `${window.location.origin}/post/${pendingSharePostId}`;
+          setTimeout(() => {
+            chatSocketHelpers.sendMessage(res.conversation._id, postUrl);
+          }, 600);
+
+          // increment share count in DB and cache
+          incrementPostShares(pendingSharePostId)
+            .unwrap()
+            .catch((err) => console.error("❌ Share count failed:", err));
+
+          setPendingSharePostId(null);
+        }
       } else {
         handleError(res.error || "Failed to start chat");
       }
@@ -204,6 +243,7 @@ export default function ChatDock() {
         onClose={() => setIsModalOpen(false)}
         following={user?.following}
         onStartChat={handleStartChat}
+        pendingSharePostId={pendingSharePostId}
       />
 
       <div

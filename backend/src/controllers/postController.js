@@ -460,6 +460,31 @@ export const incrementPostViews = async (req, res) => {
 };
 
 /**
+ * INCREMENT POST SHARES
+ * -----------------------
+ * - Adds +1 to post.shares.
+ * - Only logged-in users can share.
+ */
+export const incrementPostShares = async (req, res) => {
+  try {
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { $inc: { shares: 1 } },
+      { new: true }
+    ).populate("userId", "username avatar");
+
+    if (!post) {
+      return res.status(404).json({ success: false, error: "Post not found" });
+    }
+
+    res.json({ success: true, shares: post.shares });
+  } catch (err) {
+    console.error("Increment shares error:", err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+};
+
+/**
  * TOGGLE LIKE POST
  * -------------------
  * - Adds/removes the user’s ID from post.likes.

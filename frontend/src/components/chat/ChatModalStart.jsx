@@ -7,6 +7,7 @@ export default function ChatModalStart({
   onClose,
   following = [],
   onStartChat,
+  pendingSharePostId,
 }) {
   const [searchText, setSearchText] = useState("");
 
@@ -25,7 +26,9 @@ export default function ChatModalStart({
 
   return (
     <Modal
-      title="People You Follow"
+      title={
+        pendingSharePostId ? "Share this post with..." : "People You Follow"
+      }
       open={isOpen}
       onCancel={onClose}
       footer={null}
