@@ -16,8 +16,8 @@ import {
   UserOutlined,
   LogoutOutlined,
   SettingOutlined,
-  ProfileOutlined,
   PlusOutlined,
+  CompassOutlined,
 } from "@ant-design/icons";
 import logo from "../../assets/logo.png";
 
@@ -72,7 +72,7 @@ export default function Navigation() {
     items: [
       {
         key: "profile",
-        icon: <ProfileOutlined />,
+        icon: <UserOutlined />,
         label: "Profile",
         onClick: () => handleNavigate(`/profile/${currentUser._id}`, false),
       },
@@ -110,7 +110,10 @@ export default function Navigation() {
       >
         {/* Logo */}
         <div
-          onClick={() => navigate("/")}
+          onClick={() => {
+            navigate("/");
+            window.dispatchEvent(new CustomEvent("closeAllChats"));
+          }}
           style={{
             display: "flex",
             alignItems: "center",
@@ -158,7 +161,15 @@ export default function Navigation() {
               selectable={false}
               style={{ borderBottom: "none", marginRight: "16px" }}
               items={[
-                { key: "explore", label: <Link to="/explore">Explore</Link> },
+                {
+                  key: "explore",
+                  label: (
+                    <Link to="/explore">
+                      <CompassOutlined style={{ marginRight: 6 }} />
+                      Explore
+                    </Link>
+                  ),
+                },
               ]}
             />
 
@@ -191,11 +202,17 @@ export default function Navigation() {
             )}
           </div>
         ) : (
-          <Button
-            type="text"
-            icon={<MenuOutlined />}
-            onClick={() => setDrawerOpen(true)}
-          />
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {/* Notifications drawer trigger */}
+            <NotificationsDrawer />
+
+            {/* Hamburger menu */}
+            <Button
+              type="text"
+              icon={<MenuOutlined style={{ fontSize: 20 }} />}
+              onClick={() => setDrawerOpen(true)}
+            />
+          </div>
         )}
       </Header>
 
@@ -223,7 +240,14 @@ export default function Navigation() {
           mode="vertical"
           selectable={false}
           onClick={() => handleNavigate("/explore")}
-          items={[{ key: "explore", label: "Explore" }]}
+          style={{ textAlign: "center" }}
+          items={[
+            {
+              key: "explore",
+              icon: <CompassOutlined />,
+              label: "Explore",
+            },
+          ]}
         />
 
         <div style={{ marginTop: "16px" }}>
@@ -250,20 +274,18 @@ export default function Navigation() {
                 Post
               </Button>
 
-              {/* --- Mobile notifications --- */}
-              <div style={{ margin: "12px 0" }}>
-                <NotificationsDrawer onNavigate={() => setDrawerOpen(false)} />
-              </div>
-
               <Button
                 block
+                icon={<UserOutlined />}
                 onClick={() => handleNavigate(`/profile/${currentUser._id}`)}
                 style={{ marginTop: "8px" }}
               >
                 Profile
               </Button>
+
               <Button
                 block
+                icon={<SettingOutlined />}
                 onClick={() => {
                   setSettingsOpen(true);
                   setDrawerOpen(false);
@@ -272,6 +294,7 @@ export default function Navigation() {
               >
                 Settings
               </Button>
+
               <Button
                 danger
                 block

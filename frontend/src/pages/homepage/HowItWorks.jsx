@@ -7,7 +7,6 @@ import {
   CompassOutlined,
   DownOutlined,
 } from "@ant-design/icons";
-import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import image from "../../assets/image-banner.png";
 const { Title, Paragraph } = Typography;
@@ -40,9 +39,6 @@ export default function HowItWorks() {
   const stepRefs = useRef([]);
   const ctaRef = useRef(null);
   const navigate = useNavigate();
-  const user = useSelector((state) => state.auth.user);
-
-  const handleCTA = () => (user ? navigate("/explore") : navigate("/login"));
 
   const handleScrollNext = () => {
     const nextSection = document.getElementById("featured-creators");
@@ -174,9 +170,9 @@ export default function HowItWorks() {
               e.currentTarget.style.background = "#5e8aed";
               e.currentTarget.style.boxShadow = "none";
             }}
-            onClick={handleCTA}
+            onClick={() => navigate("/explore")}
           >
-            {user ? "Explore Now" : "Get Started"}
+            Explore Now
           </Button>
 
           {/* Scroll-down button */}

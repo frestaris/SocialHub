@@ -128,7 +128,7 @@ export default function ProfileInfo({ user }) {
             <Button
               type="text"
               shape="circle"
-              icon={<SettingOutlined style={{ fontSize: 22, color: "#fff" }} />}
+              icon={<SettingOutlined style={{ fontSize: 20, color: "#fff" }} />}
               onClick={() => setIsSettingsModalOpen(true)}
               onMouseEnter={() => setHover(true)}
               onMouseLeave={() => setHover(false)}
@@ -138,10 +138,12 @@ export default function ProfileInfo({ user }) {
                 right: 16,
                 width: 36,
                 height: 36,
+                border: "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: "none",
+                lineHeight: 0,
+                padding: 0,
                 background: hover ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.6)",
                 transition: "background 0.2s ease",
               }}

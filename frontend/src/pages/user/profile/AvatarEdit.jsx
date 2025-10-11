@@ -183,6 +183,8 @@ export default function AvatarEdit({ avatar, isOwner, onProgress }) {
             alignItems: "center",
             justifyContent: "center",
             border: "none",
+            padding: 0,
+            lineHeight: 0,
             background: hover ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.6)",
             transition: "background 0.2s ease",
           }}

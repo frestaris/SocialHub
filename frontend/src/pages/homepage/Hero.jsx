@@ -68,7 +68,7 @@ export default function Hero() {
       <div
         style={{
           position: "absolute",
-          bottom: isMobile ? 50 : 20,
+          bottom: isMobile ? 80 : 20,
           left: "50%",
           transform: "translateX(-50%)",
           cursor: "pointer",

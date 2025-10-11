@@ -175,7 +175,12 @@ export default function CommentsSection({ postId }) {
   const handleLikeReply = (commentId, reply) => {
     toggleLikeReply({ commentId, replyId: reply._id, postId });
   };
-  if (isLoading) return <Spin />;
+  if (isLoading)
+    return (
+      <div style={{ textAlign: "center", padding: "20px 0" }}>
+        <Spin size="medium" />
+      </div>
+    );
 
   return (
     <div>

@@ -83,7 +83,7 @@ export default function Explore() {
         <div
           style={{
             position: "sticky",
-            top: 80 + 500,
+            top: 80 + 420,
             marginTop: 16,
             borderRadius: "12px",
             boxShadow: "0 2px 8px rgba(0,0,0,0.08)",

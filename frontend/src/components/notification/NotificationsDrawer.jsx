@@ -12,7 +12,6 @@ export default function NotificationsDrawer({ onNavigate }) {
     unreadCount,
     listRef,
     isLoading,
-    isFetching,
     loadingMore,
     handleScroll,
     handleClick,
@@ -28,24 +27,17 @@ export default function NotificationsDrawer({ onNavigate }) {
   return (
     <>
       <Button
-        block
+        type="text"
         icon={
-          <Badge
-            count={unreadCount}
-            overflowCount={9}
-            size="small"
-            style={{ backgroundColor: "#1677ff" }}
-          >
-            <BellOutlined />
+          <Badge count={unreadCount} overflowCount={9} size="medium">
+            <BellOutlined style={{ fontSize: 20 }} />
           </Badge>
         }
         onClick={() => {
           setOpen(true);
           markAsRead();
         }}
-      >
-        Notifications
-      </Button>
+      ></Button>
 
       <Drawer
         title="Notifications"
@@ -77,7 +69,7 @@ export default function NotificationsDrawer({ onNavigate }) {
             onClick={handleNotificationClick}
           />
 
-          {(isFetching || loadingMore) && (
+          {loadingMore && !isLoading && (
             <div
               style={{
                 display: "flex",

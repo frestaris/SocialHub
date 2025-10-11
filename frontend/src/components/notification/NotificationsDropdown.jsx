@@ -59,12 +59,7 @@ export default function NotificationsDropdown() {
       )}
     >
       <span>
-        <Badge
-          count={unreadCount}
-          overflowCount={9}
-          offset={[0, 6]}
-          style={{ backgroundColor: "#1677ff" }}
-        >
+        <Badge count={unreadCount} overflowCount={9} offset={[0, 6]}>
           <BellOutlined style={{ fontSize: 20, cursor: "pointer" }} />
         </Badge>
       </span>
