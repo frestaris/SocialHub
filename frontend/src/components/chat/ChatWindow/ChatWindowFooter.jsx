@@ -43,20 +43,7 @@ export default function ChatWindowFooter({ ...props }) {
       }}
     >
       {/* Emoji Button */}
-      <Popover
-        getPopupContainer={() => document.body}
-        open={emojiOpen}
-        onOpenChange={(open) => setEmojiOpen(open)}
-        placement="topLeft"
-        content={
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{ maxHeight: 320, overflowY: "auto" }}
-          >
-            <EmojiPicker onEmojiClick={handleEmojiClick} />
-          </div>
-        }
-      >
+      <div style={{ position: "relative" }}>
         <Button
           type="text"
           icon={<SmileOutlined style={{ fontSize: 20, color: "#888" }} />}
@@ -71,7 +58,34 @@ export default function ChatWindowFooter({ ...props }) {
             flexShrink: 0,
           }}
         />
-      </Popover>
+
+        {emojiOpen && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "absolute",
+              bottom: "48px",
+              left: 0,
+              background: "#fff",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              borderRadius: 8,
+              padding: 8,
+              zIndex: 1000,
+              maxHeight: 320,
+              overflowY: "auto",
+            }}
+          >
+            <EmojiPicker
+              onEmojiClick={handleEmojiClick}
+              width={300}
+              height={320}
+              searchDisabled={true}
+              skinTonesDisabled={true}
+              previewConfig={{ showPreview: false }}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Input */}
       <Input.TextArea

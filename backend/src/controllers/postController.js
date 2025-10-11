@@ -172,7 +172,14 @@ export const getPosts = async (req, res) => {
         { $match: filter },
         {
           $addFields: {
-            score: { $add: ["$views", { $multiply: ["$likesCount", 2] }] },
+            // Weight formula: likes have more impact, shares add a boost
+            score: {
+              $add: [
+                "$views", // base visibility
+                { $multiply: ["$likesCount", 2] },
+                { $multiply: ["$shares", 3] },
+              ],
+            },
           },
         },
         { $sort: { score: -1 } },
@@ -189,7 +196,7 @@ export const getPosts = async (req, res) => {
       return res.json({
         success: true,
         posts: populated,
-        total: populated.length, // counts only returned docs
+        total: populated.length,
       });
     }
 

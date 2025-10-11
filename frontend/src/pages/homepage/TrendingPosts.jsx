@@ -5,7 +5,7 @@ import PostCard from "../../components/post/cards/PostCard";
 const { Title } = Typography;
 
 export default function TrendingPosts() {
-  const { data, isLoading } = useGetPostsQuery({ sort: "trending", limit: 4 });
+  const { data, isLoading } = useGetPostsQuery({ sort: "trending", limit: 8 });
   const posts = data?.posts || [];
 
   return (

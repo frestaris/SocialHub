@@ -1,16 +1,13 @@
 import { useEffect, useRef } from "react";
-import { Typography, Grid } from "antd";
+import { Typography } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import image from "../../assets/image-hero.avif";
 
 const { Title, Paragraph } = Typography;
-const { useBreakpoint } = Grid;
 
 export default function Hero() {
   const textRef = useRef(null);
   const paraRef = useRef(null);
-  const screens = useBreakpoint();
-  const isMobile = !screens.md;
 
   const handleScroll = () => {
     const next = document.getElementById("how-it-works");
@@ -41,7 +38,7 @@ export default function Hero() {
 
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
-        backgroundSize: isMobile ? "cover" : "contain",
+        backgroundSize: "contain",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
