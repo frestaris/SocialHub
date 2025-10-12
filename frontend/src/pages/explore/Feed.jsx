@@ -13,7 +13,7 @@ import {
 } from "../../redux/post/postApi";
 
 // --- Libraries ---
-import { Grid, Spin, Result, Button } from "antd";
+import { Grid, Spin, Result, Button, Skeleton } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import Masonry from "react-masonry-css";
 
@@ -117,15 +117,22 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
   // --- Loading state (initial load only) ---
   if ((isLoading || isFetching) && skip === 0) {
     return (
-      <div
-        style={{
-          minHeight: "50vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <Spin size="large" />
+      <div style={{ padding: "24px" }}>
+        <Masonry
+          breakpointCols={breakpointColumns}
+          className="masonry-grid"
+          columnClassName="masonry-grid_column"
+        >
+          {Array.from({ length: 6 }).map((_, idx) => (
+            <div key={idx} style={{ marginBottom: 24 }}>
+              <Skeleton.Avatar active size={48} shape="circle" />
+              <div style={{ marginTop: 12 }}>
+                <Skeleton.Input active block style={{ marginBottom: 8 }} />
+                <Skeleton paragraph={{ rows: 2 }} active />
+              </div>
+            </div>
+          ))}
+        </Masonry>
       </div>
     );
   }

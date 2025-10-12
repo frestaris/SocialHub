@@ -4,11 +4,14 @@ import {
   UserAddOutlined,
   PlusCircleOutlined,
   MessageOutlined,
-  CompassOutlined,
   DownOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import image from "../../assets/image-banner.png";
+import imageBg1 from "../../assets/bg-card-1.jpg";
+import imageBg2 from "../../assets/bg-card-2.jpg";
+import imageBg3 from "../../assets/bg-card-3.jpg";
+
 const { Title, Paragraph } = Typography;
 
 // --- Steps data ---
@@ -98,7 +101,13 @@ export default function HowItWorks() {
               >
                 <div
                   style={{
-                    background: "#fff",
+                    backgroundImage: `linear-gradient(
+      rgba(255, 255, 255, 0.92),
+      rgba(255, 255, 255, 0.92)
+    ), url(${i === 0 ? imageBg1 : i === 1 ? imageBg2 : imageBg3})`,
+                    backgroundSize: "cover",
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "center",
                     borderRadius: 12,
                     padding: 24,
                     boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
@@ -155,24 +164,27 @@ export default function HowItWorks() {
           <Button
             type="primary"
             size="large"
-            icon={<CompassOutlined />}
+            icon={<UserAddOutlined />}
             style={{
               marginRight: 16,
-              background: "#5e8aed",
-              border: "none",
+              background: "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
+              border: "2px solid #ffffffaa",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#5e8aed";
+              e.currentTarget.style.background =
+                "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
               e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(34,211,238,0.4)";
+                "0 6px 20px rgba(59,130,246,0.6)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = "#5e8aed";
-              e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.background =
+                "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 14px rgba(59,130,246,0.4)";
             }}
-            onClick={() => navigate("/explore")}
+            onClick={() => navigate("/register")}
           >
-            Explore Now
+            Join Today
           </Button>
 
           {/* Scroll-down button */}

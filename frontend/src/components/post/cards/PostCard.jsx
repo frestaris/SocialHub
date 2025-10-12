@@ -1,4 +1,5 @@
-import { Card, Avatar, Typography } from "antd";
+import { useState } from "react";
+import { Card, Avatar, Typography, Skeleton } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import moment from "../../../utils/momentShort";
@@ -7,6 +8,129 @@ import PostActions from "./PostActions";
 import PostDropdown from "./PostDropdown";
 
 const { Text, Paragraph } = Typography;
+
+function PostImage({ src, alt, showOverlay, fitMode = "cover" }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        height: "100%",
+        overflow: "hidden",
+      }}
+    >
+      {!loaded && (
+        <Skeleton.Image
+          active
+          style={{
+            width: "100%",
+            height: "100%",
+            borderRadius: 0,
+            display: "block",
+            objectFit: "cover",
+            position: "absolute",
+            top: 0,
+            left: 0,
+          }}
+        />
+      )}
+
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: fitMode,
+          position: "absolute",
+          top: 0,
+          left: 0,
+          display: loaded ? "block" : "none",
+          opacity: loaded ? 1 : 0,
+          transition: "opacity 0.3s ease",
+        }}
+      />
+
+      {showOverlay && (
+        <div
+          style={{
+            position: "absolute",
+            top: 6,
+            right: 6,
+            background: "rgba(0,0,0,0.65)",
+            color: "#fff",
+            fontSize: 13,
+            fontWeight: 600,
+            lineHeight: 1,
+            padding: "3px 6px",
+            borderRadius: 6,
+            pointerEvents: "none",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+          }}
+        >
+          {showOverlay}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VideoThumbnail({ src, alt, duration }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      {!loaded && (
+        <Skeleton.Image
+          active
+          style={{
+            width: "100%",
+            height: "100%",
+            borderRadius: 0,
+            position: "absolute",
+            top: 0,
+            left: 0,
+            objectFit: "cover",
+          }}
+        />
+      )}
+
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          opacity: loaded ? 1 : 0,
+          transition: "opacity 0.4s ease",
+          display: "block",
+        }}
+      />
+
+      {duration > 0 && (
+        <span
+          style={{
+            position: "absolute",
+            bottom: "8px",
+            right: "8px",
+            background: "rgba(0,0,0,0.75)",
+            color: "#fff",
+            fontSize: "12px",
+            padding: "2px 6px",
+            borderRadius: "4px",
+          }}
+        >
+          {Math.floor(duration / 60)}:
+          {(duration % 60).toString().padStart(2, "0")}
+        </span>
+      )}
+    </div>
+  );
+}
 
 export default function PostCard({
   post,
@@ -107,33 +231,11 @@ export default function PostCard({
               borderRadius: "8px",
             }}
           >
-            <img
+            <VideoThumbnail
               src={post.video.thumbnail || "/fallback-thumbnail.jpg"}
               alt={post.video.title}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-              }}
+              duration={post.video.duration}
             />
-            {/* Video duration overlay */}
-            {post.video.duration > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  bottom: "8px",
-                  right: "8px",
-                  background: "rgba(0,0,0,0.75)",
-                  color: "#fff",
-                  fontSize: "12px",
-                  padding: "2px 6px",
-                  borderRadius: "4px",
-                }}
-              >
-                {Math.floor(post.video.duration / 60)}:
-                {(post.video.duration % 60).toString().padStart(2, "0")}
-              </span>
-            )}
           </div>
         </Link>
       )}
@@ -156,44 +258,19 @@ export default function PostCard({
               <div
                 key={idx}
                 style={{
-                  position: "relative",
-                  height: "100%",
-                  overflow: "hidden",
                   gridColumn: post.images.length === 1 ? "1 / -1" : "auto",
                 }}
               >
-                <img
+                <PostImage
                   src={img}
                   alt={`Post attachment ${idx + 1}`}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    display: "block",
-                  }}
+                  showOverlay={
+                    idx === 1 && post.images.length > 2
+                      ? `+${post.images.length - 2}`
+                      : null
+                  }
+                  fitMode={post.images.length === 1 ? "contain" : "cover"}
                 />
-
-                {/* If this is the last visible image and there are more */}
-                {idx === 1 && post.images.length > 2 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      background: "rgba(0,0,0,0.5)",
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      color: "#fff",
-                      fontSize: 20,
-                      fontWeight: 600,
-                    }}
-                  >
-                    +{post.images.length - 2}
-                  </div>
-                )}
               </div>
             ))}
           </div>

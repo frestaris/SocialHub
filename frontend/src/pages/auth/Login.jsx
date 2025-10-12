@@ -20,8 +20,11 @@ import { auth, googleProvider, githubProvider } from "../../firebase";
 
 // --- Libraries ---
 import { Button, Form, Input, Divider, Typography, Space, Spin } from "antd";
+import { LoginOutlined, UserAddOutlined } from "@ant-design/icons";
+
 import googleIcon from "../../assets/google-logo.png";
 import githubIcon from "../../assets/github.png";
+import bgImage from "../../assets/bg-card-1.jpg";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";
@@ -128,7 +131,13 @@ export default function Login() {
           padding: 24,
           border: "1px solid #eee",
           borderRadius: 8,
-          background: "#fff",
+          backgroundImage: `linear-gradient(
+      rgba(255, 255, 255, 0.94),
+      rgba(255, 255, 255, 0.94)
+    ), url(${bgImage})`,
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
           boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
         }}
       >
@@ -177,6 +186,21 @@ export default function Login() {
             type="primary"
             htmlType="submit"
             block
+            style={{
+              background: "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background =
+                "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
+              e.currentTarget.style.boxShadow =
+                "0 4px 12px rgba(59,130,246,0.45)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background =
+                "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
+              e.currentTarget.style.boxShadow =
+                "0 2px 8px rgba(59,130,246,0.35)";
+            }}
             disabled={formLoading || (socialLoading && activeMethod === "form")}
           >
             {formLoading || (socialLoading && activeMethod === "form") ? (
@@ -185,9 +209,13 @@ export default function Login() {
                 {isRegister ? "Registering..." : "Logging in..."}
               </>
             ) : isRegister ? (
-              "Register"
+              <>
+                <UserAddOutlined style={{ fontSize: 16 }} /> Register
+              </>
             ) : (
-              "Login"
+              <>
+                <LoginOutlined style={{ fontSize: 16 }} /> Login
+              </>
             )}
           </Button>
         </Form>

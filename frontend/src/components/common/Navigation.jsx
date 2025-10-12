@@ -20,9 +20,11 @@ import {
   PlusOutlined,
   CompassOutlined,
   MessageOutlined,
+  LoginOutlined,
 } from "@ant-design/icons";
-import logo from "../../assets/logo.png";
 
+import logo from "../../assets/logo.png";
+import imageBg from "../../assets/bg-card-1.jpg";
 // --- Routing & Redux ---
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
@@ -162,31 +164,38 @@ export default function Navigation() {
         {!screens.md ? (
           // ----- MOBILE -----
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-            {/* Chat button icon (mobile) */}
-            <Badge
-              count={unreadCount}
-              overflowCount={9}
-              size="small"
-              offset={[-4, 4]}
-            >
-              <Button
-                type="text"
-                icon={
-                  <MessageOutlined
-                    style={{
-                      fontSize: 20,
-                      position: "relative",
-                      top: -2,
-                    }}
+            {currentUser && (
+              <>
+                {/* Chat button icon (mobile) */}
+                <Badge
+                  count={unreadCount}
+                  overflowCount={9}
+                  size="small"
+                  offset={[-4, 4]}
+                >
+                  <Button
+                    type="text"
+                    icon={
+                      <MessageOutlined
+                        style={{
+                          fontSize: 20,
+                          position: "relative",
+                          top: -2,
+                        }}
+                      />
+                    }
+                    onClick={() =>
+                      window.dispatchEvent(new CustomEvent("toggleChatList"))
+                    }
                   />
-                }
-                onClick={() =>
-                  window.dispatchEvent(new CustomEvent("toggleChatList"))
-                }
-              />
-            </Badge>
-            <NotificationsDrawer />
-            {/* Hamburger menu */}
+                </Badge>
+
+                {/* Notifications drawer (mobile) */}
+                <NotificationsDrawer />
+              </>
+            )}
+
+            {/* Hamburger menu (always visible) */}
             <Button
               type="text"
               icon={<MenuOutlined style={{ fontSize: 20 }} />}
@@ -219,6 +228,22 @@ export default function Navigation() {
                   type="primary"
                   icon={<PlusOutlined />}
                   onClick={() => setUploadOpen(true)}
+                  style={{
+                    background:
+                      "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background =
+                      "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 12px rgba(59,130,246,0.45)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background =
+                      "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
+                    e.currentTarget.style.boxShadow =
+                      "0 2px 8px rgba(59,130,246,0.35)";
+                  }}
                 >
                   Post
                 </Button>
@@ -236,7 +261,27 @@ export default function Navigation() {
                 </Dropdown>
               </Space>
             ) : (
-              <Button type="primary" onClick={() => handleNavigate("/login")}>
+              <Button
+                type="primary"
+                style={{
+                  background:
+                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background =
+                    "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(59,130,246,0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background =
+                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
+                  e.currentTarget.style.boxShadow =
+                    "0 2px 8px rgba(59,130,246,0.35)";
+                }}
+                onClick={() => handleNavigate("/login")}
+              >
+                <LoginOutlined style={{ fontSize: 16 }} />
                 Login
               </Button>
             )}
@@ -251,6 +296,18 @@ export default function Navigation() {
         closable
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
+        styles={{
+          body: {
+            backgroundImage: `linear-gradient(
+        rgba(255, 255, 255, 0.94),
+        rgba(255, 255, 255, 0.94)
+      ), url(${imageBg})`,
+            backgroundSize: "cover",
+            backgroundRepeat: "no-repeat",
+            backgroundPosition: "center",
+            padding: 24,
+          },
+        }}
       >
         {/* SearchBar inside drawer */}
         <div style={{ marginBottom: 16 }}>
@@ -268,7 +325,13 @@ export default function Navigation() {
           mode="vertical"
           selectable={false}
           onClick={() => handleNavigate("/explore")}
-          style={{ textAlign: "center" }}
+          style={{
+            textAlign: "center",
+            borderRadius: 8,
+            background: "rgba(255, 255, 255, 0.9)",
+            border: "1px solid rgba(99, 102, 241, 0.15)",
+            boxShadow: "0 2px 6px rgba(59, 130, 246, 0.08)",
+          }}
           items={[
             {
               key: "explore",
@@ -283,8 +346,24 @@ export default function Navigation() {
             <Button
               type="primary"
               block
+              style={{
+                background: "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background =
+                  "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
+                e.currentTarget.style.boxShadow =
+                  "0 4px 12px rgba(59,130,246,0.45)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background =
+                  "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
+                e.currentTarget.style.boxShadow =
+                  "0 2px 8px rgba(59,130,246,0.35)";
+              }}
               onClick={() => handleNavigate("/login")}
             >
+              <LoginOutlined style={{ fontSize: 16 }} />
               Login
             </Button>
           ) : (
@@ -297,7 +376,23 @@ export default function Navigation() {
                   setUploadOpen(true);
                   setDrawerOpen(false);
                 }}
-                style={{ marginBottom: "8px" }}
+                style={{
+                  background:
+                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
+                  marginBottom: "8px",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background =
+                    "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(59,130,246,0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background =
+                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
+                  e.currentTarget.style.boxShadow =
+                    "0 2px 8px rgba(59,130,246,0.35)";
+                }}
               >
                 Post
               </Button>
