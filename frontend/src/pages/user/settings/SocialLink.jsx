@@ -5,7 +5,6 @@ export default function SocialLink({
   providerId,
   label,
   icon,
-  color,
   provider,
   linkedProviders,
   handleLinkProvider,
@@ -36,8 +35,20 @@ export default function SocialLink({
         }
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        {icon && <span style={{ fontSize: 22, color }}>{icon}</span>}
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {icon && (
+          <div
+            style={{
+              width: 22,
+              height: 22,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {icon}
+          </div>
+        )}
         {isLinked ? (
           <Text strong style={{ color: "#52c41a" }}>
             Connected with {label}

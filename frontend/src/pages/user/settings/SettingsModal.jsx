@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo } from "react";
 
 // --- Ant Design ---
 import { Modal, Divider, Form, Button, Spin, Input, Space } from "antd";
-import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
+import googleIcon from "../../../assets/google-logo.png";
+import githubIcon from "../../../assets/github.png";
 
 // --- Firebase ---
 import { auth, googleProvider, githubProvider } from "../../../firebase";
@@ -221,8 +222,13 @@ export default function SettingsModal({ open, onClose, user }) {
             <SocialLink
               providerId="google.com"
               label="Google"
-              icon={<GoogleOutlined />}
-              color="#DB4437"
+              icon={
+                <img
+                  src={googleIcon}
+                  alt="Google"
+                  style={{ width: 18, height: 18 }}
+                />
+              }
               provider={googleProvider}
               linkedProviders={linkedProviders}
               handleLinkProvider={handleLinkProvider}
@@ -230,8 +236,13 @@ export default function SettingsModal({ open, onClose, user }) {
             <SocialLink
               providerId="github.com"
               label="GitHub"
-              icon={<GithubOutlined />}
-              color="#181717"
+              icon={
+                <img
+                  src={githubIcon}
+                  alt="Google"
+                  style={{ width: 18, height: 18 }}
+                />
+              }
               provider={githubProvider}
               linkedProviders={linkedProviders}
               handleLinkProvider={handleLinkProvider}

@@ -14,6 +14,7 @@ import useNotificationsSocket from "./utils/sockets/useNotificationsSocket";
 import useAuthTokenRefresh from "./utils/firebase/useAuthTokenRefresh";
 import { useSelector } from "react-redux";
 import useChatSocket from "./utils/sockets/useChatSocket";
+import ScrollToTop from "./utils/ScrollToTop";
 const { Content } = Layout;
 
 // Lazy-loaded pages (heavier ones)
@@ -39,6 +40,7 @@ export default function App() {
   }, []);
   return (
     <Router>
+      <ScrollToTop />
       <AnalyticsTracker />
       <Layout style={{ minHeight: "100vh" }}>
         {/* Global navigation bar (always visible) */}

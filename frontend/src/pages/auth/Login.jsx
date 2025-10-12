@@ -20,7 +20,8 @@ import { auth, googleProvider, githubProvider } from "../../firebase";
 
 // --- Libraries ---
 import { Button, Form, Input, Divider, Typography, Space, Spin } from "antd";
-import { GoogleOutlined, GithubOutlined } from "@ant-design/icons";
+import googleIcon from "../../assets/google-logo.png";
+import githubIcon from "../../assets/github.png";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";
@@ -197,7 +198,13 @@ export default function Login() {
         {/* Social Buttons */}
         <Space direction="vertical" style={{ width: "100%" }}>
           <Button
-            icon={<GoogleOutlined />}
+            icon={
+              <img
+                src={googleIcon}
+                alt="Google"
+                style={{ width: 18, height: 18, marginRight: 8 }}
+              />
+            }
             block
             onClick={() => handleSocialLogin(googleProvider)}
             disabled={socialLoading && activeMethod === "google"}
@@ -210,7 +217,13 @@ export default function Login() {
           </Button>
 
           <Button
-            icon={<GithubOutlined />}
+            icon={
+              <img
+                src={githubIcon}
+                alt="Github"
+                style={{ width: 18, height: 18, marginRight: 8 }}
+              />
+            }
             block
             onClick={() => handleSocialLogin(githubProvider)}
             disabled={socialLoading && activeMethod === "github"}
