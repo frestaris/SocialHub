@@ -43,7 +43,11 @@ export default function useNotificationsSocket() {
 
       // 3️⃣ Connect to backend socket with token in handshake.auth
       const baseURL = import.meta.env.VITE_API_BASE_URL;
-      socketInstance = io(baseURL, { auth: { token } });
+      socketInstance = io(baseURL, {
+        auth: { token },
+        transports: ["websocket"],
+        path: "/socket.io",
+      });
 
       // 4️⃣ Listen for incoming notifications
       socketInstance.on("notification", (notif) => {

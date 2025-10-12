@@ -70,6 +70,7 @@ export default function useChatSocket() {
       const socketInstance = io(baseURL, {
         auth: { token },
         transports: ["websocket"],
+        path: "/socket.io",
       });
 
       globalSocket = socketInstance;
