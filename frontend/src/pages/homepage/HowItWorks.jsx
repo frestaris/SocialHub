@@ -6,6 +6,7 @@ import {
   MessageOutlined,
   DownOutlined,
 } from "@ant-design/icons";
+import GradientButton from "../../components/common/GradientButton";
 import { useNavigate } from "react-router-dom";
 import image from "../../assets/image-banner.png";
 import imageBg1 from "../../assets/bg-card-1.jpg";
@@ -161,31 +162,19 @@ export default function HowItWorks() {
             Connect, share, and chat in real time with people who inspire you.
           </Paragraph>
 
-          <Button
-            type="primary"
-            size="large"
+          <GradientButton
             icon={<UserAddOutlined />}
+            text="Join Today"
+            onClick={() => navigate("/login")}
             style={{
               marginRight: 16,
-              background: "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
               border: "2px solid #ffffffaa",
+              fontWeight: 600,
+              height: 48,
+              padding: "0 32px",
+              borderRadius: 8,
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background =
-                "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 20px rgba(59,130,246,0.6)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background =
-                "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 14px rgba(59,130,246,0.4)";
-            }}
-            onClick={() => navigate("/register")}
-          >
-            Join Today
-          </Button>
+          />
 
           {/* Scroll-down button */}
           <div

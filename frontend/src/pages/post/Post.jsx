@@ -15,6 +15,7 @@ import { Divider, Spin, Result, Button } from "antd";
 // --- Components ---
 import PostInfo from "./PostInfo";
 import CommentsSection from "../../components/post/comments/CommentsSection";
+import GradientButton from "../../components/common/GradientButton";
 
 export default function Post() {
   const { id } = useParams();
@@ -65,9 +66,7 @@ export default function Post() {
           title="Post Not Found"
           subTitle="Sorry, the post you are looking for does not exist or has been removed."
           extra={
-            <Button type="primary" onClick={() => navigate("/")}>
-              Back Home
-            </Button>
+            <GradientButton text="Back Home" onClick={() => navigate("/")} />
           }
         />
       </div>

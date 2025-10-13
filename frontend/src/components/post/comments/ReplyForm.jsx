@@ -34,7 +34,6 @@ export default function ReplyForm({
             type="text"
             icon={<CloseOutlined style={{ fontSize: 18, color: "#999" }} />}
             onClick={onCancel}
-            disabled={editing ? isUnchanged : !value.trim()}
             size="small"
           />
           {/* Send/Update button */}

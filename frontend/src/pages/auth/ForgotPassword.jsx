@@ -1,15 +1,19 @@
 import { useState } from "react";
 
 // --- Libraries ---
-import { Form, Input, Button, Typography, Spin } from "antd";
+import { Form, Input, Typography, Spin, Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
+import { MailOutlined, LoginOutlined } from "@ant-design/icons";
 
 // --- Utilities ---
 import { auth } from "../../firebase";
 import { baseURL } from "../../utils/baseURL";
 import { handleError, handleSuccess } from "../../utils/handleMessage";
 import { getFirebaseErrorMessage } from "../../utils/firebase/firebaseErrorMessages";
+
+// --- Custom Components ---
+import GradientButton from "../../components/common/GradientButton";
 
 const { Title } = Typography;
 
@@ -70,17 +74,29 @@ export default function ForgotPassword() {
             name="email"
             rules={[{ required: true, message: "Please enter your email" }]}
           >
-            <Input placeholder="Enter your email" />
+            <Input
+              prefix={<MailOutlined style={{ color: "#888" }} />}
+              placeholder="Enter your email"
+            />
           </Form.Item>
 
-          <Button type="primary" htmlType="submit" block disabled={isLoading}>
-            {isLoading ? <Spin size="small" /> : "Send Reset Link"}
-          </Button>
+          <GradientButton
+            text="Send Reset Link"
+            icon={!isLoading && <MailOutlined />}
+            htmlType="submit"
+            block
+            loading={isLoading}
+            disabled={isLoading}
+          />
         </Form>
 
         {/* Navigation back to login */}
         <div style={{ textAlign: "center", marginTop: 16 }}>
-          <Button type="link" onClick={() => navigate("/login")}>
+          <Button
+            type="link"
+            icon={<LoginOutlined />}
+            onClick={() => navigate("/login")}
+          >
             Back to Login
           </Button>
         </div>

@@ -1,5 +1,7 @@
-import { Result, Button } from "antd";
+import { Result } from "antd";
 import { Link } from "react-router-dom";
+import { CompassOutlined } from "@ant-design/icons";
+import GradientButton from "../common/GradientButton";
 
 export default function NotFound() {
   return (
@@ -9,7 +11,7 @@ export default function NotFound() {
       subTitle="Sorry, the page you visited does not exist."
       extra={
         <Link to="/explore">
-          <Button type="primary">Back to Explore</Button>
+          <GradientButton icon={<CompassOutlined />} text="Back to Explore" />
         </Link>
       }
     />

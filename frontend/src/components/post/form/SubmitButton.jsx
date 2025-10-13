@@ -1,4 +1,4 @@
-import { Button } from "antd";
+import GradientButton from "../../common/GradientButton";
 
 export default function SubmitButton({
   isUploading,
@@ -19,14 +19,13 @@ export default function SubmitButton({
   }
 
   return (
-    <Button
+    <GradientButton
+      text={label}
       type="primary"
       htmlType="submit"
       block
       loading={isUploading || loading}
       disabled={isEdit ? !isChanged : false}
-    >
-      {label}
-    </Button>
+    />
   );
 }

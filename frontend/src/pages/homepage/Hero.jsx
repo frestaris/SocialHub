@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Typography, Grid, Button } from "antd";
 import { DownOutlined, CompassOutlined } from "@ant-design/icons";
 import image from "../../assets/image-hero.avif";
+import GradientButton from "../../components/common/GradientButton";
 
 const { Title, Paragraph } = Typography;
 const { useBreakpoint } = Grid;
@@ -63,37 +64,19 @@ export default function Hero() {
             Support and discover amazing creators in one place.
           </Paragraph>
 
-          <Button
-            size="large"
+          <GradientButton
+            icon={<CompassOutlined style={{ fontSize: 20 }} />}
+            text="Explore Now"
+            onClick={() => (window.location.href = "/explore")}
             style={{
               marginTop: 20,
-              background: "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
               border: "2px solid #ffffffaa",
-              color: "#ffffff",
               fontWeight: 600,
               padding: "0 32px",
               height: 48,
               borderRadius: 8,
-              boxShadow: "0 4px 14px rgba(59,130,246,0.4)",
-              transition: "all 0.4s ease",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background =
-                "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 20px rgba(59,130,246,0.6)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background =
-                "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 14px rgba(59,130,246,0.4)";
-            }}
-            onClick={() => (window.location.href = "/explore")}
-          >
-            <CompassOutlined style={{ fontSize: 20 }} />
-            Explore Now
-          </Button>
+          />
         </div>
       </div>
 

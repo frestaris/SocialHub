@@ -109,15 +109,13 @@ export default function ResetPassword() {
             <Input.Password />
           </Form.Item>
 
-          <Button type="primary" htmlType="submit" block disabled={isLoading}>
-            {isLoading ? (
-              <>
-                <Spin size="small" /> Resetting Password...
-              </>
-            ) : (
-              "Reset Password"
-            )}
-          </Button>
+          <GradientButton
+            htmlType="submit"
+            block
+            loading={isLoading}
+            disabled={isLoading}
+            text="Reset Password"
+          />
         </Form>
       </div>
     </div>

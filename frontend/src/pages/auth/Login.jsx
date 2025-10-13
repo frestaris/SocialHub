@@ -28,6 +28,7 @@ import bgImage from "../../assets/bg-card-1.jpg";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";
+import GradientButton from "../../components/common/GradientButton";
 
 const { Title } = Typography;
 
@@ -182,42 +183,29 @@ export default function Login() {
           </Button>
 
           {/* Submit Button */}
-          <Button
-            type="primary"
+          <GradientButton
             htmlType="submit"
             block
-            style={{
-              background: "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background =
-                "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-              e.currentTarget.style.boxShadow =
-                "0 4px 12px rgba(59,130,246,0.45)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background =
-                "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
-              e.currentTarget.style.boxShadow =
-                "0 2px 8px rgba(59,130,246,0.35)";
-            }}
+            loading={formLoading || (socialLoading && activeMethod === "form")}
             disabled={formLoading || (socialLoading && activeMethod === "form")}
-          >
-            {formLoading || (socialLoading && activeMethod === "form") ? (
-              <>
-                <Spin size="small" />{" "}
-                {isRegister ? "Registering..." : "Logging in..."}
-              </>
-            ) : isRegister ? (
-              <>
-                <UserAddOutlined style={{ fontSize: 16 }} /> Register
-              </>
-            ) : (
-              <>
-                <LoginOutlined style={{ fontSize: 16 }} /> Login
-              </>
-            )}
-          </Button>
+            icon={
+              formLoading ||
+              (socialLoading && activeMethod === "form") ? null : isRegister ? (
+                <UserAddOutlined style={{ fontSize: 16 }} />
+              ) : (
+                <LoginOutlined style={{ fontSize: 16 }} />
+              )
+            }
+            text={
+              formLoading || (socialLoading && activeMethod === "form")
+                ? isRegister
+                  ? "Registering..."
+                  : "Logging in..."
+                : isRegister
+                ? "Register"
+                : "Login"
+            }
+          />
         </Form>
 
         {/* Divider */}

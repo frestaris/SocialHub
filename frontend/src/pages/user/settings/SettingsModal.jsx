@@ -27,6 +27,7 @@ import { useNavigate } from "react-router-dom";
 
 // --- Components ---
 import ProfileInfoForm from "./ProfileInfoForm";
+import GradientButton from "../../../components/common/GradientButton";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../../utils/handleMessage";
@@ -260,20 +261,12 @@ export default function SettingsModal({ open, onClose, user }) {
             <Button danger onClick={() => setConfirmOpen(true)}>
               Delete Account
             </Button>
-            <Button
-              type="primary"
+            <GradientButton
               htmlType="submit"
+              text={saving ? "Saving..." : "Save"}
+              loading={saving}
               disabled={!isChanged || saving}
-            >
-              {saving ? (
-                <>
-                  <Spin size="small" style={{ marginRight: 8 }} />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
+            />
           </div>
         </Form>
       </Modal>

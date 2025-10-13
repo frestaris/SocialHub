@@ -14,6 +14,7 @@ import FollowButton from "../../../components/common/FollowButton";
 import CoverEdit from "./CoverEdit";
 import AvatarEdit from "./AvatarEdit";
 import moment from "../../../utils/momentShort";
+import GradientButton from "../../../components/common/GradientButton";
 
 // --- Chat ---
 import { useStartConversationMutation } from "../../../redux/chat/chatApi";
@@ -295,29 +296,11 @@ export default function ProfileInfo({ user }) {
             )}
 
             {isOwner && (
-              <Button
-                type="primary"
+              <GradientButton
+                text="Post"
                 block
                 onClick={() => setIsUploadModalOpen(true)}
-                style={{
-                  background:
-                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background =
-                    "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 12px rgba(59,130,246,0.45)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background =
-                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 8px rgba(59,130,246,0.35)";
-                }}
-              >
-                Post
-              </Button>
+              />
             )}
           </Space>
         </div>

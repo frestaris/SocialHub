@@ -37,6 +37,7 @@ import SearchBar from "./SearchBar";
 import NotificationsDropdown from "../notification/NotificationsDropdown";
 import NotificationsDrawer from "../notification/NotificationsDrawer";
 import useSearchHandler from "../../hooks/useSearchHandler";
+import GradientButton from "./GradientButton";
 
 const { Header } = Layout;
 const { useBreakpoint } = Grid;
@@ -224,29 +225,11 @@ export default function Navigation() {
 
             {currentUser ? (
               <Space size="middle" align="center">
-                <Button
-                  type="primary"
+                <GradientButton
                   icon={<PlusOutlined />}
+                  text="Post"
                   onClick={() => setUploadOpen(true)}
-                  style={{
-                    background:
-                      "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background =
-                      "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 12px rgba(59,130,246,0.45)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background =
-                      "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
-                    e.currentTarget.style.boxShadow =
-                      "0 2px 8px rgba(59,130,246,0.35)";
-                  }}
-                >
-                  Post
-                </Button>
+                />
 
                 {/* --- Desktop notifications --- */}
                 <NotificationsDropdown />
@@ -261,29 +244,11 @@ export default function Navigation() {
                 </Dropdown>
               </Space>
             ) : (
-              <Button
-                type="primary"
-                style={{
-                  background:
-                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background =
-                    "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 12px rgba(59,130,246,0.45)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background =
-                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 8px rgba(59,130,246,0.35)";
-                }}
+              <GradientButton
+                icon={<LoginOutlined style={{ fontSize: 16 }} />}
+                text="Login"
                 onClick={() => handleNavigate("/login")}
-              >
-                <LoginOutlined style={{ fontSize: 16 }} />
-                Login
-              </Button>
+              />
             )}
           </div>
         )}
@@ -343,59 +308,24 @@ export default function Navigation() {
 
         <div style={{ marginTop: "16px" }}>
           {!currentUser ? (
-            <Button
-              type="primary"
-              block
-              style={{
-                background: "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background =
-                  "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-                e.currentTarget.style.boxShadow =
-                  "0 4px 12px rgba(59,130,246,0.45)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background =
-                  "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
-                e.currentTarget.style.boxShadow =
-                  "0 2px 8px rgba(59,130,246,0.35)";
-              }}
+            <GradientButton
+              icon={<LoginOutlined style={{ fontSize: 16 }} />}
+              text="Login"
               onClick={() => handleNavigate("/login")}
-            >
-              <LoginOutlined style={{ fontSize: 16 }} />
-              Login
-            </Button>
+              block
+            />
           ) : (
             <>
-              <Button
-                type="primary"
-                block
+              <GradientButton
                 icon={<PlusOutlined />}
+                text="Post"
                 onClick={() => {
                   setUploadOpen(true);
                   setDrawerOpen(false);
                 }}
-                style={{
-                  background:
-                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
-                  marginBottom: "8px",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background =
-                    "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 12px rgba(59,130,246,0.45)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background =
-                    "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
-                  e.currentTarget.style.boxShadow =
-                    "0 2px 8px rgba(59,130,246,0.35)";
-                }}
-              >
-                Post
-              </Button>
+                style={{ width: "100%", marginBottom: 8 }}
+                block
+              />
 
               <Button
                 block

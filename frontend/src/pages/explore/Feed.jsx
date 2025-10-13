@@ -22,6 +22,7 @@ import TopCreators from "./TopCreators";
 import PostCard from "../../components/post/cards/PostCard";
 import HotNow from "./HotNow";
 import Upload from "../../components/post/modals/Upload";
+import GradientButton from "../../components/common/GradientButton";
 
 // --- Utils ---
 import { handleError, handleSuccess } from "../../utils/handleMessage";
@@ -158,17 +159,13 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
           subTitle="Be the first to create a post!"
           extra={
             currentUser ? (
-              <Button
-                type="primary"
+              <GradientButton
                 icon={<PlusOutlined />}
+                text="Post"
                 onClick={() => setUploadOpen(true)}
-              >
-                Post
-              </Button>
+              />
             ) : (
-              <Button type="primary" onClick={() => navigate("/login")}>
-                Login
-              </Button>
+              <GradientButton text="Login" onClick={() => navigate("/login")} />
             )
           }
         />
