@@ -3,6 +3,11 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 import { postApi } from "../post/postApi";
 import authorizedBaseQuery from "../utils/authorizedBaseQuery";
 
+// Helper: updateFeedCaches()
+// Iterates over all feed/post caches and applies the provided updater
+// to the target post matching `postId`.
+// Used when deleting or modifying comments.
+
 function updateFeedCaches(postApi, dispatch, queries, postId, updater) {
   Object.entries(queries).forEach(([cacheKey, entry]) => {
     if (
@@ -30,8 +35,13 @@ function updateFeedCaches(postApi, dispatch, queries, postId, updater) {
   });
 }
 
-// Comment API slice (RTK Query)
-// Handles fetching, creating, updating, and deleting comments
+// =============================================================
+// commentApi
+// -------------------------------------------------------------
+// Manages fetching, creating, editing, deleting, and liking comments.
+// Automatically syncs post & feed caches on comment changes.
+// =============================================================
+
 export const commentApi = createApi({
   reducerPath: "commentApi",
   baseQuery: authorizedBaseQuery("/comments"),

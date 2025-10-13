@@ -10,11 +10,19 @@ const baseQueryWithAuthCheck = async (args, api, extraOptions) => {
   return authorizedBaseQuery("/notifications")(args, api, extraOptions);
 };
 
+// =============================================================
+// notificationApi
+// -------------------------------------------------------------
+// Handles fetching, marking, and local caching of notifications.
+// Syncs with Firebase-authenticated backend via authorizedBaseQuery.
+// =============================================================
+
 export const notificationApi = createApi({
   reducerPath: "notificationApi",
   baseQuery: baseQueryWithAuthCheck,
   tagTypes: ["Notification"],
   endpoints: (builder) => ({
+    // ---- GET NOTIFICATIONS (paginated) ----
     getNotifications: builder.query({
       query: ({ skip = 0, limit = 10 } = {}) => {
         const params = new URLSearchParams();
@@ -29,10 +37,14 @@ export const notificationApi = createApi({
       }),
       providesTags: ["Notification"],
     }),
+
+    // ---- MARK ALL AS READ ----
     markAsRead: builder.mutation({
       query: () => ({ url: "/read", method: "PATCH" }),
       invalidatesTags: ["Notification"],
     }),
+
+    // ---- ADD LOCAL NOTIFICATION (client-side insert for real-time) ----
     addNotificationLocally: builder.mutation({
       queryFn: (notif, { dispatch }) => {
         dispatch(
@@ -56,6 +68,8 @@ export const notificationApi = createApi({
         return { data: notif };
       },
     }),
+
+    // ---- CLEAR NOTIFICATIONS (client-side reset) ----
     clearNotifications: builder.mutation({
       queryFn: (_, { dispatch }) => {
         dispatch(

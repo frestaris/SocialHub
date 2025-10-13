@@ -38,6 +38,7 @@ export default function App() {
     const GA_ID = import.meta.env.VITE_GA_ID;
     initAnalytics(GA_ID);
   }, []);
+
   return (
     <Router>
       <ScrollToTop />

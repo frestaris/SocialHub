@@ -5,14 +5,14 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../firebase";
 import { notificationApi } from "../../redux/notification/notificationApi";
 
-/**
- * useNotificationsSocket
- * -------------------------
- * - Custom hook that connects to the backend socket server
- * - Authenticates with Firebase ID token
- * - Listens for "notification" events
- * - Updates Redux RTK Query cache in real time
- */
+// =============================================================
+// useNotificationsSocket()
+// -------------------------------------------------------------
+// Connects to the backend notifications socket.
+// Authenticates via Firebase → listens for "notification" events →
+// updates RTK Query cache and triggers refetch for consistency.
+// =============================================================
+
 export default function useNotificationsSocket() {
   const user = useSelector((s) => s.auth.user); // logged-in Mongo user
   const dispatch = useDispatch();

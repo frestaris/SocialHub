@@ -2,8 +2,13 @@ import { createApi } from "@reduxjs/toolkit/query/react";
 
 import authorizedBaseQuery from "../utils/authorizedBaseQuery";
 
-// Post API slice (RTK Query)
-// Handles CRUD operations for posts, user feeds, views, and likes
+// =============================================================
+// postApi
+// -------------------------------------------------------------
+// Handles CRUD operations for posts + engagement counters
+// Includes: create, get (all/user/feed/single), update, delete,
+// view/share/like/hide toggles, and full cache sync across queries.
+// =============================================================
 
 export const postApi = createApi({
   reducerPath: "postApi",

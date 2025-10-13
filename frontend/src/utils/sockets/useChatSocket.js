@@ -15,8 +15,16 @@ import { store } from "../../redux/store";
 const messageSound = new Audio("/juntos-607.mp3");
 messageSound.volume = 0.6;
 
-// ✅ Keep a global singleton socket
+// Keep a global singleton socket
 let globalSocket = null;
+
+// =============================================================
+// useChatSocket()
+// -------------------------------------------------------------
+// Custom React hook managing the real-time chat socket connection.
+// Authenticates via Firebase → joins user conversations →
+// handles message events, typing indicators, presence, and cache sync.
+// =============================================================
 
 export default function useChatSocket() {
   const user = useSelector((s) => s.auth.user);
@@ -29,6 +37,10 @@ export default function useChatSocket() {
   useEffect(() => {
     activeConversationRef.current = activeConversationId;
   }, [activeConversationId]);
+
+  // -------------------------------
+  // Setup & Lifecycle
+  // -------------------------------
 
   useEffect(() => {
     if (!user?._id) return;
