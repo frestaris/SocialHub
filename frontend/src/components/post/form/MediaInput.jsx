@@ -136,7 +136,39 @@ export default function MediaInput({ useUpload, setUseUpload }) {
                         );
                         return Promise.reject();
                       }
+                      // Validate each image URL actually loads
+                      const validateImage = (url) =>
+                        new Promise((resolve, reject) => {
+                          const img = new Image();
+                          img.onload = () => resolve(true);
+                          img.onerror = () => reject(url);
+                          img.src = url;
+                        });
 
+                      const brokenUrls = [];
+
+                      for (const url of imageUrls) {
+                        try {
+                          await validateImage(url);
+                        } catch (badUrl) {
+                          brokenUrls.push(badUrl);
+                        }
+                      }
+
+                      if (brokenUrls.length > 0) {
+                        triggerError(
+                          `Some image URLs are invalid or unreachable.`,
+                          "Invalid images",
+                          "brokenImage"
+                        );
+                        return Promise.reject(
+                          new Error(
+                            `Invalid or broken image URL(s): ${brokenUrls.join(
+                              ", "
+                            )}`
+                          )
+                        );
+                      }
                       return Promise.resolve();
                     },
                   },
