@@ -11,14 +11,14 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Public routes
-router.get("/", listUsers);
-router.get("/:id", getUserById);
-
 // Authenticated routes (current user)
 router.get("/me", protect, getCurrentUser);
 router.put("/me", protect, updateUser);
 router.delete("/me", protect, deleteUser);
+
+// Public routes
+router.get("/", listUsers);
+router.get("/:id", getUserById);
 
 // Authenticated routes (interactions)
 router.patch("/:id/follow", protect, toggleFollow);

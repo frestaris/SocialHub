@@ -34,6 +34,7 @@ export const getCurrentUser = async (req, res) => {
     // Auto-create if missing
     if (!user) {
       user = await User.create({
+        uid: uid,
         username: decoded.name || email.split("@")[0],
         email,
         avatar: decoded.picture || "",

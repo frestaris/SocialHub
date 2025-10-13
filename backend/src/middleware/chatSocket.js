@@ -237,7 +237,7 @@ export default async function chatSocket(io, socket) {
 
       await Message.updateMany(
         { conversationId, readBy: { $ne: userId } },
-        { $push: { readBy: userId } }
+        { $addToSet: { readBy: userId } }
       );
 
       const seenData = { conversationId, userId, seenAt: new Date() };

@@ -288,7 +288,7 @@ export const markMessagesAsRead = async (req, res) => {
 
     await Message.updateMany(
       { conversationId: id, readBy: { $ne: req.user._id } },
-      { $push: { readBy: req.user._id } }
+      { $addToSet: { readBy: req.user._id } }
     );
 
     res.json({ success: true });
