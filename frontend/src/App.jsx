@@ -17,7 +17,7 @@ import useChatSocket from "./utils/sockets/useChatSocket";
 import ScrollToTop from "./utils/ScrollToTop";
 const { Content } = Layout;
 
-// Lazy-loaded pages (heavier ones)
+// Lazy-loaded pages
 const HomePage = lazy(() => import("./pages/homepage/HomePage"));
 const Explore = lazy(() => import("./pages/explore/Explore"));
 const Profile = lazy(() => import("./pages/user/profile/Profile"));
@@ -43,7 +43,7 @@ export default function App() {
       <ScrollToTop />
       <AnalyticsTracker />
       <Layout style={{ minHeight: "100vh" }}>
-        {/* Global navigation bar (always visible) */}
+        {/* Navigation bar  */}
         <Navigation />
         {/* Suspense ensures fallback while lazy routes load */}
         <Content>

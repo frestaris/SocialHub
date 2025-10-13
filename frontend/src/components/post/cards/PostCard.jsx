@@ -11,63 +11,78 @@ const { Text, Paragraph } = Typography;
 
 function PostImage({ src, alt, showOverlay, fitMode = "cover" }) {
   const [loaded, setLoaded] = useState(false);
+  const [naturalRatio, setNaturalRatio] = useState(null);
+
+  const handleLoad = (e) => {
+    const { naturalWidth, naturalHeight } = e.target;
+    if (naturalWidth && naturalHeight) {
+      setNaturalRatio(naturalHeight / naturalWidth);
+    }
+    setLoaded(true);
+  };
 
   return (
     <div
       style={{
         position: "relative",
-        height: "100%",
+        width: "100%",
         overflow: "hidden",
+        borderRadius: 8,
+        background: "#f5f5f5",
       }}
     >
+      {/* --- Skeleton while loading --- */}
       {!loaded && (
-        <Skeleton.Image
-          active
+        <div
           style={{
             width: "100%",
-            height: "100%",
-            borderRadius: 0,
-            display: "block",
-            objectFit: "cover",
-            position: "absolute",
-            top: 0,
-            left: 0,
+            aspectRatio: naturalRatio ? `1 / ${naturalRatio}` : "16 / 9",
+            borderRadius: 8,
+            background: "#f0f0f0",
           }}
-        />
+        >
+          <Skeleton.Image
+            active
+            style={{
+              width: "100%",
+              height: "100%",
+              borderRadius: 8,
+            }}
+          />
+        </div>
       )}
 
+      {/* --- Actual image --- */}
       <img
         src={src}
         alt={alt}
-        onLoad={() => setLoaded(true)}
+        onLoad={handleLoad}
         style={{
           width: "100%",
-          height: "100%",
-          objectFit: fitMode,
-          position: "absolute",
-          top: 0,
-          left: 0,
+          height: "auto",
           display: loaded ? "block" : "none",
-          opacity: loaded ? 1 : 0,
+          objectFit: fitMode,
           transition: "opacity 0.3s ease",
+          opacity: loaded ? 1 : 0,
         }}
       />
 
+      {/* --- Overlay --- */}
       {showOverlay && (
         <div
           style={{
             position: "absolute",
-            top: 6,
-            right: 6,
-            background: "rgba(0,0,0,0.65)",
+            inset: 0,
+            background: "rgba(0, 0, 0, 0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
             color: "#fff",
-            fontSize: 13,
-            fontWeight: 600,
-            lineHeight: 1,
-            padding: "3px 6px",
-            borderRadius: 6,
+            fontSize: 26,
+            fontWeight: 700,
+            letterSpacing: 0.5,
+            textShadow: "0 2px 6px rgba(0,0,0,0.4)",
             pointerEvents: "none",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
           }}
         >
           {showOverlay}
@@ -244,13 +259,11 @@ export default function PostCard({
         <Link to={`/post/${post._id}`}>
           <div
             style={{
-              position: "relative",
+              display: "flex",
+              flexDirection: post.images.length === 2 ? "row" : "column",
+              gap: "6px",
               marginBottom: 8,
-              aspectRatio: "16/9",
-              display: "grid",
-              gridTemplateColumns: post.images.length === 1 ? "1fr" : "1fr 1fr",
-              gap: "2px",
-              borderRadius: "8px",
+              borderRadius: 8,
               overflow: "hidden",
             }}
           >
@@ -258,18 +271,21 @@ export default function PostCard({
               <div
                 key={idx}
                 style={{
-                  gridColumn: post.images.length === 1 ? "1 / -1" : "auto",
+                  flex: post.images.length === 2 ? 1 : "none",
+                  position: "relative",
+                  borderRadius: 8,
+                  overflow: "hidden",
                 }}
               >
                 <PostImage
                   src={img}
-                  alt={`Post attachment ${idx + 1}`}
+                  alt={`Post image ${idx + 1}`}
                   showOverlay={
                     idx === 1 && post.images.length > 2
                       ? `+${post.images.length - 2}`
                       : null
                   }
-                  fitMode={post.images.length === 1 ? "contain" : "cover"}
+                  fitMode={post.images.length === 2 ? "cover" : "contain"}
                 />
               </div>
             ))}

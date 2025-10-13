@@ -228,6 +228,9 @@ export const postApi = createApi({
       async onQueryStarted(postId, { dispatch, queryFulfilled, getState }) {
         try {
           const { data } = await queryFulfilled;
+          // skip if backend returned no data
+          if (!data?.views) return;
+
           const state = getState();
           const queries = state.postApi.queries;
 
@@ -294,7 +297,12 @@ export const postApi = createApi({
             }
           });
         } catch (err) {
-          console.error("Increment views error:", err);
+          const status = err?.error?.status;
+          if (status && status < 500 && status !== 400) {
+            console.warn("Increment views minor issue:", err);
+          } else if (!status || status >= 500) {
+            console.error("Increment views critical error:", err);
+          }
         }
       },
     }),

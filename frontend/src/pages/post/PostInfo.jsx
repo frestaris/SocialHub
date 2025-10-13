@@ -18,7 +18,7 @@ import VideoPlayer from "./VideoPlayer";
 import FollowButton from "../../components/common/FollowButton";
 import PostActions from "../../components/post/cards/PostActions";
 
-const { Text, Paragraph, Title } = Typography;
+const { Text, Title } = Typography;
 const { useBreakpoint } = Grid;
 import ArrowButton from "../../components/common/ArrowButton";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";

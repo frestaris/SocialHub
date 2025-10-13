@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Post from "../models/postSchema.js";
 import User from "../models/userSchema.js";
 import Notification from "../models/notificationSchema.js";
@@ -235,6 +236,13 @@ export const getPosts = async (req, res) => {
  */
 export const getPostById = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    // Validate ID before querying
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, error: "Invalid post ID" });
+    }
+
     const post = await Post.findById(req.params.id)
       .populate("userId", "username avatar")
       .populate({
@@ -437,12 +445,21 @@ const MILESTONES = [10, 50, 100, 500, 1000, 5000, 10000];
 
 export const incrementPostViews = async (req, res) => {
   try {
+    const { id } = req.params;
+
+    // Validate the ID before querying
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, error: "Invalid post ID" });
+    }
+
+    // Update and return the post
     const post = await Post.findByIdAndUpdate(
-      req.params.id,
+      id,
       { $inc: { views: 1 } },
       { new: true }
     ).populate("userId", "username avatar");
 
+    // Handle not found cleanly
     if (!post) {
       return res.status(404).json({ success: false, error: "Post not found" });
     }
@@ -462,7 +479,9 @@ export const incrementPostViews = async (req, res) => {
     res.json({ success: true, views: post.views });
   } catch (err) {
     console.error("Increment views error:", err);
-    res.status(500).json({ success: false, error: "Server error" });
+    res
+      .status(500)
+      .json({ success: false, error: "Server error. Please try again later." });
   }
 };
 

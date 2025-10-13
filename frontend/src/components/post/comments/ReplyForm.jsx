@@ -42,7 +42,7 @@ export default function ReplyForm({
             icon={
               <SendOutlined
                 style={{
-                  fontSize: 18,
+                  fontSize: 19,
                   color:
                     editing && isUnchanged
                       ? "#bbb"
