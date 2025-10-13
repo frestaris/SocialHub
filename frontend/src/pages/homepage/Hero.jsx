@@ -13,11 +13,13 @@ export default function Hero() {
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
 
+  // --- Scroll to the "How It Works" section ---
   const handleScroll = () => {
     const next = document.getElementById("how-it-works");
     next?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // --- Fade-in animation setup for heading and paragraph ---
   useEffect(() => {
     const els = [textRef.current, paraRef.current];
     const obs = new IntersectionObserver(
@@ -37,9 +39,8 @@ export default function Hero() {
   return (
     <div
       style={{
-        minHeight: "calc(100vh - 64px)",
+        minHeight: "calc(100vh - 64px)", // full viewport minus navbar height
         backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.35)), url(${image})`,
-
         backgroundRepeat: "no-repeat",
         backgroundPosition: "center",
         backgroundSize: "contain",
@@ -53,17 +54,22 @@ export default function Hero() {
         backgroundColor: "#5e8aed",
       }}
     >
+      {/* --- Text & CTA content --- */}
       <div style={{ maxWidth: 800 }}>
+        {/* Heading with fade-in animation */}
         <div ref={textRef} className="fade-element">
           <Title level={1} style={{ color: "#fff", marginBottom: 20 }}>
             Your Community. Your Creators.
           </Title>
         </div>
+
+        {/* Subtext and button */}
         <div ref={paraRef} className="fade-element delay-1">
           <Paragraph style={{ fontSize: 18, color: "#eee" }}>
             Support and discover amazing creators in one place.
           </Paragraph>
 
+          {/* Explore button */}
           <GradientButton
             icon={<CompassOutlined style={{ fontSize: 20 }} />}
             text="Explore Now"
@@ -80,6 +86,7 @@ export default function Hero() {
         </div>
       </div>
 
+      {/* --- Scroll-down arrow --- */}
       <div
         style={{
           position: "absolute",
@@ -99,6 +106,7 @@ export default function Hero() {
         />
       </div>
 
+      {/* --- Inline styles for animations --- */}
       <style>{`
         .fade-element {
           opacity: 0;

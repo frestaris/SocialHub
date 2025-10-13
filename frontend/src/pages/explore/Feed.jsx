@@ -13,7 +13,7 @@ import {
 } from "../../redux/post/postApi";
 
 // --- Libraries ---
-import { Grid, Spin, Result, Button, Skeleton } from "antd";
+import { Grid, Spin, Result, Skeleton } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import Masonry from "react-masonry-css";
 

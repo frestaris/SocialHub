@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 // --- Libraries ---
-import { Form, Input, Typography, Spin, Button } from "antd";
+import { Form, Input, Typography, Button } from "antd";
 import { useNavigate } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { MailOutlined, LoginOutlined } from "@ant-design/icons";

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 
 // --- Ant Design ---
-import { Modal, Divider, Form, Button, Spin, Input, Space } from "antd";
+import { Modal, Divider, Form, Button, Input, Space } from "antd";
 import googleIcon from "../../../assets/google-logo.png";
 import githubIcon from "../../../assets/github.png";
 

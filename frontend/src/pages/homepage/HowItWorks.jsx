@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Row, Col, Typography, Button } from "antd";
+import { Row, Col, Typography } from "antd";
 import {
   UserAddOutlined,
   PlusCircleOutlined,
@@ -15,7 +15,7 @@ import imageBg3 from "../../assets/bg-card-3.jpg";
 
 const { Title, Paragraph } = Typography;
 
-// --- Steps data ---
+// --- Steps data for the "How It Works" section ---
 const steps = [
   {
     id: 1,
@@ -40,20 +40,22 @@ const steps = [
 ];
 
 export default function HowItWorks() {
-  const stepRefs = useRef([]);
-  const ctaRef = useRef(null);
+  const stepRefs = useRef([]); // holds references to each step card
+  const ctaRef = useRef(null); // reference to CTA section for fade animation
   const navigate = useNavigate();
 
+  // --- Scroll smoothly to the "Featured Creators" section ---
   const handleScrollNext = () => {
     const nextSection = document.getElementById("featured-creators");
     if (nextSection) {
-      const yOffset = -64;
+      const yOffset = -64; // offset for navbar height
       const y =
         nextSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
       window.scrollTo({ top: y, behavior: "smooth" });
     }
   };
 
+  // --- Fade-in observer for steps and CTA animation ---
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -66,8 +68,13 @@ export default function HowItWorks() {
       },
       { threshold: 0.2 }
     );
+
+    // Observe each step
     stepRefs.current.forEach((el) => el && observer.observe(el));
+
+    // Observe CTA section
     if (ctaRef.current) observer.observe(ctaRef.current);
+
     return () => observer.disconnect();
   }, []);
 
@@ -86,7 +93,7 @@ export default function HowItWorks() {
         position: "relative",
       }}
     >
-      {/* Steps content */}
+      {/* --- Step cards --- */}
       <div style={{ maxWidth: 1000, margin: "0 auto", flexGrow: 1 }}>
         <Row
           gutter={[32, 32]}
@@ -96,6 +103,7 @@ export default function HowItWorks() {
         >
           {steps.map((step, i) => (
             <Col xs={24} sm={12} md={8} key={step.id}>
+              {/* Fade animation container */}
               <div
                 ref={(el) => (stepRefs.current[i] = el)}
                 className={`fade-element delay-${i}`}
@@ -103,9 +111,11 @@ export default function HowItWorks() {
                 <div
                   style={{
                     backgroundImage: `linear-gradient(
-      rgba(255, 255, 255, 0.92),
-      rgba(255, 255, 255, 0.92)
-    ), url(${i === 0 ? imageBg1 : i === 1 ? imageBg2 : imageBg3})`,
+                      rgba(255, 255, 255, 0.92),
+                      rgba(255, 255, 255, 0.92)
+                    ), url(${
+                      i === 0 ? imageBg1 : i === 1 ? imageBg2 : imageBg3
+                    })`,
                     backgroundSize: "cover",
                     backgroundRepeat: "no-repeat",
                     backgroundPosition: "center",
@@ -114,6 +124,7 @@ export default function HowItWorks() {
                     boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
                     transition: "transform 0.3s",
                   }}
+                  // Hover effect: card lifts up slightly
                   onMouseEnter={(e) =>
                     (e.currentTarget.style.transform = "translateY(-6px)")
                   }
@@ -121,6 +132,7 @@ export default function HowItWorks() {
                     (e.currentTarget.style.transform = "translateY(0)")
                   }
                 >
+                  {/* Icon, title, and description */}
                   {step.icon}
                   <Title level={4} style={{ marginTop: 16 }}>
                     {step.title}
@@ -135,16 +147,14 @@ export default function HowItWorks() {
         </Row>
       </div>
 
-      {/* CTA fills lower half */}
+      {/* --- Call-to-Action banner --- */}
       <div
         ref={ctaRef}
         style={{
           backgroundImage: `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.3)), url(${image})`,
-
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center",
-
           borderRadius: 12,
           color: "#fff",
           padding: "80px 20px 100px",
@@ -153,6 +163,7 @@ export default function HowItWorks() {
         }}
       >
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          {/* CTA text */}
           <Title level={2} style={{ color: "#fff" }}>
             Join a Community of Creators & Fans
           </Title>
@@ -162,6 +173,7 @@ export default function HowItWorks() {
             Connect, share, and chat in real time with people who inspire you.
           </Paragraph>
 
+          {/* CTA button */}
           <GradientButton
             icon={<UserAddOutlined />}
             text="Join Today"
@@ -176,7 +188,7 @@ export default function HowItWorks() {
             }}
           />
 
-          {/* Scroll-down button */}
+          {/* Scroll-down arrow to next section */}
           <div
             onClick={handleScrollNext}
             style={{

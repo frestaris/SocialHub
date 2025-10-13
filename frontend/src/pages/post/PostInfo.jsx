@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 
 // --- Libraries ---
 import { Typography, Avatar, Button, Grid, Modal } from "antd";
-import { UserOutlined } from "@ant-design/icons";
+import { UserOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 // --- Utils ---
 import moment from "../../utils/momentShort";
@@ -17,11 +17,10 @@ import { useSelector } from "react-redux";
 import VideoPlayer from "./VideoPlayer";
 import FollowButton from "../../components/common/FollowButton";
 import PostActions from "../../components/post/cards/PostActions";
+import ArrowButton from "../../components/common/ArrowButton";
 
 const { Text, Title } = Typography;
 const { useBreakpoint } = Grid;
-import ArrowButton from "../../components/common/ArrowButton";
-import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 export default function PostInfo({ post }) {
   const [expanded, setExpanded] = useState(false);

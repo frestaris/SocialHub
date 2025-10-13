@@ -22,6 +22,7 @@ import { auth, googleProvider, githubProvider } from "../../firebase";
 import { Button, Form, Input, Divider, Typography, Space, Spin } from "antd";
 import { LoginOutlined, UserAddOutlined } from "@ant-design/icons";
 
+// --- Assets ---
 import googleIcon from "../../assets/google-logo.png";
 import githubIcon from "../../assets/github.png";
 import bgImage from "../../assets/bg-card-1.jpg";

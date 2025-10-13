@@ -141,12 +141,32 @@ export default function Navigation() {
           />
           <span
             style={{
-              fontWeight: 700,
+              fontWeight: 600,
               fontSize: 22,
               color: "#0F172A",
             }}
           >
-            Social Hub
+            Social
+          </span>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontWeight: 600,
+              fontSize: 18,
+              color: "#fff",
+              background: "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
+              padding: "2px 12px",
+              borderRadius: "6px",
+              border: "1px solid #3b82f6",
+              boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+              lineHeight: 1.4,
+              height: "fit-content",
+              marginTop: 1,
+            }}
+          >
+            Hub
           </span>
         </div>
 

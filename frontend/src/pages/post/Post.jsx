@@ -10,7 +10,7 @@ import {
 } from "../../redux/post/postApi";
 
 // --- Libraries ---
-import { Divider, Spin, Result, Button } from "antd";
+import { Divider, Spin, Result } from "antd";
 
 // --- Components ---
 import PostInfo from "./PostInfo";

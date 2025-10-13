@@ -8,10 +8,13 @@ import { auth } from "../../firebase";
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 
 // --- UI Libraries ---
-import { Form, Input, Button, Typography, Spin, Result } from "antd";
+import { Form, Input, Typography, Result } from "antd";
 
 // --- Utils ---
 import { handleSuccess, handleError } from "../../utils/handleMessage";
+
+// --- Components ---
+import GradientButton from "../../components/common/GradientButton";
 
 const { Title } = Typography;
 

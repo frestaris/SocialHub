@@ -7,12 +7,14 @@ const { Title } = Typography;
 const breakpointColumns = { default: 3, 1100: 2, 700: 1 };
 
 export default function TrendingPosts() {
+  // --- Fetch top trending posts ---
   const { data, isLoading, isFetching } = useGetPostsQuery({
     sort: "trending",
     limit: 8,
   });
   const posts = data?.posts || [];
 
+  // --- Placeholder skeletons for loading state ---
   const skeletonArray = Array.from({ length: 6 });
 
   return (
@@ -21,11 +23,12 @@ export default function TrendingPosts() {
       style={{ padding: "20px 0", background: "#fff" }}
     >
       <div style={{ maxWidth: 1000, margin: "0 auto", padding: "0 16px" }}>
+        {/* Section heading */}
         <Title level={2} style={{ marginBottom: 24 }}>
           Trending Now
         </Title>
 
-        {/* Show Skeletons while loading */}
+        {/* --- Loading: show skeletons while fetching data --- */}
         {isLoading ? (
           <Masonry
             breakpointCols={breakpointColumns}
@@ -47,6 +50,7 @@ export default function TrendingPosts() {
             ))}
           </Masonry>
         ) : posts.length > 0 ? (
+          // --- Success: display trending posts in Masonry grid ---
           <Masonry
             breakpointCols={breakpointColumns}
             className="masonry-grid"
@@ -59,6 +63,7 @@ export default function TrendingPosts() {
             ))}
           </Masonry>
         ) : isFetching ? (
+          // --- Intermediate fetching (spinner) ---
           <div
             style={{
               display: "flex",
@@ -70,6 +75,7 @@ export default function TrendingPosts() {
             <Spin size="large" />
           </div>
         ) : (
+          // --- Empty state ---
           <p style={{ textAlign: "center", color: "#777" }}>
             No trending posts yet.
           </p>
