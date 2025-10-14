@@ -32,7 +32,7 @@ export default function PostInfo({ post }) {
       if (contentRef.current) {
         const el = contentRef.current;
         const lineHeight = parseInt(window.getComputedStyle(el).lineHeight, 10);
-        const maxHeight = lineHeight * 3; // limit to 3 lines
+        const maxHeight = lineHeight * 6; // limit to 6 lines
         setIsOverflowing(el.scrollHeight > maxHeight);
       }
     };
@@ -293,7 +293,7 @@ export default function PostInfo({ post }) {
               transition: "max-height 0.4s ease",
               maxHeight: expanded
                 ? `${contentRef.current?.scrollHeight || 500}px`
-                : "4.8em", // ≈ 3 lines * 1.6 line-height
+                : "9.6em", // 6 lines * 1.6 line-height
             }}
           >
             <p

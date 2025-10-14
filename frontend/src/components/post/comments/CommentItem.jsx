@@ -98,7 +98,7 @@ export default function CommentItem({
       <List.Item.Meta
         avatar={
           <Avatar
-            src={item.userId?.avatar || undefined}
+            src={item.userId?.avatar || null}
             icon={<UserOutlined />}
             size={isReply ? 28 : 32}
           />
@@ -106,17 +106,32 @@ export default function CommentItem({
         title={
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <Link to={`/profile/${item.userId?._id}`}>
+              {item.userId ? (
+                <Link to={`/profile/${item.userId._id}`}>
+                  <Text
+                    strong
+                    style={{
+                      color: "#1677ff",
+                      fontSize: isReply ? 13 : 14,
+                    }}
+                  >
+                    {item.userId.username}
+                  </Text>
+                </Link>
+              ) : (
                 <Text
                   strong
+                  type="secondary"
                   style={{
-                    color: "#1677ff",
                     fontSize: isReply ? 13 : 14,
+                    fontStyle: "italic",
+                    color: "#999",
                   }}
                 >
-                  {item.userId?.username}
+                  Unknown User
                 </Text>
-              </Link>
+              )}
+
               <Text
                 type="secondary"
                 style={{

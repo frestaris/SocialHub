@@ -93,7 +93,9 @@ export default function CommentList({
           <CommentItem
             item={item}
             currentUser={currentUser}
-            isOwner={currentUser?._id === item.userId?._id}
+            isOwner={Boolean(
+              currentUser && item.userId && currentUser._id === item.userId._id
+            )}
             expanded={expanded[item._id]}
             onToggleExpanded={() => toggleExpanded(item._id)}
             onEdit={onEdit}
@@ -166,7 +168,11 @@ export default function CommentList({
                       <CommentItem
                         item={reply}
                         currentUser={currentUser}
-                        isOwner={currentUser?._id === reply.userId?._id}
+                        isOwner={Boolean(
+                          currentUser &&
+                            reply.userId &&
+                            currentUser._id === reply.userId._id
+                        )}
                         expanded={expanded[reply._id]}
                         onToggleExpanded={() => toggleExpanded(reply._id)}
                         onEdit={(r) => onEdit({ ...r, parentId: item._id })}
