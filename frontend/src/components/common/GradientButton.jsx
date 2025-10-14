@@ -1,5 +1,26 @@
 import { Button } from "antd";
 
+/**
+ *
+ * --------------------------------------
+ * Reusable gradient-styled button built on Ant Design's <Button>.
+ *
+ * Responsibilities:
+ *  Provides consistent gradient styling across the app
+ *  Handles hover glow transitions
+ *  Supports AntD props like block, loading, disabled, and htmlType
+ *
+ * Props:
+ * - icon: React node (optional)
+ * - text: string → button label
+ * - onClick: function → click handler
+ * - type: AntD button type (default: "primary")
+ * - style: custom inline style overrides
+ * - block: boolean → full width
+ * - loading: boolean → AntD spinner state
+ * - disabled: boolean → disables button + hover
+ * - htmlType: string → form type ("button", "submit", etc.)
+ */
 export default function GradientButton({
   icon,
   text,
@@ -13,8 +34,9 @@ export default function GradientButton({
 }) {
   const baseGradient = "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
   const hoverGradient = "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-  const disabledColor = "#d9d9d9"; // ✅ AntD default disabled gray
+  const disabledColor = "#d9d9d9"; // default Ant Design gray
 
+  // --- Hover effects ---
   const handleMouseEnter = (e) => {
     if (disabled) return;
     e.currentTarget.style.background = hoverGradient;
@@ -27,6 +49,7 @@ export default function GradientButton({
     e.currentTarget.style.boxShadow = "0 2px 8px rgba(59,130,246,0.35)";
   };
 
+  // --- Render ---
   return (
     <Button
       type={type}

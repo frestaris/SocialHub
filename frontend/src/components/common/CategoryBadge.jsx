@@ -3,14 +3,27 @@ import { categories, categoryColors } from "../../utils/posts/categories";
 
 const { useBreakpoint } = Grid;
 
+/**
+ *
+ * --------------------------------------
+ * Displays a colored label (Tag) for a post’s category.
+ *
+ * Responsibilities:
+ *  Uses global category definitions (label + icon)
+ *  Adjusts size for mobile breakpoints
+ *  Fallbacks gracefully if category not recognized
+ *
+ * Props:
+ * - category: string → category key (e.g. "music", "travel")
+ */
 export default function CategoryBadge({ category }) {
   const screens = useBreakpoint();
   const isMobile = !screens.sm;
 
-  // Find the category object (label + icon) from utils
+  //  Match category data (label & icon)
   const categoryObj = categories.find((c) => c.key === category);
 
-  // Fallback: use raw category string if not found
+  //  Fallback to plain text if not found
   const label = categoryObj?.label || category;
 
   return (
@@ -26,6 +39,7 @@ export default function CategoryBadge({ category }) {
         gap: "4px",
       }}
     >
+      {/*  Icon + Label */}
       {categoryObj?.icon && <categoryObj.icon />}
       {label}
     </Tag>

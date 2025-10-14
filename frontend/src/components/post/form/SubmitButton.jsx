@@ -1,5 +1,9 @@
 import GradientButton from "../../common/GradientButton";
 
+// Handles dynamic submit button label and states for post forms
+// Shows upload progress if uploading media
+// Uses GradientButton for consistent UI theme
+
 export default function SubmitButton({
   isUploading,
   uploadProgress,

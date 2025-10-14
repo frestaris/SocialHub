@@ -4,6 +4,58 @@ import ReplyForm from "./ReplyForm";
 import CommentForm from "./CommentForm";
 import "./CommentList.css";
 
+/**
+ *
+ * ------------------------------------------------------------------
+ * This component renders a full threaded comment section for a post.
+ * It handles displaying all comments and their replies, inline editing,
+ * reply creation, deletion, and "show more" toggling — all in one place.
+ *
+ * How it works:
+ * - Loops through each top-level comment and renders it with <CommentItem />
+ * - For each comment:
+ *    • If editing, show an inline <CommentForm />
+ *    • If replying, show an inline <ReplyForm />
+ *    • If it has replies, show them nested under a collapsible container
+ *      with CSS "elbow" lines connecting avatars (see CommentList.css)
+ *
+ * Why it looks busy:
+ *   Comment threads require a lot of state coordination between editing,
+ *   replying, liking, and expanding. This file doesn’t contain logic for
+ *   CRUD operations — only UI wiring. Actual data mutations happen in
+ *   CommentsSection.jsx via RTK Query.
+ *
+ * Key props (simplified mental map):
+ *   comments ........ the full list of top-level comments
+ *   expanded ........ which comment IDs are expanded (for replies/content)
+ *   toggleExpanded ... toggles open/close for a given comment ID
+ *   currentUser ...... needed for ownership and like logic
+ *
+ *   editing .......... the comment/reply currently being edited
+ *   replyingTo ....... ID of comment currently being replied to
+ *   content .......... text of a comment being edited/created
+ *   replyContent ..... { commentId: replyText } map for replies
+ *
+ *   onEdit, onDelete ........ actions for modifying comments/replies
+ *   onReplyClick ............ open reply input under a comment
+ *   onReplySubmit ........... handle creating or editing replies
+ *   onReplyCancel ........... close reply input and clear text
+ *   onCommentSubmit ......... handle creating or editing comments
+ *   onCommentCancel ......... cancel editing a comment
+ *   onLikeComment/onLikeReply toggle like states
+ *
+ *   commentRefs ...... ref map for scroll/highlight behavior
+ *   deletingId ....... marks which comment/reply is currently deleting
+ *
+ * Styling:
+ *   Thread connections and highlight effects are handled in CommentList.css
+ *
+ * TL;DR:
+ *   This component focuses on presentation and interaction wiring for
+ *   threaded comments. The heavy lifting (API calls, mutation state)
+ *   happens one level up in CommentsSection.jsx.
+ */
+
 export default function CommentList({
   comments,
   expanded,

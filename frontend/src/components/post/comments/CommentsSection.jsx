@@ -24,6 +24,50 @@ import CommentList from "./CommentList";
 import CommentForm from "./CommentForm";
 import { useLocation } from "react-router-dom";
 
+/**
+ *
+ * ------------------------------------------------------------------
+ * This is the main controller for the comment system on a post.
+ * It manages fetching, creating, editing, deleting, replying, liking,
+ * and expanding comments — while delegating the actual UI to CommentList.
+ *
+ * What this file does:
+ *  - Fetches comments for a given post using RTK Query
+ *  - Tracks which comment/reply is being edited or replied to
+ *  - Handles creating, updating, and deleting comments or replies
+ *  - Coordinates like toggling for both comments and replies
+ *  - Scrolls and highlights a target comment when redirected from notifications
+ *
+ * Division of responsibility:
+ *  - This file owns all the logic and state (mutations, flags, coordination)
+ *  - <CommentList /> is purely visual — it just renders based on these states
+ *  - <CommentForm /> handles text input for creating/editing comments
+ *  - <ReplyForm /> handles text input for creating/editing replies
+ *
+ * Local state summary:
+ *  content ............ text for new or edited top-level comment
+ *  replyContent ....... { commentId: replyText } map for reply text fields
+ *  editing ............ current comment/reply object being edited
+ *  replyingTo ......... ID of comment currently being replied to
+ *  expanded ........... map of which comment/reply IDs are expanded
+ *  deletingId ......... marks which comment/reply is currently deleting
+ *  visibleCount ....... how many comments are currently visible (pagination)
+ *  error .............. used for empty-comment validation feedback
+ *
+ *
+ * UX details worth remembering:
+ *  - "Show more comments" button reveals comments in batches of 3
+ *  - Highlights a comment when redirected via ?comment= query param
+ *  - Automatically expands replies for the highlighted comment
+ *  - Error handling and success messages use handleMessage utils
+ *
+ * TL;DR:
+ *   CommentsSection is the logic hub for comment interactions.
+ *   CommentList is the renderer.
+ *   Together they form a complete threaded comment experience with
+ *   inline editing, replies, likes, and highlight-on-redirect support.
+ */
+
 export default function CommentsSection({ postId }) {
   const [content, setContent] = useState("");
   const [replyContent, setReplyContent] = useState({});

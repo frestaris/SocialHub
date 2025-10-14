@@ -1,8 +1,25 @@
 import { useState } from "react";
 
+/**
+ *
+ * --------------------------------------
+ * A reusable circular button used for carousel navigation.
+ *
+ * Responsibilities:
+ * Renders a left/right arrow button
+ * Handles hover color transitions
+ * Automatically hides when disabled
+ *
+ * Props:
+ * - icon: React node for the arrow icon
+ * - onClick: click handler
+ * - position: "left" | "right" for placement
+ * - disabled: boolean, hides button when true
+ */
 export default function ArrowButton({ icon, onClick, position, disabled }) {
   const [hovered, setHovered] = useState(false);
 
+  // Skip rendering if disabled (Ant Design Carousel passes disabled state)
   if (disabled) return null;
 
   return (

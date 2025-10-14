@@ -2,6 +2,21 @@ import { List, Avatar } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import moment from "../../utils/momentShort";
 
+/**
+ *
+ * --------------------------------------
+ * Renders a list of notifications with avatars and timestamps.
+ *
+ * Responsibilities:
+ *  Displays sender info and action message
+ *  Highlights unread notifications
+ *  Handles click events for navigation or marking as read
+ *
+ * Props:
+ * - notifications: array → list of notification objects
+ * - isLoading: bool → shows AntD loader
+ * - onClick: fn(notification) → callback when clicked
+ */
 export default function NotificationsList({
   notifications,
   isLoading,
@@ -21,10 +36,12 @@ export default function NotificationsList({
             cursor: "pointer",
           }}
         >
+          {/*  Sender avatar */}
           <List.Item.Meta
             avatar={<Avatar src={n.fromUser?.avatar} icon={<UserOutlined />} />}
             title={
               <span style={{ fontSize: 14 }}>
+                {/*  Notification types */}
                 {n.type === "new_post" && (
                   <span>
                     <b>{n.fromUser?.username}</b> posted a new post
@@ -71,6 +88,8 @@ export default function NotificationsList({
                     <b>{n.fromUser?.username}</b> followed you
                   </span>
                 )}
+
+                {/*  Timestamp */}
                 <span style={{ fontSize: 12, color: "#888", marginLeft: 6 }}>
                   {moment(n.createdAt).fromNow()}
                 </span>

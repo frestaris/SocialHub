@@ -4,9 +4,24 @@ import NotificationsList from "./NotificationsList";
 import useNotificationsFeed from "../../hooks/useNotificationsFeed";
 import { useState } from "react";
 
+/**
+ *
+ * --------------------------------------
+ * Displays a full-height notifications drawer for mobile devices.
+ *
+ * Responsibilities:
+ *  Fetch and display user notifications
+ *  Handles scroll-based pagination
+ *  Marks notifications as read on open
+ *  Navigates or closes drawer when an item is clicked
+ *
+ * Props:
+ * - onNavigate (optional): callback fired when a notification leads to navigation
+ */
 export default function NotificationsDrawer({ onNavigate }) {
   const [open, setOpen] = useState(false);
 
+  // Hook for fetching + pagination
   const {
     notifications,
     unreadCount,
@@ -18,6 +33,7 @@ export default function NotificationsDrawer({ onNavigate }) {
     markAsRead,
   } = useNotificationsFeed({ limit: 15, active: open });
 
+  //  Handle notification click → navigate & close
   const handleNotificationClick = (n) => {
     handleClick(n);
     setOpen(false);
@@ -26,6 +42,7 @@ export default function NotificationsDrawer({ onNavigate }) {
 
   return (
     <>
+      {/*  Button trigger (with badge) */}
       <Button
         type="text"
         icon={
@@ -39,6 +56,7 @@ export default function NotificationsDrawer({ onNavigate }) {
         }}
       />
 
+      {/*  Right-side drawer */}
       <Drawer
         title="Notifications"
         placement="right"
@@ -63,12 +81,14 @@ export default function NotificationsDrawer({ onNavigate }) {
             background: "#fafafa",
           }}
         >
+          {/*  Notifications list */}
           <NotificationsList
             notifications={notifications}
             isLoading={isLoading}
             onClick={handleNotificationClick}
           />
 
+          {/*  Infinite scroll loader */}
           {loadingMore && !isLoading && (
             <div
               style={{

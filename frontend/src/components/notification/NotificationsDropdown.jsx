@@ -4,6 +4,17 @@ import NotificationsList from "./NotificationsList";
 import useNotificationsFeed from "../../hooks/useNotificationsFeed";
 import { useState } from "react";
 
+/**
+ *
+ * --------------------------------------
+ * Displays a compact notifications feed as a dropdown (for desktop).
+ *
+ * Responsibilities:
+ *  Fetches and displays latest notifications
+ *  Handles infinite scroll & mark-as-read logic
+ *  Updates unread badge dynamically
+ *  Closes dropdown when a notification is clicked
+ */
 export default function NotificationsDropdown() {
   const [open, setOpen] = useState(false);
 
@@ -26,7 +37,7 @@ export default function NotificationsDropdown() {
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (next) markAsRead();
+        if (next) markAsRead(); // mark all as read when opened
       }}
       popupRender={() => (
         <div
@@ -41,6 +52,7 @@ export default function NotificationsDropdown() {
             boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
           }}
         >
+          {/*  Notifications list */}
           <NotificationsList
             notifications={notifications}
             isLoading={isLoading}
@@ -50,6 +62,7 @@ export default function NotificationsDropdown() {
             }}
           />
 
+          {/*  Loading spinner (fetching more) */}
           {(isFetching || loadingMore) && (
             <div style={{ textAlign: "center", padding: 8 }}>
               <Spin size="small" />
@@ -58,6 +71,7 @@ export default function NotificationsDropdown() {
         </div>
       )}
     >
+      {/* Bell icon with unread badge */}
       <span>
         <Badge
           count={unreadCount}

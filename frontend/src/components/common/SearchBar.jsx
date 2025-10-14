@@ -1,11 +1,24 @@
 import { Input, Button } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 
+/**
+ *
+ * --------------------------------------
+ * A reusable rounded search input with icon button.
+ *
+ * Responsibilities:
+ *  Captures user input for search queries
+ *  Triggers search on Enter or button click
+ *  Provides hover & focus styling
+ *
+ * Props:
+ * - value: string → current search value
+ * - onChange: fn(value) → update handler
+ * - onSearch: fn(value) → trigger search logic
+ */
 export default function SearchBar({ value, onChange, onSearch }) {
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      onSearch(value);
-    }
+    if (e.key === "Enter") onSearch(value);
   };
 
   return (
@@ -21,7 +34,7 @@ export default function SearchBar({ value, onChange, onSearch }) {
         padding: "2px 8px",
       }}
     >
-      {/* Search Input */}
+      {/* Input field */}
       <Input
         placeholder="Search"
         size="large"
@@ -37,7 +50,7 @@ export default function SearchBar({ value, onChange, onSearch }) {
         }}
       />
 
-      {/* Search Button */}
+      {/*  Search icon button */}
       <Button
         type="text"
         icon={<SearchOutlined style={{ color: "#555", fontSize: 18 }} />}

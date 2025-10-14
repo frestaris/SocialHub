@@ -23,14 +23,15 @@ import {
   LoginOutlined,
 } from "@ant-design/icons";
 
-import logo from "../../assets/logo.png";
-import imageBg from "../../assets/bg-card-1.jpg";
 // --- Routing & Redux ---
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../redux/auth/authSlice";
 
-// --- Local components/hooks ---
+import logo from "../../assets/logo.png";
+import imageBg from "../../assets/bg-card-1.jpg";
+
+// --- Local components ---
 import SettingsModal from "../../pages/user/settings/SettingsModal";
 import Upload from "../post/modals/Upload";
 import SearchBar from "./SearchBar";
@@ -42,26 +43,40 @@ import GradientButton from "./GradientButton";
 const { Header } = Layout;
 const { useBreakpoint } = Grid;
 
+/**
+ *
+ * --------------------------------------
+ * Top-level navigation bar of the app.
+ *
+ * Responsibilities:
+ *  Handles navigation across pages (Explore, Profile, etc.)
+ *  Integrates search functionality
+ *  Displays notifications, messages, and avatar menu
+ *  Supports responsive behavior with Drawer for mobile
+ */
 export default function Navigation() {
   // --- Local UI state ---
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
-  // --- Responsive breakpoints ---
+  // --- Responsive ---
   const screens = useBreakpoint();
 
-  // --- Router + Redux ---
+  // --- Routing + Redux ---
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
-  // --- Global state ---
   const currentUser = useSelector((state) => state.auth.user);
 
-  // --- Custom hooks ---
+  // --- Custom Hooks ---
   const { inputValue, setInputValue, handleSearch } = useSearchHandler();
 
-  // --- Helpers ---
+  // --- Derived values ---
+  const unreadCount = Object.values(
+    useSelector((s) => s.chat.unread) || {}
+  ).filter((c) => c > 0).length;
+
+  // --- Helper functions ---
   const handleLogout = () => {
     dispatch(logout());
     navigate("/explore");
@@ -71,9 +86,6 @@ export default function Navigation() {
     navigate(path);
     if (close) setDrawerOpen(false);
   };
-  const unreadCount = Object.values(
-    useSelector((s) => s.chat.unread) || {}
-  ).filter((c) => c > 0).length;
 
   // --- Avatar dropdown menu ---
   const avatarMenu = {
@@ -103,6 +115,7 @@ export default function Navigation() {
 
   return (
     <>
+      {/*  Sticky Header */}
       <Header
         style={{
           display: "flex",
@@ -116,7 +129,7 @@ export default function Navigation() {
           zIndex: 1000,
         }}
       >
-        {/* Logo */}
+        {/*  Logo */}
         <div
           onClick={() => {
             navigate("/");
@@ -139,13 +152,7 @@ export default function Navigation() {
               marginTop: -2,
             }}
           />
-          <span
-            style={{
-              fontWeight: 600,
-              fontSize: 22,
-              color: "#0F172A",
-            }}
-          >
+          <span style={{ fontWeight: 600, fontSize: 22, color: "#0F172A" }}>
             Social
           </span>
           <span
@@ -170,7 +177,7 @@ export default function Navigation() {
           </span>
         </div>
 
-        {/* SearchBar (desktop only) */}
+        {/*  Search (desktop only) */}
         {screens.sm && (
           <div style={{ flex: 1, maxWidth: 500, margin: "0 16px" }}>
             <SearchBar
@@ -181,13 +188,13 @@ export default function Navigation() {
           </div>
         )}
 
-        {/* Right section */}
+        {/*  Right Section */}
         {!screens.md ? (
           // ----- MOBILE -----
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             {currentUser && (
               <>
-                {/* Chat button icon (mobile) */}
+                {/*  Chat toggle */}
                 <Badge
                   count={unreadCount}
                   overflowCount={9}
@@ -198,11 +205,7 @@ export default function Navigation() {
                     type="text"
                     icon={
                       <MessageOutlined
-                        style={{
-                          fontSize: 20,
-                          position: "relative",
-                          top: -2,
-                        }}
+                        style={{ fontSize: 20, top: -2, position: "relative" }}
                       />
                     }
                     onClick={() =>
@@ -211,12 +214,12 @@ export default function Navigation() {
                   />
                 </Badge>
 
-                {/* Notifications drawer (mobile) */}
+                {/*  Notifications (drawer) */}
                 <NotificationsDrawer />
               </>
             )}
 
-            {/* Hamburger menu (always visible) */}
+            {/*  Menu button */}
             <Button
               type="text"
               icon={<MenuOutlined style={{ fontSize: 20 }} />}
@@ -245,15 +248,17 @@ export default function Navigation() {
 
             {currentUser ? (
               <Space size="middle" align="center">
+                {/*  Create post */}
                 <GradientButton
                   icon={<PlusOutlined />}
                   text="Post"
                   onClick={() => setUploadOpen(true)}
                 />
 
-                {/* --- Desktop notifications --- */}
+                {/* Notifications dropdown */}
                 <NotificationsDropdown />
 
+                {/* Avatar menu */}
                 <Dropdown menu={avatarMenu} placement="bottomRight">
                   <Avatar
                     src={currentUser?.avatar || null}
@@ -274,19 +279,18 @@ export default function Navigation() {
         )}
       </Header>
 
-      {/* Drawer (mobile main menu) */}
+      {/*  Mobile Drawer */}
       <Drawer
         title="Social Hub"
         placement="right"
-        closable
         onClose={() => setDrawerOpen(false)}
         open={drawerOpen}
         styles={{
           body: {
             backgroundImage: `linear-gradient(
-        rgba(255, 255, 255, 0.94),
-        rgba(255, 255, 255, 0.94)
-      ), url(${imageBg})`,
+              rgba(255, 255, 255, 0.94),
+              rgba(255, 255, 255, 0.94)
+            ), url(${imageBg})`,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
@@ -294,7 +298,7 @@ export default function Navigation() {
           },
         }}
       >
-        {/* SearchBar inside drawer */}
+        {/*  Search inside drawer */}
         <div style={{ marginBottom: 16 }}>
           <SearchBar
             value={inputValue}
@@ -306,6 +310,7 @@ export default function Navigation() {
           />
         </div>
 
+        {/*  Menu list */}
         <Menu
           mode="vertical"
           selectable={false}
@@ -318,14 +323,11 @@ export default function Navigation() {
             boxShadow: "0 2px 6px rgba(59, 130, 246, 0.08)",
           }}
           items={[
-            {
-              key: "explore",
-              icon: <CompassOutlined />,
-              label: "Explore",
-            },
+            { key: "explore", icon: <CompassOutlined />, label: "Explore" },
           ]}
         />
 
+        {/* Profile / Login actions */}
         <div style={{ marginTop: "16px" }}>
           {!currentUser ? (
             <GradientButton
@@ -381,7 +383,7 @@ export default function Navigation() {
         </div>
       </Drawer>
 
-      {/* Modals (only when logged in) */}
+      {/* Modals (Settings / Upload) */}
       {currentUser && (
         <>
           <SettingsModal

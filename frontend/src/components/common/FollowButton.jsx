@@ -15,6 +15,21 @@ import {
   clearNotifications,
 } from "../../utils/handleMessage";
 
+/**
+ *
+ * --------------------------------------
+ * Handles user follow/unfollow interactions.
+ *
+ * Responsibilities:
+ *  Toggles follow/unfollow via API
+ *  Prevents action if user is not logged in
+ *  Displays gradient styling and hover animation
+ *
+ * Props:
+ * - userId: ID of the profile being followed
+ * - isFollowing: boolean → whether current user already follows
+ * - size: optional string ("small" | "middle"), defaults to "middle"
+ */
 export default function FollowButton({ userId, isFollowing, size = "middle" }) {
   const currentUser = useSelector((state) => state.auth.user);
   const navigate = useNavigate();
@@ -22,6 +37,11 @@ export default function FollowButton({ userId, isFollowing, size = "middle" }) {
   const [toggleFollowUser] = useToggleFollowUserMutation();
   const [loading, setLoading] = useState(false);
 
+  /**
+   *  Handle follow/unfollow click
+   * - Redirects to login if unauthenticated
+   * - Calls API to toggle state
+   */
   const handleFollowToggle = async (e) => {
     e.stopPropagation();
 
@@ -55,6 +75,7 @@ export default function FollowButton({ userId, isFollowing, size = "middle" }) {
     }
   };
 
+  // --- Render ---
   return (
     <Button
       size={size}

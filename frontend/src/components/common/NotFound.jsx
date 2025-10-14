@@ -3,6 +3,15 @@ import { Link } from "react-router-dom";
 import { CompassOutlined } from "@ant-design/icons";
 import GradientButton from "../common/GradientButton";
 
+/**
+ *
+ * --------------------------------------
+ * Displays a 404 error page when route is not found.
+ *
+ * Responsibilities:
+ *  Informs user that the page doesn’t exist
+ *  Provides a redirect button back to Explore
+ */
 export default function NotFound() {
   return (
     <Result

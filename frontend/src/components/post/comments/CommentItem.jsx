@@ -6,6 +6,56 @@ import PostDropdown from "../cards/PostDropdown";
 
 const { Paragraph, Text } = Typography;
 
+/**
+ *
+ * ------------------------------------------------------------------
+ * Renders a single comment or reply item within the thread.
+ * Used by CommentList to display both top-level comments and nested replies.
+ *
+ * What this component does:
+ *  - Shows the author’s avatar, username, and timestamp
+ *  - Displays comment text with an optional “Show More / Show Less” toggle
+ *  - Handles like toggling for both comments and replies
+ *  - Shows inline edit/delete dropdown for the comment owner
+ *  - Optionally renders a “Reply” link for top-level comments
+ *  - Accepts children (used for nested ReplyForm components)
+ *
+ * Key behaviors:
+ *  • Likes:
+ *      Checks if current user already liked this comment/reply
+ *      Calls onLikeComment or onLikeReply depending on isReply
+ *
+ *  • Ownership:
+ *      Displays a PostDropdown menu (Edit/Delete) only if isOwner === true
+ *
+ *  • Expansion:
+ *      Long comments (>120 chars) collapse by default;
+ *      clicking “Show More” expands content smoothly
+ *
+ * Props overview (simplified mental model):
+ *  item .......... the comment or reply object
+ *  isOwner ....... true if current user owns this comment/reply
+ *  currentUser ... logged-in user object (for likes/reply access)
+ *  isReply ....... marks if this is a nested reply (affects styling)
+ *  parentId ...... ID of parent comment (used for reply like toggles)
+ *  expanded ...... whether content is expanded or truncated
+ *  deleting ...... used to show loading state in the dropdown
+ *
+ *  onEdit, onDelete ........ owner actions (edit/delete)
+ *  onReplyClick ............ open reply input under this comment
+ *  onLikeComment/onLikeReply toggle like state
+ *  onToggleExpanded ........ expand/collapse long content
+ *
+ * Styling notes:
+ *  - Uses inline styles to control layout and spacing
+ *  - Avatar sizes and font sizes scale down for replies
+ *  - Reply lines/threads are handled by CommentList.css, not here
+ *
+ * TL;DR:
+ *   CommentItem is the smallest visual building block in the comment thread.
+ *   It’s presentation-focused but wired for all comment/reply actions.
+ */
+
 export default function CommentItem({
   item,
   isOwner,

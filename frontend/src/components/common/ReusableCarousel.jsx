@@ -1,11 +1,26 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { Carousel, Grid } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
+import ArrowButton from "./ArrowButton";
 
 const { useBreakpoint } = Grid;
 
-import ArrowButton from "./ArrowButton";
-
+/**
+ *
+ * --------------------------------------
+ * A responsive wrapper for Ant Design's Carousel.
+ *
+ * Responsibilities:
+ *  Adjusts slides count per screen breakpoint
+ *  Shows custom ArrowButton for navigation
+ *  Handles boundary scrolling and arrow visibility
+ *
+ * Props:
+ * - children: array of slide components
+ * - settings: Ant Design Carousel config overrides
+ * - slidesToShow: number or object defining responsive slides
+ *   e.g. { default: 4.3, lg: 3.2, md: 2.3, sm: 1.2 }
+ */
 export default function ReusableCarousel({
   children,
   settings,
@@ -14,18 +29,15 @@ export default function ReusableCarousel({
   const carouselRef = useRef(null);
   const screens = useBreakpoint();
 
-  // ---  Calculate slidesToShow ---
-  let slidesToShow = customSlides || 4.3; // fallback default
-
+  // --- Calculate slides to show dynamically ---
+  let slidesToShow = customSlides || 4.3;
   if (typeof customSlides === "object") {
-    // Custom slides per breakpoint (preferred)
     if (screens.xl) slidesToShow = customSlides.default || 3.2;
     else if (screens.lg) slidesToShow = customSlides.lg || 2.2;
     else if (screens.md) slidesToShow = customSlides.md || 2.2;
     else if (screens.sm) slidesToShow = customSlides.sm || 1.2;
     else slidesToShow = customSlides.xs || 1.0;
   } else {
-    // Fallback hardcoded breakpoints
     if (!screens.lg && screens.md) slidesToShow = 3.3;
     if (!screens.md && screens.sm) slidesToShow = 2.3;
     if (!screens.sm) slidesToShow = 1.3;
@@ -33,13 +45,13 @@ export default function ReusableCarousel({
 
   const total = children.length;
 
-  // ---  Arrow state (show/hide left/right) ---
+  // --- Track which arrows should be visible ---
   const [showArrows, setShowArrows] = useState({
     left: false,
     right: total > slidesToShow,
   });
 
-  // ---  After slide change → adjust arrows ---
+  // --- Adjust arrow visibility after each slide change ---
   const handleAfterChange = useCallback(
     (index) => {
       setShowArrows({
@@ -50,7 +62,7 @@ export default function ReusableCarousel({
     [total, slidesToShow]
   );
 
-  // ---  Prevent scrolling beyond last safe index ---
+  // --- Prevent scroll beyond last safe index ---
   const handleBeforeChange = (current, next) => {
     if (next + slidesToShow > total) {
       const safeIndex = Math.max(0, total - Math.ceil(slidesToShow));
@@ -59,12 +71,12 @@ export default function ReusableCarousel({
     }
   };
 
-  // ---  Reset arrows on mount or when breakpoints change ---
+  // --- Reset arrow state on mount / breakpoint change ---
   useEffect(() => {
     handleAfterChange(0);
   }, [handleAfterChange]);
 
-  // ---  Render Carousel ---
+  // --- Render ---
   return (
     <Carousel
       ref={carouselRef}
@@ -91,8 +103,9 @@ export default function ReusableCarousel({
       slidesToScroll={1}
       beforeChange={handleBeforeChange}
       afterChange={handleAfterChange}
-      {...settings} // allow overrides
+      {...settings} // allow external overrides
     >
+      {/* Child slides with padding */}
       {children.map((child, idx) => (
         <div key={idx} style={{ padding: "0 12px" }}>
           {child}
