@@ -6,19 +6,77 @@ A **modern social platform built with the MERN stack (MongoDB, Express.js, React
 
 ---
 
-## 🚀 Live Demo
-
-- **Website:** [https://social-hub-xi.vercel.app](https://social-hub-xi.vercel.app)
-- **Backend:** Hosted on Render
-- **Database:** MongoDB Atlas
-
----
-
----
+🔗 <a href="https://social-hub-xi.vercel.app">Live Demo</a>
 
 ## 🖼️ Screenshots
 
-## ![Home Screenshot](./src/assets/homepage-desktop.png)
+### 🏠 Home Page
+
+<p align="center">
+  <img src="frontend/src/assets/screenshots/homepage-desktop.png" width="90%" alt="Home Page" />
+</p>
+<p align="center">
+  <sub>The landing page showcasing trending posts, featured creators.</sub>
+</p>
+
+---
+
+### 🧭 Explore Feed
+
+<p align="center">
+  <img src="frontend/src/assets/screenshots/feed.png" width="90%" alt="Explore Feed" />
+</p>
+<p align="center">
+  <sub>Explore trending content with a responsive Masonry grid layout and category filters.</sub>
+</p>
+
+---
+
+### 💬 Chat System
+
+<p align="center">
+ <img src="frontend/src/assets/screenshots/chat-list.png" width="70%" alt="Chat List" />
+</p>
+  <img src="frontend/src/assets/screenshots/multiple-chats.png" width="90%" alt="Chat System" />
+</p>
+<p align="center">
+  <sub>Real-time messaging with typing indicators, seen ticks, and message previews.</sub>
+</p>
+
+---
+
+### 🔔 Notifications
+
+<p align="center">
+  <img src="frontend/src/assets/screenshots/notifications.png" width="90%" alt="Notifications" />
+</p>
+<p align="center">
+  <sub>Instant alerts for likes, comments, follows, and replies — synced via Socket.IO.</sub>
+</p>
+
+---
+
+### 👤 Profile Page
+
+<p align="center">
+  <img src="frontend/src/assets/screenshots/profile-settings.png" width="90%" alt="Profile Page" />
+</p>
+<p align="center">
+  <sub>Fully customizable user profiles with cover, avatar, and follower stats.</sub>
+</p>
+
+---
+
+### ➕ Create Post
+
+<p align="center">
+  <img src="frontend/src/assets/screenshots/create-post.png" width="90%" alt="Create Post" />
+</p>
+<p align="center">
+  <sub>Upload photos, videos, YouTube links or image urls.</sub>
+</p>
+
+---
 
 ## ✨ Features
 
@@ -361,21 +419,19 @@ src/
 
 ## 🧠 Future Enhancements
 
-- Group chats and media sharing
+- Group chats
 - End-to-end encryption for messages
 - Dark mode theme
 - Post analytics dashboard
-- Voice and video calling integration
 
 ---
 
-## 👨‍💻 Author
-
-**Aris Fresta**  
-[GitHub](https://github.com/frestaris) • [Live Demo](https://social-hub-xi.vercel.app)
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — free for personal and commercial use.
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/frestaris"><strong>Aris Fresta</strong></a>  
+  <br/><br/>
+  💬 Feel free to reach out via <a href="https://github.com/frestaris/SocialHub/issues">GitHub Issues</a> or contribute a PR.  
+  <br/><br/>
+  ⭐ <strong>Show Your Support</strong> — if you like this project, please give it a star on GitHub!  
+  <br/><br/>
+  🪴 This project is <strong>open source</strong> — feel free to fork it, learn from it, or use it in your own projects.
+</p>
