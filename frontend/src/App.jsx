@@ -15,13 +15,14 @@ import useAuthTokenRefresh from "./utils/firebase/useAuthTokenRefresh";
 import { useSelector } from "react-redux";
 import useChatSocket from "./utils/sockets/useChatSocket";
 import ScrollToTop from "./utils/ScrollToTop";
+import Post from "./pages/post/Post";
+
 const { Content } = Layout;
 
 // Lazy-loaded pages
 const HomePage = lazy(() => import("./pages/homepage/HomePage"));
 const Explore = lazy(() => import("./pages/explore/Explore"));
 const Profile = lazy(() => import("./pages/user/profile/Profile"));
-const Post = lazy(() => import("./pages/post/Post"));
 
 // Auth pages
 const Login = lazy(() => import("./pages/auth/Login"));

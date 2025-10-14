@@ -154,6 +154,7 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
                     background: "#f0f0f0",
                     overflow: "hidden",
                     marginTop: 12,
+                    position: "relative",
                   }}
                 >
                   <Skeleton.Image
@@ -161,7 +162,10 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
                     style={{
                       width: "100%",
                       height: "100%",
-                      borderRadius: "8px 8px 0 0",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      borderRadius: 8,
                     }}
                   />
                 </div>
