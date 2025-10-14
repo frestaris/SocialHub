@@ -10,7 +10,7 @@ import {
 } from "../../redux/post/postApi";
 
 // --- Libraries ---
-import { Divider, Spin, Result } from "antd";
+import { Divider, Result, Skeleton } from "antd";
 
 // --- Components ---
 import PostInfo from "./PostInfo";
@@ -45,7 +45,69 @@ export default function Post() {
           justifyContent: "center",
         }}
       >
-        <Spin size="large" />
+        <div
+          style={{
+            width: "100%",
+            maxWidth: 900,
+            background: "#fff",
+            borderRadius: 10,
+            boxShadow: "0 4px 10px rgba(0, 0, 0, 0.08)",
+            padding: "20px",
+            margin: "20px",
+          }}
+        >
+          {/* --- Image placeholder --- */}
+          <div
+            style={{
+              width: "100%",
+              aspectRatio: "16 / 9",
+              borderRadius: 8,
+              background: "#f0f0f0",
+              overflow: "hidden",
+              marginBottom: 20,
+              position: "relative",
+            }}
+          >
+            <Skeleton.Image
+              active
+              style={{
+                width: "100%",
+                height: "100%",
+                position: "absolute",
+                top: 0,
+                left: 0,
+                borderRadius: 8,
+              }}
+            />
+          </div>
+
+          {/* --- Avatar + username skeleton --- */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              marginBottom: 20,
+            }}
+          >
+            <Skeleton.Avatar active size="large" shape="circle" />
+            <div style={{ flex: 1 }}>
+              <Skeleton.Input
+                active
+                size="small"
+                style={{ width: 120, marginBottom: 6 }}
+              />
+            </div>
+          </div>
+
+          {/* --- Text/content skeleton --- */}
+          <Skeleton
+            active
+            paragraph={{ rows: 3 }}
+            title={false}
+            style={{ marginTop: 8 }}
+          />
+        </div>
       </div>
     );
   }

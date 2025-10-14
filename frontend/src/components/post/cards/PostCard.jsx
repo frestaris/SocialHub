@@ -39,6 +39,7 @@ function PostImage({ src, alt, showOverlay, fitMode = "cover" }) {
             aspectRatio: naturalRatio ? `1 / ${naturalRatio}` : "16 / 9",
             borderRadius: 8,
             background: "#f0f0f0",
+            position: "relative",
           }}
         >
           <Skeleton.Image
@@ -46,6 +47,9 @@ function PostImage({ src, alt, showOverlay, fitMode = "cover" }) {
             style={{
               width: "100%",
               height: "100%",
+              position: "absolute",
+              top: 0,
+              left: 0,
               borderRadius: 8,
             }}
           />

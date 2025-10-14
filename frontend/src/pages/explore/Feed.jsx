@@ -125,11 +125,57 @@ export default function Feed({ searchQuery = "", selectedCategories = [] }) {
           columnClassName="masonry-grid_column"
         >
           {Array.from({ length: 6 }).map((_, idx) => (
-            <div key={idx} style={{ marginBottom: 24 }}>
-              <Skeleton.Avatar active size={48} shape="circle" />
-              <div style={{ marginTop: 12 }}>
-                <Skeleton.Input active block style={{ marginBottom: 8 }} />
-                <Skeleton paragraph={{ rows: 2 }} active />
+            <div
+              key={idx}
+              style={{
+                borderRadius: 10,
+                overflow: "hidden",
+                background: "#fff",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                marginBottom: 24,
+              }}
+            >
+              {/* --- Skeleton: Post info (avatar, text, etc.) --- */}
+              <div style={{ padding: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <Skeleton.Avatar active size={40} shape="circle" />
+                  <Skeleton.Input
+                    active
+                    style={{ width: 120, height: 16 }}
+                    size="small"
+                  />
+                </div>
+                {/* --- Skeleton: Media (image/video placeholder) --- */}
+                <div
+                  style={{
+                    width: "100%",
+                    aspectRatio: "16 / 9",
+                    borderRadius: "8px 8px 0 0",
+                    background: "#f0f0f0",
+                    overflow: "hidden",
+                    marginTop: 12,
+                  }}
+                >
+                  <Skeleton.Image
+                    active
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "8px 8px 0 0",
+                    }}
+                  />
+                </div>
+                <Skeleton.Input
+                  active
+                  block
+                  style={{ marginTop: 10, height: 16 }}
+                  size="small"
+                />
+                <Skeleton
+                  paragraph={{ rows: 2 }}
+                  active
+                  style={{ marginTop: 8 }}
+                />
               </div>
             </div>
           ))}
