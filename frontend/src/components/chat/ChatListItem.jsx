@@ -1,16 +1,31 @@
+// --- Ant Design ---
 import { Avatar, Badge, Dropdown } from "antd";
 import { UserOutlined, MoreOutlined } from "@ant-design/icons";
 import moment from "moment";
+
+// --- Local ---
 import MessageStatusIcon from "./MessageItem/MessageStatusIcon";
 
 /**
+ *
+ * --------------------------
+ * Renders a single chat row within the ChatList.
+ * Handles:
+ *  - Displaying participant name & avatar
+ *  - Online/offline indicator
+ *  - Last message preview
+ *  - Time of last message
+ *  - Unread badge
+ *  - Delete menu
+ *
  * Props:
  * - conv: conversation object
- * - userId: current user's id
- * - unreadCounts: map of convId -> count
- * - onSelect: (conv) => void
- * - onDelete: (conversationId) => void
- * - userStatus: map of userId -> { online, lastSeen }
+ * - userId: current user’s ID
+ * - unreadCounts: map of convId → count
+ * - onSelect(conv): open selected chat
+ * - onDelete(conversationId): delete from list
+ * - userStatus: map of userId → { online, lastSeen }
+ * - isUnread: bool for visual highlighting
  */
 export default function ChatListItem({
   conv,
@@ -21,10 +36,15 @@ export default function ChatListItem({
   userStatus,
   isUnread,
 }) {
+  // Extract participant info (everyone except current user)
   const otherUsers = (conv?.participants || []).filter((p) => p._id !== userId);
   const name = otherUsers.map((p) => p.username).join(", ");
-  const lastMsgObj = conv.lastMessage || null;
 
+  // Extract message info
+  const lastMsgObj = conv.lastMessage || null;
+  const unread = unreadCounts?.[conv._id] || 0;
+
+  // Determine message delivery state
   const isMine = lastMsgObj?.sender?._id === userId;
   const hasBeenSeen = lastMsgObj?.readBy?.some((id) => id !== userId) || false;
   const isDelivered =
@@ -32,8 +52,7 @@ export default function ChatListItem({
     ((!lastMsgObj?.pending && lastMsgObj?.readBy?.length === 1) ||
       (lastMsgObj?.readBy?.length > 1 && !hasBeenSeen));
 
-  const unread = unreadCounts?.[conv._id] || 0;
-
+  // Format last message content and timestamp
   const lastMessageText = conv.lastMessage?.deleted
     ? "This message was deleted"
     : conv.lastMessage?.content || "No messages yet";
@@ -47,6 +66,7 @@ export default function ChatListItem({
       })
     : "";
 
+  // Dropdown menu items (currently only delete)
   const menuItems = [
     {
       key: "delete",
@@ -80,6 +100,7 @@ export default function ChatListItem({
         background: isUnread ? "#f0f5ff" : "transparent",
       }}
     >
+      {/* Avatar + Unread badge + Online dot */}
       <Badge count={unread} overflowCount={9} size="small" offset={[-4, 4]}>
         <div style={{ position: "relative", display: "inline-block" }}>
           <Avatar
@@ -88,7 +109,8 @@ export default function ChatListItem({
             size={40}
             style={{ flexShrink: 0, minWidth: 40, marginTop: 2 }}
           />
-          {/* online status indicator */}
+
+          {/* Online indicator */}
           <span
             style={{
               position: "absolute",
@@ -107,6 +129,7 @@ export default function ChatListItem({
         </div>
       </Badge>
 
+      {/* Chat text + menu */}
       <div
         style={{
           flex: 1,
@@ -115,7 +138,7 @@ export default function ChatListItem({
           overflowWrap: "break-word",
         }}
       >
-        {/* Top Row: Name + Time + Menu */}
+        {/* --- Top row: Name, Time, ⋯ menu --- */}
         <div
           style={{
             display: "flex",
@@ -142,6 +165,7 @@ export default function ChatListItem({
             style={{ display: "flex", alignItems: "center", gap: 6 }}
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Last message time */}
             <span
               style={{
                 fontSize: 12,
@@ -154,6 +178,7 @@ export default function ChatListItem({
               {time}
             </span>
 
+            {/* Dropdown menu */}
             <div
               onClick={(e) => e.stopPropagation()}
               onMouseEnter={(e) =>
@@ -198,7 +223,7 @@ export default function ChatListItem({
           </div>
         </div>
 
-        {/* Bottom Row: Last message + ticks */}
+        {/* --- Bottom row: Message preview + ticks --- */}
         <div
           style={{
             fontSize: 13,
@@ -220,7 +245,6 @@ export default function ChatListItem({
                 isDelivered={isDelivered}
               />
             )}
-
             <span
               style={{
                 display: "inline-block",

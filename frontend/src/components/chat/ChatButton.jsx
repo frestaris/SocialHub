@@ -1,3 +1,4 @@
+// --- Ant Design ---
 import { Avatar, Button, Space, Tooltip, Badge, Dropdown } from "antd";
 import {
   EditOutlined,
@@ -6,10 +7,32 @@ import {
   UserOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
+
+// --- Redux ---
 import { useDispatch } from "react-redux";
 import { setUser } from "../../redux/auth/authSlice";
+
+// --- Utils ---
 import { chatSocketHelpers } from "../../utils/sockets/useChatSocket";
 
+/**
+ *
+ * --------------------------------------
+ * The main dock control bar for chat (desktop view).
+ *
+ * Responsibilities:
+ *  - Displays current user's avatar & status
+ *  - Toggles online visibility (Appear Offline / Online)
+ *  - Opens the new chat modal
+ *  - Expands or collapses the chat list
+ *
+ * Props:
+ *  - user: current logged-in user
+ *  - onNewChat: opens start chat modal
+ *  - onToggleList: toggles chat list visibility
+ *  - openList: whether list is currently expanded
+ *  - badgeCount: unread conversation count
+ */
 export default function ChatButton({
   user,
   onNewChat,
@@ -19,7 +42,9 @@ export default function ChatButton({
 }) {
   const dispatch = useDispatch();
 
-  // Dropdown menu
+  /**
+   * Dropdown Menu — toggle online visibility
+   */
   const menuItems = [
     {
       key: "toggleStatus",
@@ -32,7 +57,7 @@ export default function ChatButton({
         e.domEvent.stopPropagation();
         const newStatus = !user?.showOnlineStatus;
 
-        // Optimistic UI update
+        // Optimistically update local state
         dispatch(setUser({ ...user, showOnlineStatus: newStatus }));
 
         // Notify backend via socket
@@ -46,11 +71,8 @@ export default function ChatButton({
   ];
 
   /**
-   * --------------------------
-   * DESKTOP VERSION
-   * --------------------------
-   * - Appears as a horizontal bar in the dock.
-   * - Includes avatar, status indicator, unread badge, and controls.
+   * --- Base styles ---
+   * The button acts as a fixed dock bar (48px tall)
    */
   const buttonStyle = {
     height: 48,
@@ -75,14 +97,16 @@ export default function ChatButton({
       }
       onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
     >
-      {/* Left side */}
+      {/* --- Left side: Avatar + Label --- */}
       <Space align="center" size={8}>
+        {/* Badge for unread conversations */}
         <Badge
           count={badgeCount}
           overflowCount={9}
           size="small"
           offset={[-4, 4]}
         >
+          {/* Avatar tooltip */}
           <Tooltip
             title={
               user?.showOnlineStatus
@@ -92,7 +116,7 @@ export default function ChatButton({
             placement="top"
           >
             <div style={{ position: "relative", display: "inline-block" }}>
-              {/* User avatar */}
+              {/* Avatar */}
               <Avatar
                 src={user?.avatar || null}
                 icon={!user?.avatar && <UserOutlined />}
@@ -118,13 +142,12 @@ export default function ChatButton({
           </Tooltip>
         </Badge>
 
-        {/* Label */}
         <span style={{ fontWeight: 600, fontSize: 14 }}>Messaging</span>
       </Space>
 
-      {/* Right side*/}
+      {/* --- Right side: Controls --- */}
       <Space size={6}>
-        {/* ⋯ Visibility dropdown */}
+        {/* Visibility dropdown */}
         <Dropdown
           menu={{ items: menuItems }}
           placement="topRight"
@@ -148,7 +171,7 @@ export default function ChatButton({
           }}
         />
 
-        {/* Drawer toggle arrow */}
+        {/* toggle arrow */}
         <Button
           type="text"
           icon={openList ? <DownOutlined /> : <UpOutlined />}

@@ -1,5 +1,19 @@
+// --- Ant Design Icons ---
 import { CheckOutlined } from "@ant-design/icons";
 
+/**
+ *
+ * --------------------------------------
+ * Displays one or two check marks depending on message status.
+ *
+ * Responsibilities:
+ *  Shows ✓ when delivered
+ *  Shows ✓✓ (blue) when seen
+ *
+ * Props:
+ * - hasBeenSeen: boolean → whether recipient has seen message
+ * - isDelivered: boolean → whether message has been delivered but not yet seen
+ */
 export default function MessageStatusIcon({ hasBeenSeen, isDelivered }) {
   return (
     <div
@@ -11,6 +25,7 @@ export default function MessageStatusIcon({ hasBeenSeen, isDelivered }) {
       }}
     >
       {hasBeenSeen ? (
+        // Double blue checks → message seen
         <>
           <CheckOutlined
             style={{
@@ -33,6 +48,7 @@ export default function MessageStatusIcon({ hasBeenSeen, isDelivered }) {
           />
         </>
       ) : isDelivered ? (
+        // Double gray checks → delivered, not seen
         <>
           <CheckOutlined
             style={{
@@ -55,6 +71,7 @@ export default function MessageStatusIcon({ hasBeenSeen, isDelivered }) {
           />
         </>
       ) : (
+        // Single gray check → sent only
         <CheckOutlined
           style={{
             position: "absolute",

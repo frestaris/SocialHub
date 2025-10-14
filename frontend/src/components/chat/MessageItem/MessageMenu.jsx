@@ -1,6 +1,25 @@
+// --- Ant Design ---
 import { Tooltip } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 
+/**
+ *
+ * --------------------------------------
+ * Provides menu items (Edit / Delete) for message dropdown.
+ *
+ * Responsibilities:
+ *  Disables edit option if the time window expired or message already edited
+ *  Displays tooltip hints for edit restrictions
+ *  Returns menu items array for Ant Design Dropdown
+ *
+ * Props:
+ * - canEdit: boolean → whether editing is currently allowed
+ * - onEdit: function → triggered when Edit clicked
+ * - onDelete: function → triggered when Delete clicked
+ * - msg: message object (used for conditions)
+ * - timeSince: milliseconds since message was created
+ * - EDIT_WINDOW_MS: allowed editing window duration
+ */
 export default function MessageMenu({
   canEdit,
   onEdit,

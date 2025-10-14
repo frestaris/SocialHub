@@ -1,23 +1,44 @@
+// --- React & Redux ---
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
+
+// --- Local Components ---
 import ChatList from "./ChatList";
 import ChatWindow from "./ChatWindow/ChatWindow";
 import ChatButton from "./ChatButton";
 import ChatDrawerMobile from "./ChatDrawerMobile";
 import ChatModalStart from "./ChatModalStart";
-import { useStartConversationMutation } from "../../redux/chat/chatApi";
-import { chatSocketHelpers } from "../../utils/sockets/useChatSocket";
-import { setActiveConversation } from "../../redux/chat/chatSlice";
-import { handleError } from "../../utils/handleMessage";
-import { useIncrementPostSharesMutation } from "../../redux/post/postApi";
 
+// --- Redux & API Hooks ---
+import { useStartConversationMutation } from "../../redux/chat/chatApi";
+import { useIncrementPostSharesMutation } from "../../redux/post/postApi";
+import { setActiveConversation } from "../../redux/chat/chatSlice";
+
+// --- Utils ---
+import { chatSocketHelpers } from "../../utils/sockets/useChatSocket";
+import { handleError } from "../../utils/handleMessage";
+
+/**
+ *
+ * --------------------------------------
+ * The global floating chat dock — manages both desktop & mobile chat systems.
+ *
+ * Responsibilities:
+ *  Toggles chat list visibility
+ *  Opens / minimizes / closes chat windows
+ *  Starts new conversations
+ *  Handles mobile drawer toggle
+ *  Handles post sharing via chat
+ */
 export default function ChatDock() {
+  // --- Redux state ---
   const user = useSelector((s) => s.auth.user);
   const userStatus = useSelector((s) => s.chat.userStatus);
   const unreadCounts = useSelector((s) => s.chat.unread);
   const activeConversationId = useSelector((s) => s.chat.activeConversationId);
   const dispatch = useDispatch();
 
+  // --- Local UI state ---
   const totalUnread = Object.values(unreadCounts || {}).filter(
     (c) => c > 0
   ).length;
@@ -27,19 +48,18 @@ export default function ChatDock() {
   const [maxWindows, setMaxWindows] = useState(3);
   const [isMobile, setIsMobile] = useState(false);
   const [pendingSharePostId, setPendingSharePostId] = useState(null);
+
+  // --- API hooks ---
+  const [startConversation] = useStartConversationMutation();
   const [incrementPostShares] = useIncrementPostSharesMutation();
 
-  const [startConversation] = useStartConversationMutation();
+  // --- Socket helpers ---
   const { joinConversation } = chatSocketHelpers;
 
-  useEffect(() => {
-    const handleToggleChatList = () => setOpenList((prev) => !prev);
-    window.addEventListener("toggleChatList", handleToggleChatList);
-    return () =>
-      window.removeEventListener("toggleChatList", handleToggleChatList);
-  }, []);
-
-  // responsive handling
+  /**
+   * Window resize listener
+   * Adjusts chat window count & enables mobile mode dynamically.
+   */
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
@@ -59,20 +79,36 @@ export default function ChatDock() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  /**
+   * Toggle chat list via global event
+   * Allows programmatic opening/closing (e.g., from notifications or buttons).
+   */
+  useEffect(() => {
+    const handleToggleChatList = () => setOpenList((prev) => !prev);
+    window.addEventListener("toggleChatList", handleToggleChatList);
+    return () =>
+      window.removeEventListener("toggleChatList", handleToggleChatList);
+  }, []);
+
+  /**
+   * Prevent background scroll when mobile chat window open
+   */
   useEffect(() => {
     if (isMobile && chatWindows.some((w) => !w.minimized)) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
     }
-
     return () => {
       document.body.style.overflow = "";
     };
   }, [isMobile, chatWindows]);
 
+  /**
+   * Event listener: open chat from Profile page
+   * Triggered via CustomEvent('openChatFromProfile', { detail: { conversation } })
+   */
   useEffect(() => {
-    // Listen for global event from ProfileInfo
     const handleOpenFromProfile = (e) => {
       const conv = e.detail.conversation;
       if (!conv?._id) return;
@@ -85,6 +121,10 @@ export default function ChatDock() {
       window.removeEventListener("openChatFromProfile", handleOpenFromProfile);
   }, [joinConversation]);
 
+  /**
+   * Event listener: "Share Post to Chat"
+   * Triggered when user shares a post via SharePostModal.
+   */
   useEffect(() => {
     const handleSharePost = (e) => {
       const { postId } = e.detail;
@@ -94,25 +134,34 @@ export default function ChatDock() {
     window.addEventListener("sharePostToChat", handleSharePost);
     return () => window.removeEventListener("sharePostToChat", handleSharePost);
   }, []);
+
+  /**
+   * Event listener: "closeAllChats"
+   * Minimizes or closes all open chat windows globally.
+   */
   useEffect(() => {
     const handleCloseAllChats = () => {
-      // Close or minimize all chat windows
       setChatWindows((prev) => prev.map((c) => ({ ...c, minimized: true })));
       setOpenList(false);
     };
-
     window.addEventListener("closeAllChats", handleCloseAllChats);
     return () =>
       window.removeEventListener("closeAllChats", handleCloseAllChats);
   }, []);
 
+  // Do not render dock if user not logged in
   if (!user?._id) return null;
 
   const toggleList = () => setOpenList((prev) => !prev);
 
+  /**
+   * Open a chat window
+   * - Unminimizes existing window if already open
+   * - Adds new one if not open
+   * - Keeps maximum open windows based on screen size
+   */
   const openChatWindow = (conv) => {
     setChatWindows((prev) => {
-      // If chat already open, just un-minimize it
       const existing = prev.find((c) => c._id === conv._id);
       if (existing) {
         return prev.map((c) =>
@@ -120,14 +169,8 @@ export default function ChatDock() {
         );
       }
 
-      // Add new chat window at the end
       const updated = [...prev, { ...conv }];
-
-      // If exceeding max windows, close (remove) the oldest one
-      if (updated.length > maxWindows) {
-        updated.shift();
-      }
-
+      if (updated.length > maxWindows) updated.shift(); // remove oldest
       return updated;
     });
 
@@ -135,30 +178,35 @@ export default function ChatDock() {
     dispatch(setActiveConversation(conv._id));
   };
 
+  /**
+   * Close a chat window completely
+   */
   const closeChatWindow = (id) => {
     setChatWindows(chatWindows.filter((c) => c._id !== id));
     if (activeConversationId === id) dispatch(setActiveConversation(null));
   };
 
+  /**
+   * Start a new conversation
+   * - Opens chat modal
+   * - Optionally sends post link if sharing
+   */
   const handleStartChat = async (targetUserId) => {
     try {
       const res = await startConversation(targetUserId).unwrap();
       if (res.success && res.conversation?._id) {
         joinConversation(res.conversation._id);
-        openChatWindow({
-          ...res.conversation,
-          initialMessages: res.messages,
-        });
+        openChatWindow({ ...res.conversation, initialMessages: res.messages });
         setIsModalOpen(false);
 
-        // Automatically send post link if sharing
+        // If sharing a post, send link as first message
         if (pendingSharePostId) {
           const postUrl = `${window.location.origin}/post/${pendingSharePostId}`;
           setTimeout(() => {
             chatSocketHelpers.sendMessage(res.conversation._id, postUrl);
           }, 600);
 
-          // increment share count in DB and cache
+          // Increment post share count in DB
           incrementPostShares(pendingSharePostId)
             .unwrap()
             .catch((err) => console.error("❌ Share count failed:", err));
@@ -173,10 +221,13 @@ export default function ChatDock() {
     }
   };
 
+  // Limit number of visible windows
   const visibleWindows = chatWindows.slice(-maxWindows);
 
+  // --- RENDER ---
   return (
     <>
+      {/* Desktop Dock */}
       {!isMobile && (
         <div
           style={{
@@ -220,6 +271,7 @@ export default function ChatDock() {
         </div>
       )}
 
+      {/* Mobile Drawer */}
       {isMobile && (
         <ChatDrawerMobile
           open={openList}
@@ -232,6 +284,7 @@ export default function ChatDock() {
         />
       )}
 
+      {/* New Chat Modal */}
       <ChatModalStart
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -240,6 +293,7 @@ export default function ChatDock() {
         pendingSharePostId={pendingSharePostId}
       />
 
+      {/* Floating chat windows */}
       <div
         style={{
           position: "fixed",

@@ -1,8 +1,32 @@
+// --- Ant Design ---
 import { List, Avatar, Spin } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+
+// --- Time library ---
 import moment from "moment";
+
+// --- Components ---
 import MessageItem from "../MessageItem/MessageItem";
 
+/**
+ *
+ * --------------------------------------
+ * Displays all chat messages inside a conversation.
+ *
+ * Responsibilities:
+ *  Render messages with date dividers
+ *  Handle “is typing…” bubble
+ *  Show empty or loading states
+ *
+ * Props:
+ * - messages: array of message objects
+ * - isLoading: bool (true while messages load)
+ * - isTyping: bool (true if other user typing)
+ * - otherUser: user object (for avatar)
+ * - currentUser: user object
+ * - messagesEndRef: scroll anchor
+ * - searchTerm: highlights matching terms (passed to MessageItem)
+ */
 export default function ChatWindowBody({
   messages,
   isLoading,
@@ -12,6 +36,7 @@ export default function ChatWindowBody({
   messagesEndRef,
   searchTerm,
 }) {
+  // Typing animation dot style
   const dotStyle = {
     width: "6px",
     height: "6px",
@@ -31,15 +56,18 @@ export default function ChatWindowBody({
         overflowWrap: "break-word",
       }}
     >
+      {/* Loading state */}
       {isLoading ? (
         <div style={{ textAlign: "center", padding: "40px 0" }}>
           <Spin size="medium" />
         </div>
       ) : messages.length === 0 ? (
+        /*  Empty chat state */
         <div style={{ textAlign: "center", padding: "40px 0", color: "#999" }}>
           Say hello...
         </div>
       ) : (
+        /*  Messages list */
         <List
           dataSource={messages}
           renderItem={(msg, index) => {
@@ -52,6 +80,7 @@ export default function ChatWindowBody({
 
             return (
               <>
+                {/*  Date divider (Today / Yesterday / Day name) */}
                 {showDivider && (
                   <div
                     style={{
@@ -92,6 +121,7 @@ export default function ChatWindowBody({
                   </div>
                 )}
 
+                {/* Individual message */}
                 <MessageItem
                   key={msg._id}
                   msg={{
@@ -109,6 +139,8 @@ export default function ChatWindowBody({
           split={false}
         />
       )}
+
+      {/* Typing indicator bubble */}
       {isTyping && (
         <div
           style={{
@@ -141,6 +173,8 @@ export default function ChatWindowBody({
           </div>
         </div>
       )}
+
+      {/* Bottom anchor for auto-scroll */}
       <div ref={messagesEndRef} />
     </div>
   );

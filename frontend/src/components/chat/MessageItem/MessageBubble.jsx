@@ -1,11 +1,19 @@
+// --- Ant Design ---
 import { Dropdown } from "antd";
+
+// --- Components ---
 import MessageEditor from "./MessageEditor";
 import MessageStatusIcon from "./MessageStatusIcon";
 import MessageMenu from "./MessageMenu";
-import moment from "../../../utils/momentShort";
-import { Link } from "react-router-dom";
 import PostPreviewBubble from "./PostPreviewBubble";
 
+// --- Utils ---
+import moment from "../../../utils/momentShort";
+import { Link } from "react-router-dom";
+
+/**
+ * Helper: Highlight search term inside text
+ */
 function highlightText(text, term) {
   if (!term) return text;
   const regex = new RegExp(`(${term})`, "gi");
@@ -20,23 +28,28 @@ function highlightText(text, term) {
     )
   );
 }
+
+/**
+ * Helper: Render message content
+ * - Detects links
+ * - If it's a post link, renders a preview bubble
+ * - Otherwise, wraps clickable links or highlights search term
+ */
 function renderMessageContent(text, searchTerm) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const match = text.match(urlRegex)?.[0];
   const postMatch = match?.match(/\/post\/([A-Za-z0-9_-]+)(?:$|\b|\/|\?|#)/);
 
-  // message contains a post link → show preview card
+  // If link refers to a post → show preview
   if (postMatch) {
     const postId = postMatch[1];
     return <PostPreviewBubble postId={postId} />;
   }
 
-  // normal text (may contain URLs and/or search term)
+  // Otherwise render text with clickable URLs
   const segments = text.split(urlRegex);
-
   return segments.map((segment, i) => {
     if (urlRegex.test(segment)) {
-      // clickable URL
       return (
         <Link
           key={i}
@@ -52,12 +65,24 @@ function renderMessageContent(text, searchTerm) {
         </Link>
       );
     } else {
-      // highlight search term inside this segment
       return <span key={i}>{highlightText(segment, searchTerm)}</span>;
     }
   });
 }
 
+/**
+ *
+ * --------------------------------------
+ * Displays the message bubble itself — handles edit mode, context menu, and status icons.
+ *
+ * Responsibilities:
+ *  Renders message text (with highlight & links)
+ *  Shows "edited" label if applicable
+ *  Renders post preview if message includes post link
+ *  Supports inline edit mode
+ *  Integrates dropdown menu for edit/delete
+ *  Shows message time & delivery/seen icons
+ */
 export default function MessageBubble({
   msg,
   isMine,
@@ -113,6 +138,7 @@ export default function MessageBubble({
           transition: "background 0.2s ease",
         }}
       >
+        {/*  Message tail triangle */}
         <span
           style={{
             position: "absolute",
@@ -135,6 +161,8 @@ export default function MessageBubble({
                 }),
           }}
         />
+
+        {/*  Edit Mode or Read Mode */}
         {isEditing ? (
           <MessageEditor
             editText={editText}
@@ -148,6 +176,7 @@ export default function MessageBubble({
           />
         ) : (
           <>
+            {/*  Message content */}
             <span style={{ lineHeight: 1.4 }}>
               {renderMessageContent(msg.content, searchTerm)}
               {msg.edited && (
@@ -155,6 +184,7 @@ export default function MessageBubble({
               )}
             </span>
 
+            {/*  Time + Status */}
             <div
               style={{
                 display: "flex",

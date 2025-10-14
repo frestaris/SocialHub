@@ -1,19 +1,40 @@
+// --- React ---
 import { useEffect, useState, useRef } from "react";
-import {
-  useGetMessagesQuery,
-  useLazyGetMessagesQuery,
-} from "../../../redux/chat/chatApi";
-import { chatSocketHelpers } from "../../../utils/sockets/useChatSocket";
+
+// --- Redux ---
 import { useSelector, useDispatch } from "react-redux";
 import {
   clearUnread,
   setActiveConversation,
 } from "../../../redux/chat/chatSlice";
+
+// --- API Hooks ---
+import {
+  useGetMessagesQuery,
+  useLazyGetMessagesQuery,
+} from "../../../redux/chat/chatApi";
+
+// --- Components ---
 import ChatWindowHeader from "./ChatWindowHeader";
 import ChatWindowBody from "./ChatWindowBody";
 import ChatWindowFooter from "./ChatWindowFooter";
+
+// --- Utils ---
+import { chatSocketHelpers } from "../../../utils/sockets/useChatSocket";
 import { Spin } from "antd";
 
+/**
+ *
+ * --------------------------------------
+ * Represents one open chat window.
+ *
+ * Responsibilities:
+ *  Fetch messages (initial + infinite scroll)
+ *  Handle optimistic message sending
+ *  Handle mark-as-read logic
+ *  Manage typing indicators
+ *  Integrate search filter (via header search)
+ */
 export default function ChatWindow({
   conversation,
   onClose,
@@ -22,13 +43,15 @@ export default function ChatWindow({
   minimized,
   onToggleMinimize,
 }) {
+  // --- Redux state ---
   const currentUser = useSelector((s) => s.auth.user);
-  const conversationId = conversation?._id;
   const unreadCounts = useSelector((s) => s.chat.unread);
   const activeConversationId = useSelector((s) => s.chat.activeConversationId);
   const dispatch = useDispatch();
 
-  // --- Chat socket helpers ---
+  const conversationId = conversation?._id;
+
+  // --- Socket helpers ---
   const { sendMessage, markAsRead, startTyping, stopTyping } =
     chatSocketHelpers;
 
@@ -39,23 +62,27 @@ export default function ChatWindow({
   const [input, setInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
+  // --- Refs ---
   const scrollContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messagesEndRef = useRef(null);
 
-  // --- Typing indicator ---
+  // --- Typing indicator logic ---
   const typingUserId = useSelector((s) => s.chat.typing?.[conversationId]);
   const isTyping = typingUserId && typingUserId !== currentUser._id;
 
-  // --- Initial load (latest 20 messages) ---
+  // --- Initial fetch (latest 20 messages) ---
   const { data, isFetching } = useGetMessagesQuery(
     { conversationId, limit: 20 },
     { skip: !conversationId }
   );
 
-  // --- Lazy fetch for older messages ---
+  // --- Lazy query for older messages ---
   const [loadOlderMessages] = useLazyGetMessagesQuery();
 
+  /**
+   * Initialize messages on load
+   */
   useEffect(() => {
     if (data?.messages) {
       setMessages(data.messages);
@@ -63,11 +90,14 @@ export default function ChatWindow({
     }
   }, [data]);
 
-  // --- Infinite scroll: load older messages when near top ---
+  /**
+   * Infinite scroll for older messages
+   */
   const handleScroll = async () => {
     const container = scrollContainerRef.current;
     if (!container || loadingMore || !hasMore) return;
 
+    // When near top, fetch older
     if (container.scrollTop < 100) {
       setLoadingMore(true);
       const oldestMsgId = messages[0]?._id;
@@ -84,7 +114,7 @@ export default function ChatWindow({
           setMessages((prev) => [...older.messages, ...prev]);
           setHasMore(older.hasMore);
 
-          // Keep scroll position stable
+          // Maintain scroll position after prepend
           requestAnimationFrame(() => {
             container.scrollTop = container.scrollHeight - prevHeight + 60;
           });
@@ -95,14 +125,18 @@ export default function ChatWindow({
     }
   };
 
-  // --- Filter messages by search term ---
+  /**
+   * Apply search filter (live)
+   */
   const filteredMessages = searchTerm
     ? messages.filter((m) =>
         m.content?.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : messages;
 
-  // --- Mark as read when opened ---
+  /**
+   * Mark as read when window opened
+   */
   useEffect(() => {
     if (!conversationId) return;
     if (!minimized && messages.length > 0) {
@@ -111,7 +145,9 @@ export default function ChatWindow({
     }
   }, [conversationId, minimized, messages.length, dispatch, markAsRead]);
 
-  // --- Track active conversation ---
+  /**
+   * Manage active conversation tracking
+   */
   useEffect(() => {
     if (!conversationId) return;
     if (!minimized) {
@@ -126,16 +162,22 @@ export default function ChatWindow({
     };
   }, [conversationId, minimized, dispatch, activeConversationId]);
 
-  // --- Scroll to bottom when new messages arrive (from socket) ---
+  /**
+   * Auto-scroll to bottom on new messages
+   */
   useEffect(() => {
     if (!scrollContainerRef.current || minimized) return;
     const container = scrollContainerRef.current;
     container.scrollTop = container.scrollHeight;
   }, [messages.length, minimized]);
 
-  // --- Send message (optimistic UI) ---
+  /**
+   * Send message (optimistic UI)
+   */
   const handleSend = () => {
     if (!input.trim()) return;
+
+    // Create optimistic temporary message
     const optimisticMsg = {
       _id: Date.now().toString(),
       conversationId,
@@ -152,13 +194,15 @@ export default function ChatWindow({
     setInput("");
   };
 
-  // --- Other participant ---
+  /**
+   * Determine the other participant
+   */
   const otherUser =
     conversation?.participants?.find(
       (p) => p._id.toString() !== currentUser?._id?.toString()
     ) || null;
 
-  // --- Styles ---
+  // --- Base window style (desktop + responsive) ---
   const baseWindowStyle = {
     position: "fixed",
     bottom: 0,
@@ -177,6 +221,7 @@ export default function ChatWindow({
     overflow: "hidden",
   };
 
+  // Mobile overrides
   if (window.innerWidth < 768) {
     baseWindowStyle.right = 0;
     baseWindowStyle.left = 0;
@@ -184,8 +229,10 @@ export default function ChatWindow({
     baseWindowStyle.height = minimized ? 48 : "82vh";
   }
 
+  // --- Render ---
   return (
     <div style={baseWindowStyle}>
+      {/* HEADER */}
       <ChatWindowHeader
         otherUser={otherUser}
         unreadCount={unreadCounts?.[conversationId]}
@@ -196,8 +243,10 @@ export default function ChatWindow({
         onSearch={setSearchTerm}
       />
 
+      {/* BODY + FOOTER (only visible when not minimized) */}
       {!minimized && (
         <>
+          {/* Message list */}
           <div
             ref={scrollContainerRef}
             onScroll={handleScroll}
@@ -208,7 +257,7 @@ export default function ChatWindow({
               position: "relative",
             }}
           >
-            {/* Show loading spinner when fetching older messages */}
+            {/* Spinner for loading older messages */}
             {loadingMore && (
               <div
                 style={{
@@ -234,6 +283,7 @@ export default function ChatWindow({
             />
           </div>
 
+          {/* Input box */}
           <ChatWindowFooter
             input={input}
             setInput={setInput}

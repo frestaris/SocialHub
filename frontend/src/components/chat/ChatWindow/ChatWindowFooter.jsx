@@ -1,29 +1,54 @@
+// --- React ---
 import { useEffect, useRef, useState } from "react";
-import { Input, Button, Popover } from "antd";
+
+// --- Ant Design ---
+import { Input, Button } from "antd";
 import { SmileOutlined, SendOutlined } from "@ant-design/icons";
+
+// --- Emoji Picker ---
 import EmojiPicker from "emoji-picker-react";
 
-export default function ChatWindowFooter({ ...props }) {
-  const {
-    input,
-    setInput,
-    handleSend,
-    startTyping,
-    stopTyping,
-    conversationId,
-    typingTimeoutRef,
-    autoFocus = false,
-  } = props;
-
+/**
+ *
+ * --------------------------------------
+ * The bottom input area of the chat window.
+ *
+ * Responsibilities:
+ *  Handles message input and sending
+ *  Emits typing events
+ *  Integrates emoji picker
+ *
+ * Props:
+ * - input: message string
+ * - setInput: state setter
+ * - handleSend: fn() to send message
+ * - startTyping: fn(conversationId)
+ * - stopTyping: fn(conversationId)
+ * - conversationId: current chat id
+ * - typingTimeoutRef: ref to debounce typing events
+ * - autoFocus: focus input on mount (bool)
+ */
+export default function ChatWindowFooter({
+  input,
+  setInput,
+  handleSend,
+  startTyping,
+  stopTyping,
+  conversationId,
+  typingTimeoutRef,
+  autoFocus = false,
+}) {
   const inputRef = useRef(null);
   const [emojiOpen, setEmojiOpen] = useState(false);
 
+  // Autofocus input when chat opens
   useEffect(() => {
     if (autoFocus && inputRef.current) {
       inputRef.current.focus({ cursor: "end" });
     }
   }, [autoFocus]);
 
+  //  Handle emoji insert
   const handleEmojiClick = (emojiData) => {
     const emoji = emojiData.emoji;
     setInput((prev) => prev + emoji);
@@ -42,7 +67,7 @@ export default function ChatWindowFooter({ ...props }) {
         background: "#fff",
       }}
     >
-      {/* Emoji Button */}
+      {/*  Emoji picker toggle */}
       <div style={{ position: "relative" }}>
         <Button
           type="text"
@@ -59,6 +84,7 @@ export default function ChatWindowFooter({ ...props }) {
           }}
         />
 
+        {/* Popup emoji picker */}
         {emojiOpen && (
           <div
             onClick={(e) => e.stopPropagation()}
@@ -87,7 +113,7 @@ export default function ChatWindowFooter({ ...props }) {
         )}
       </div>
 
-      {/* Input */}
+      {/* Text input */}
       <Input.TextArea
         ref={inputRef}
         rows={1}
@@ -115,7 +141,7 @@ export default function ChatWindowFooter({ ...props }) {
         placeholder="Write a message..."
       />
 
-      {/* Send Button */}
+      {/* Send button */}
       <Button
         type="text"
         icon={

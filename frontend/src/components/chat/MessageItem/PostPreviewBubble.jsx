@@ -1,12 +1,33 @@
+// --- Ant Design ---
 import { Card, Avatar, Skeleton } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+
+// --- Routing ---
 import { Link } from "react-router-dom";
+
+// --- Redux API ---
 import { useGetPostByIdQuery } from "../../../redux/post/postApi";
 
+/**
+ *
+ * --------------------------------------
+ * Displays a compact post preview (thumbnail, title, author)
+ * when a message contains a link to a post.
+ *
+ * Responsibilities:
+ *  Fetch post data by ID
+ *  Display loading skeleton while fetching
+ *  Show thumbnail, text snippet, and author info
+ *  Close chat dock when clicked (via global event)
+ *
+ * Props:
+ * - postId: string → ID of the post to display
+ */
 export default function PostPreviewBubble({ postId }) {
   const { data, isLoading } = useGetPostByIdQuery(postId, { skip: !postId });
   const post = data?.post;
 
+  // Loading skeleton (when fetching)
   if (isLoading)
     return (
       <div style={{ marginTop: 6 }}>
@@ -15,6 +36,7 @@ export default function PostPreviewBubble({ postId }) {
       </div>
     );
 
+  // No post found
   if (!post) return null;
 
   const isVideo = post.type === "video";
@@ -27,6 +49,7 @@ export default function PostPreviewBubble({ postId }) {
     <Link
       to={`/post/${post._id}`}
       onClick={() => {
+        // Close all open chats when navigating
         window.dispatchEvent(new CustomEvent("closeAllChats"));
       }}
       style={{ textDecoration: "none" }}
@@ -48,6 +71,7 @@ export default function PostPreviewBubble({ postId }) {
         }}
       >
         <div style={{ display: "flex", gap: 8 }}>
+          {/* Thumbnail */}
           <div
             style={{
               width: 72,
@@ -69,6 +93,7 @@ export default function PostPreviewBubble({ postId }) {
             />
           </div>
 
+          {/* Text content */}
           <div
             style={{
               display: "flex",
@@ -90,6 +115,7 @@ export default function PostPreviewBubble({ postId }) {
                 🎥 {post.video?.title}
               </div>
             )}
+
             <div
               style={{
                 fontSize: 13,
@@ -105,6 +131,7 @@ export default function PostPreviewBubble({ postId }) {
               {post.content}
             </div>
 
+            {/* Author info */}
             <div
               style={{
                 display: "flex",

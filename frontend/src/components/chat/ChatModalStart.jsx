@@ -1,7 +1,28 @@
+// --- Ant Design ---
 import { Modal, List, Avatar, Input } from "antd";
 import { UserOutlined } from "@ant-design/icons";
+
+// --- React ---
 import { useState, useMemo } from "react";
 
+/**
+ *
+ * --------------------------------------
+ * Displays a modal for starting a new chat or sharing a post.
+ *
+ * Responsibilities:
+ *  Lists all users the current user follows
+ *  Provides search bar to filter by username
+ *  Calls onStartChat(userId) when a user is selected
+ *  Dynamically changes title if sharing a post
+ *
+ * Props:
+ * - isOpen: bool → whether modal is visible
+ * - onClose: fn → close handler
+ * - following: array of user objects [{ _id, username, avatar }]
+ * - onStartChat: fn(userId) → triggers conversation creation
+ * - pendingSharePostId: optional string (if sharing a post)
+ */
 export default function ChatModalStart({
   isOpen,
   onClose,
@@ -11,19 +32,24 @@ export default function ChatModalStart({
 }) {
   const [searchText, setSearchText] = useState("");
 
-  // Filter following users by name
+  /**
+   *  Filter following users by username
+   */
   const filteredList = useMemo(() => {
     if (!searchText.trim()) return following;
     const lower = searchText.toLowerCase();
     return following.filter((f) => f.username?.toLowerCase().includes(lower));
   }, [following, searchText]);
 
-  // Dynamic empty message
+  /**
+   *  Dynamic empty state message
+   */
   const emptyMessage =
     following.length === 0
       ? "You’re not following anyone yet"
       : "No users match your search";
 
+  // --- Render ---
   return (
     <Modal
       title={
@@ -43,7 +69,7 @@ export default function ChatModalStart({
         },
       }}
     >
-      {/* Sticky Search bar */}
+      {/*  Sticky search bar */}
       <div
         style={{
           position: "sticky",
@@ -68,7 +94,7 @@ export default function ChatModalStart({
         />
       </div>
 
-      {/* Scrollable User list */}
+      {/*  Scrollable user list */}
       <div
         style={{
           padding: "8px 16px",

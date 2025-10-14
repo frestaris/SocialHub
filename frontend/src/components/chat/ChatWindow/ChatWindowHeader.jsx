@@ -1,4 +1,7 @@
+// --- React ---
 import { useState } from "react";
+
+// --- Ant Design ---
 import { Avatar, Button, Badge, Input } from "antd";
 import {
   MinusOutlined,
@@ -6,9 +9,33 @@ import {
   UserOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
+
+// --- Routing ---
 import { Link } from "react-router-dom";
+
+// --- Time utils ---
 import moment from "moment";
 
+/**
+ *
+ * --------------------------------------
+ * The top section of each chat window.
+ *
+ * Responsibilities:
+ *  Display other user's avatar, name, and online status
+ *  Show unread message badge
+ *  Allow minimizing / closing the chat
+ *  Toggle search within the conversation
+ *
+ * Props:
+ * - otherUser: { _id, username, avatar }
+ * - unreadCount: number of unread messages
+ * - userStatus: { [userId]: { online, lastSeen } }
+ * - minimized: bool
+ * - onToggleMinimize: fn(minimized: bool)
+ * - onClose: fn()
+ * - onSearch: fn(value: string)
+ */
 export default function ChatWindowHeader({
   otherUser,
   unreadCount,
@@ -18,9 +45,11 @@ export default function ChatWindowHeader({
   onClose,
   onSearch,
 }) {
+  // --- Local state ---
   const [showSearch, setShowSearch] = useState(false);
   const [pendingSearch, setPendingSearch] = useState("");
 
+  //  Toggle visibility of search bar
   const toggleSearch = (e) => {
     e.stopPropagation();
     if (minimized) onToggleMinimize(false);
@@ -34,14 +63,16 @@ export default function ChatWindowHeader({
     });
   };
 
+  //  Trigger search
   const handleSearch = (value) => {
     if (minimized) onToggleMinimize(false);
     onSearch?.(value);
   };
 
+  // --- Render ---
   return (
     <div style={{ position: "relative" }}>
-      {/* HEADER BAR */}
+      {/*  HEADER BAR */}
       <div
         onClick={() => onToggleMinimize(!minimized)}
         style={{
@@ -61,8 +92,10 @@ export default function ChatWindowHeader({
         onMouseEnter={(e) => (e.currentTarget.style.background = "#f8f8f8")}
         onMouseLeave={(e) => (e.currentTarget.style.background = "#fdfdfd")}
       >
+        {/*  LEFT: User info */}
         {otherUser ? (
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* --- Avatar + Online indicator --- */}
             <Link to={`/profile/${otherUser._id}`}>
               <div style={{ position: "relative", display: "inline-block" }}>
                 <Avatar
@@ -88,6 +121,7 @@ export default function ChatWindowHeader({
               </div>
             </Link>
 
+            {/* --- Username + status text --- */}
             <div
               style={{
                 display: "flex",
@@ -96,6 +130,7 @@ export default function ChatWindowHeader({
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {/* Username link */}
                 <Link
                   to={`/profile/${otherUser._id}`}
                   style={{
@@ -111,6 +146,7 @@ export default function ChatWindowHeader({
                   {otherUser.username}
                 </Link>
 
+                {/*  Unread badge */}
                 {unreadCount > 0 && (
                   <Badge
                     count={unreadCount}
@@ -125,6 +161,7 @@ export default function ChatWindowHeader({
                 )}
               </div>
 
+              {/*  Status (Online / Last seen) */}
               <small style={{ fontSize: 11, color: "#888" }}>
                 {(() => {
                   const status = userStatus?.[otherUser._id];
@@ -147,14 +184,16 @@ export default function ChatWindowHeader({
           <span style={{ fontSize: 14, color: "#888" }}>Unknown user</span>
         )}
 
-        {/* Right controls */}
+        {/*  RIGHT: Control buttons */}
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          {/* Search icon */}
           <Button
             type="text"
             size="small"
             icon={<SearchOutlined />}
             onClick={toggleSearch}
           />
+          {/* Minimize */}
           <Button
             type="text"
             size="small"
@@ -164,6 +203,7 @@ export default function ChatWindowHeader({
               onToggleMinimize(!minimized);
             }}
           />
+          {/* Close */}
           <Button
             type="text"
             size="small"
@@ -176,7 +216,7 @@ export default function ChatWindowHeader({
         </div>
       </div>
 
-      {/* SEARCH BAR */}
+      {/*  SEARCH BAR (slides down) */}
       <div
         style={{
           height: showSearch ? 48 : 0,
@@ -209,19 +249,20 @@ export default function ChatWindowHeader({
           </div>
         )}
 
+        {/* --- Small animation for smooth dropdown --- */}
         <style>
           {`
-      @keyframes fadeSlideDown {
-        from {
-          opacity: 0;
-          transform: translateY(-6px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    `}
+          @keyframes fadeSlideDown {
+            from {
+              opacity: 0;
+              transform: translateY(-6px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+          `}
         </style>
       </div>
     </div>

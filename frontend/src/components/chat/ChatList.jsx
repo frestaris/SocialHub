@@ -1,24 +1,46 @@
+// --- React & Hooks ---
+import { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+// --- Ant Design ---
 import { List, Spin, Modal, Input } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
+
+// --- Redux Logic ---
 import {
   useDeleteConversationMutation,
   useGetConversationsQuery,
 } from "../../redux/chat/chatApi";
-import { handleSuccess, handleError } from "../../utils/handleMessage";
-import { useDispatch, useSelector } from "react-redux";
 import { setUnreadCounts } from "../../redux/chat/chatSlice";
-import { useEffect, useMemo, useState } from "react";
+
+// --- Utils ---
+import { handleSuccess, handleError } from "../../utils/handleMessage";
+
+// --- Components ---
 import ChatListItem from "./ChatListItem";
 
+/**
+ *
+ * --------------------------
+ * Displays the user’s list of conversations inside the chat dock or mobile drawer.
+ * Handles:
+ *  - Fetching conversations
+ *  - Hydrating unread counts
+ *  - Deleting conversations
+ *  - Searching by participant name
+ *  - Sorting: unread first, then most recent
+ */
 export default function ChatList({
   onSelectConversation,
   enabled,
   userStatus,
 }) {
+  // Load conversations only when the list is enabled (drawer open)
   const { data, isLoading } = useGetConversationsQuery(undefined, {
     skip: !enabled,
   });
 
+  // Extract conversation list safely
   const conversations = useMemo(
     () => data?.conversations || [],
     [data?.conversations]
@@ -30,7 +52,11 @@ export default function ChatList({
 
   const [searchText, setSearchText] = useState("");
 
-  // ✅ Hydrate unread counts on first load
+  /**
+   * Hydrate unread counts on mount
+   * If the Redux store is missing some conversation IDs,
+   * we sync them from the backend’s unreadCount field.
+   */
   useEffect(() => {
     if (!conversations?.length) return;
 
@@ -46,7 +72,10 @@ export default function ChatList({
     }
   }, [conversations, unreadCounts, dispatch]);
 
-  // ✅ Deletion confirm
+  /**
+   * Confirm and delete a conversation
+   * Only removes it from the current user’s chat list (doesn’t delete for both).
+   */
   const handleDelete = (conversationId) => {
     Modal.confirm({
       title: "Delete Conversation",
@@ -68,19 +97,24 @@ export default function ChatList({
     });
   };
 
-  // Filter only by participant name
+  /**
+   * Filter & Sort Conversations
+   * - Filter by participant username
+   * - Sort unread first, then latest activity
+   */
   const filteredConversations = useMemo(() => {
     if (!conversations?.length) return [];
 
-    const list = [...conversations].map((conv) => ({
+    const list = conversations.map((conv) => ({
       ...conv,
       unreadCount: unreadCounts?.[conv._id] || conv.unreadCount || 0,
       lastActivity:
         conv.lastMessage?.createdAt || conv.updatedAt || conv.createdAt,
     }));
 
-    // Filter by search
     const lower = searchText.trim().toLowerCase();
+
+    // Filter by name, excluding self
     const filtered = lower
       ? list.filter((conv) =>
           (conv.participants || []).some(
@@ -92,7 +126,7 @@ export default function ChatList({
         )
       : list;
 
-    // ✅ Sort: unread first, then most recent activity
+    // Sort unread first → then newest activity
     return filtered.sort((a, b) => {
       if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
       if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
@@ -127,12 +161,11 @@ export default function ChatList({
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           allowClear
-          style={{
-            borderRadius: 8,
-          }}
+          style={{ borderRadius: 8 }}
         />
       </div>
 
+      {/* Loading / Empty state */}
       {isLoading ? (
         <div
           style={{
