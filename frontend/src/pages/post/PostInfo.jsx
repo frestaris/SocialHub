@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 
 // --- Libraries ---
-import { Typography, Avatar, Button, Grid, Modal } from "antd";
+import { Typography, Avatar, Button, Grid, Modal, Skeleton } from "antd";
 import { UserOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 // --- Utils ---
@@ -21,6 +21,44 @@ import ArrowButton from "../../components/common/ArrowButton";
 
 const { Text, Title } = Typography;
 const { useBreakpoint } = Grid;
+
+function ImageWithSkeleton({ src, alt, style, onClick }) {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div style={{ position: "relative", ...style }}>
+      {!loaded && (
+        <Skeleton.Image
+          active
+          style={{
+            width: "100%",
+            height: "100%",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            borderRadius: 8,
+          }}
+        />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          borderRadius: "8px",
+          opacity: loaded ? 1 : 0,
+          transition: "opacity 0.3s ease",
+          cursor: "pointer",
+        }}
+        onClick={onClick}
+      />
+    </div>
+  );
+}
 
 export default function PostInfo({ post }) {
   const [expanded, setExpanded] = useState(false);
@@ -111,13 +149,13 @@ export default function PostInfo({ post }) {
                     : "auto", // last image spans full width if 3
               }}
             >
-              <img
+              <ImageWithSkeleton
                 src={img}
                 alt={`Post attachment ${idx + 1}`}
+                onClick={() => openGallery(idx)}
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
                   borderRadius: "8px",
                   cursor: "pointer",
                   maxHeight: isSmall
@@ -128,8 +166,8 @@ export default function PostInfo({ post }) {
                     ? "300px"
                     : "200px",
                 }}
-                onClick={() => openGallery(idx)}
               />
+
               {idx === 3 && post.images.length > 4 && (
                 <div
                   onClick={() => openGallery(idx)}

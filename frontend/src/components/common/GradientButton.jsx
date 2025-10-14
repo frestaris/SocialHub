@@ -34,7 +34,7 @@ export default function GradientButton({
 }) {
   const baseGradient = "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)";
   const hoverGradient = "linear-gradient(90deg, #60a5fa, #3b82f6, #22d3ee)";
-  const disabledColor = "#d9d9d9"; // default Ant Design gray
+  const disabledColor = "#f0f0f0";
 
   // --- Hover effects ---
   const handleMouseEnter = (e) => {

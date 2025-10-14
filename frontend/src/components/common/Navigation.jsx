@@ -166,7 +166,6 @@ export default function Navigation() {
               background: "linear-gradient(90deg, #6366f1, #3b82f6, #06b6d4)",
               padding: "2px 12px",
               borderRadius: "6px",
-              border: "1px solid #3b82f6",
               boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
               lineHeight: 1.4,
               height: "fit-content",
