@@ -14,6 +14,12 @@ A **modern social platform built with the MERN stack (MongoDB, Express.js, React
 
 ---
 
+---
+
+## 🖼️ Screenshots
+
+## ![Home Screenshot](./src/assets/homepage-desktop.png)
+
 ## ✨ Features
 
 - 🔥 Real-time **chat system** with search, typing indicator, seen ticks, and delivery states
