@@ -1,5 +1,14 @@
 // --- Ant Design ---
-import { Card, Typography, Button, Grid, Spin, Result, Tooltip } from "antd";
+import {
+  Card,
+  Typography,
+  Button,
+  Grid,
+  Spin,
+  Skeleton,
+  Result,
+  Tooltip,
+} from "antd";
 import { EyeOutlined, EyeInvisibleOutlined } from "@ant-design/icons";
 
 // --- React ---
@@ -109,13 +118,81 @@ export default function UserFeed({ feed, isLoading, currentUserId, sortBy }) {
     return (
       <div
         style={{
-          minHeight: "50vh",
           display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
+          flexDirection: "column",
+          gap: 24,
+          padding: "20px",
         }}
       >
-        <Spin size="large" />
+        {[...Array(3)].map((_, i) => (
+          <Card key={i} style={{ borderRadius: 12, overflow: "hidden" }}>
+            {/* --- Header skeleton --- */}
+
+            <Skeleton.Input
+              active
+              size="small"
+              style={{ width: 80, marginBottom: 16 }}
+            />
+
+            {/* --- Content skeleton (Image + Text) --- */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: isMobile ? "column" : "row",
+                gap: 16,
+                alignItems: "flex-start",
+                flexWrap: "wrap",
+              }}
+            >
+              {/* Image placeholder */}
+              <div
+                style={{
+                  flex: isMobile ? "1 1 100%" : "1 1 45%",
+                  minWidth: isMobile ? "100%" : "45%",
+                  maxWidth: isMobile ? "100%" : "45%",
+                }}
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    height: 180,
+                    borderRadius: 8,
+                    background: "#f0f0f0",
+                    overflow: "hidden",
+                    position: "relative",
+                  }}
+                >
+                  <Skeleton.Image
+                    active
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      borderRadius: 8,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Text placeholder */}
+              <div
+                style={{
+                  flex: isMobile ? "1 1 100%" : "1 1 50%",
+                  minWidth: isMobile ? "100%" : "50%",
+                  maxWidth: isMobile ? "100%" : "50%",
+                }}
+              >
+                <Skeleton
+                  active
+                  title={false}
+                  paragraph={{ rows: 3, width: ["90%", "80%", "60%"] }}
+                />
+              </div>
+            </div>
+          </Card>
+        ))}
       </div>
     );
   }

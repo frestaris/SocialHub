@@ -1,8 +1,6 @@
 import { useEffect } from "react";
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Layout, Spin } from "antd";
-import { Suspense, lazy } from "react";
+import { Layout } from "antd";
 
 import Navigation from "./components/common/Navigation";
 import NotFound from "./components/common/NotFound";
@@ -12,29 +10,29 @@ import { initAnalytics } from "./utils/analytics/analytics";
 import AnalyticsTracker from "./utils/analytics/AnalyticsTracker";
 import useNotificationsSocket from "./utils/sockets/useNotificationsSocket";
 import useAuthTokenRefresh from "./utils/firebase/useAuthTokenRefresh";
-import { useSelector } from "react-redux";
 import useChatSocket from "./utils/sockets/useChatSocket";
 import ScrollToTop from "./utils/ScrollToTop";
+import { useSelector } from "react-redux";
+
+import HomePage from "./pages/homepage/HomePage";
+import Explore from "./pages/explore/Explore";
+import Profile from "./pages/user/profile/Profile";
 import Post from "./pages/post/Post";
+import Login from "./pages/auth/Login";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 const { Content } = Layout;
 
-// Lazy-loaded pages
-const HomePage = lazy(() => import("./pages/homepage/HomePage"));
-const Explore = lazy(() => import("./pages/explore/Explore"));
-const Profile = lazy(() => import("./pages/user/profile/Profile"));
-
-// Auth pages
-const Login = lazy(() => import("./pages/auth/Login"));
-const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
-
 export default function App() {
   const user = useSelector((s) => s.auth.user);
+
+  // Initialize sockets
   useNotificationsSocket();
   useChatSocket();
   useAuthTokenRefresh();
 
+  // Initialize Google Analytics
   useEffect(() => {
     const GA_ID = import.meta.env.VITE_GA_ID;
     initAnalytics(GA_ID);
@@ -45,48 +43,27 @@ export default function App() {
       <ScrollToTop />
       <AnalyticsTracker />
       <Layout style={{ minHeight: "100vh" }}>
-        {/* Navigation bar  */}
+        {/* --- Navigation bar --- */}
         <Navigation />
-        {/* Suspense ensures fallback while lazy routes load */}
+
         <Content>
-          <Suspense
-            fallback={
-              <div
-                style={{
-                  minHeight: "50vh",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
-              >
-                <Spin size="large" />
-              </div>
-            }
-          >
-            <Routes>
-              {/* ---------- Public Pages ---------- */}
-              <Route path="/" element={<HomePage />} />
+          <Routes>
+            {/* ---------- Public Pages ---------- */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/explore/:category" element={<Explore />} />
+            <Route path="/post/:id" element={<Post />} />
+            <Route path="/profile/:id" element={<Profile />} />
+            <Route path="*" element={<NotFound />} />
 
-              {/* Explore feed: all posts or by category */}
-              <Route path="/explore" element={<Explore />} />
-              <Route path="/explore/:category" element={<Explore />} />
-
-              {/* Single post page */}
-              <Route path="/post/:id" element={<Post />} />
-
-              {/* User profile page */}
-              <Route path="/profile/:id" element={<Profile />} />
-
-              {/* Fallback for undefined routes */}
-              <Route path="*" element={<NotFound />} />
-
-              {/* ---------- Auth Pages ---------- */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-            </Routes>
-          </Suspense>
+            {/* ---------- Auth Pages ---------- */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+          </Routes>
         </Content>
+
+        {/* --- Chat Dock (only when logged in) --- */}
         {user?._id && <ChatDock />}
       </Layout>
     </Router>
