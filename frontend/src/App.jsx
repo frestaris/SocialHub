@@ -21,6 +21,9 @@ import Post from "./pages/post/Post";
 import Login from "./pages/auth/Login";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
+import About from "./pages/footer/About";
+import PrivacyPolicy from "./pages/footer/PrivacyPolicy";
+import TermsOfService from "./pages/footer/TermsOfService";
 
 const { Content } = Layout;
 
@@ -54,8 +57,10 @@ export default function App() {
             <Route path="/explore/:category" element={<Explore />} />
             <Route path="/post/:id" element={<Post />} />
             <Route path="/profile/:id" element={<Profile />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
             <Route path="*" element={<NotFound />} />
-
             {/* ---------- Auth Pages ---------- */}
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

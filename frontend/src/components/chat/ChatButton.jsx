@@ -162,15 +162,16 @@ export default function ChatButton({
         </Dropdown>
 
         {/* Start new chat */}
-        <Button
-          type="text"
-          icon={<EditOutlined />}
-          onClick={(e) => {
-            e.stopPropagation();
-            onNewChat();
-          }}
-        />
-
+        <Tooltip title={"Start a new chat"} placement="top">
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={(e) => {
+              e.stopPropagation();
+              onNewChat();
+            }}
+          />
+        </Tooltip>
         {/* toggle arrow */}
         <Button
           type="text"

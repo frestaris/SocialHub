@@ -226,7 +226,7 @@ export default function ChatWindow({
     baseWindowStyle.right = 0;
     baseWindowStyle.left = 0;
     baseWindowStyle.width = "100%";
-    baseWindowStyle.height = minimized ? 48 : "82vh";
+    baseWindowStyle.height = minimized ? 48 : "70vh";
   }
 
   // --- Render ---
