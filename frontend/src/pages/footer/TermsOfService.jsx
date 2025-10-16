@@ -57,15 +57,11 @@ export default function TermsOfService() {
       <Title level={4}>6. Contact</Title>
       <Paragraph>
         For any questions or concerns about these terms, feel free to contact me
-        at{" "}
-        <a href="mailto:frestaris.web.developer@gmail.com">
-          frestaris.web.developer@gmail.com
-        </a>
-        .
+        at <a href="mailto:frestaris@gmail.com">frestaris@gmail.com</a>.
       </Paragraph>
 
       <Paragraph style={{ marginTop: 40, fontSize: 14, color: "#777" }}>
-        Last updated: {new Date().toLocaleDateString()}
+        Last updated: 16/10/2025
       </Paragraph>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
-import { Typography, Grid, Button } from "antd";
+import { Typography, Grid } from "antd";
 import { DownOutlined, CompassOutlined } from "@ant-design/icons";
-import image from "../../assets/image-hero.avif";
+import image from "../../assets/hero.avif";
 import GradientButton from "../../components/common/GradientButton";
 
 const { Title, Paragraph } = Typography;

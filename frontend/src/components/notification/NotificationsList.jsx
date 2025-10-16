@@ -38,7 +38,13 @@ export default function NotificationsList({
         >
           {/*  Sender avatar */}
           <List.Item.Meta
-            avatar={<Avatar src={n.fromUser?.avatar} icon={<UserOutlined />} />}
+            avatar={
+              <Avatar
+                src={n.fromUser?.avatar || undefined}
+                icon={<UserOutlined />}
+                alt={n.fromUser?.username || "User Avatar"}
+              />
+            }
             title={
               <span style={{ fontSize: 14 }}>
                 {/*  Notification types */}
